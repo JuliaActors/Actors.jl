@@ -207,8 +207,8 @@ function ask(actor::LocalActor, msg::Any)
 end
 
 
-function Base.kill(actor::LocalActor, reason::Any)
-    Base.throwto(actor_task(actor), reason)
+function Base.kill(actor::LocalActor, exc = InterruptException())
+    Base.throwto(actor_task(actor), exc)
     return
 end
 

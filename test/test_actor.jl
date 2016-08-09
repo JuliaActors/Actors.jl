@@ -2,8 +2,7 @@
 
 using Actors
 
-import EasyPkg
-@EasyPkg.using_BaseTest
+using Base.Test
 
 
 @testset "Basic Actor operations" begin

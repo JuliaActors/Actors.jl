@@ -1,68 +1,80 @@
 # This file is a part of Actors.jl, licensed under the MIT License (MIT).
 
+
 export Actor
+export ActorMsgFrame
+export ActorID
+export ActorInbox
+export AbstractLocalActor
+export LocalActor
+export LocalActorAltInbox
+export ActorContext
+export NullActor
+
+export @actor
+
+export actor_id
+export actor_inbox
+export localactor
+export actor_context
+export actor_id
+export actor_inbox
+export localactor
+export actor_task
+export self
+export receive
+export tell
+export ask
+
+
 abstract Actor
 
 
-export ActorMsgFrame
 immutable ActorMsgFrame
     replyto::Actor
     message::Any
 end
 
 
-export ActorID
 typealias ActorID UInt64
 
 
-export ActorInbox
 typealias ActorInbox Channel{Any}
 
 
-export AbstractLocalActor
 abstract AbstractLocalActor <: Actor
 
 
-export LocalActor
 immutable LocalActor <: AbstractLocalActor
    task::Task
 end
 
 
-export LocalActorAltInbox
 immutable LocalActorAltInbox <: AbstractLocalActor
     actor::LocalActor
     inbox::ActorInbox
 end
 
 
-export ActorContext
 immutable ActorContext
    id::ActorID
    inbox::ActorInbox
    self_ref::LocalActor
 end
 
-export actor_id
 @inline actor_id(context::ActorContext) = context.id
 
-export actor_inbox
 @inline actor_inbox(context::ActorContext) = context.inbox
 
-export localactor
 @inline localactor(context::ActorContext) = context.self_ref
 
 
-export actor_context
 actor_context(task::Task) = task.storage[:_actor_context]::ActorContext
 
-export actor_id
 @inline actor_id(task::Task) = actor_id(actor_context(task))
 
-export actor_inbox
 @inline actor_inbox(task::Task) = actor_inbox(actor_context(task))
 
-export localactor
 @inline localactor(task::Task) = localactor(actor_context(task))
 
 
@@ -77,7 +89,6 @@ function Serializer.serialize(s::SerializationState, actor::LocalActor)
 end
 
 
-export actor_task
 @inline actor_task(actor::LocalActor) = actor.task
 
 @inline actor_context(actor::AbstractLocalActor) = actor_context(actor_task(actor))
@@ -113,7 +124,6 @@ end
 
 self_context() = actorize_current_task(true)
 
-export self
 @inline self() = localactor(self_context())
 
 @inline self_inbox() = actor_inbox(self_context())
@@ -121,7 +131,6 @@ export self
 self_with_alt_inbox(inbox::ActorInbox) = LocalActorAltInbox(self(), inbox)
 
 
-export receive
 
 function receive(inbox::ActorInbox)
     const message = take!(inbox)::ActorMsgFrame
@@ -156,7 +165,6 @@ function LocalActor(body)
 end
 
 
-export @actor
 macro actor(body)
     quote
         LocalActor(() -> let
@@ -167,11 +175,9 @@ macro actor(body)
 end
 
 
-export tell
 tell(to::Actor, message::Any) = tell(to, message, self())
 
 
-export ask
 function ask(actor::Actor, msg::Any)
     const result = Ref{Any}()
     const queryactor = @actor begin
@@ -213,7 +219,6 @@ function Base.kill(actor::LocalActor, exc = InterruptException())
 end
 
 
-export NullActor
 immutable NullActor <: Actor
 end
 

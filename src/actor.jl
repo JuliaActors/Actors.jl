@@ -15,6 +15,8 @@ export NullActor
 
 export @actor
 
+import Base: send, recv
+
 export actor_id
 export actor_inbox
 export localactor
@@ -24,8 +26,6 @@ export actor_inbox
 export localactor
 export actor_task
 export self
-export receive
-export tell
 export ask
 
 
@@ -154,12 +154,12 @@ self_with_alt_inbox(inbox::ActorInbox) = LocalActorAltInbox(self(), inbox)
 
 
 
-function receive(inbox::ActorInbox)
+function recv(inbox::ActorInbox)
     const message = take!(inbox)::ActorMsgFrame
     Pair(message.replyto, message.message)
 end
 
-receive() = receive(self_inbox())
+recv() = recv(self_inbox())
 
 
 
@@ -178,14 +178,14 @@ macro actor(body)
 end
 
 
-tell(to::Actor, message::Any) = tell(to, message, self())
+send(to::Actor, message::Any) = send(to, message, self())
 
 
 function ask(actor::Actor, msg::Any)
     const result = Ref{Any}()
     const queryactor = @actor begin
-        tell(actor, msg)
-        const x, reply = receive()
+        send(actor, msg)
+        const x, reply = recv()
         result.x = reply
     end
     wait(queryactor)
@@ -194,7 +194,7 @@ end
 
 
 
-function tell(to::AbstractLocalActor, message::Any, replyto::Actor)
+function send(to::AbstractLocalActor, message::Any, replyto::Actor)
     try
         put!(actor_inbox(to), ActorMsgFrame(replyto, message))
     catch
@@ -207,8 +207,8 @@ end
 function ask(actor::LocalActor, msg::Any)
     const tmp_inbox = ActorInbox(1)
     try
-        tell(actor, msg, self_with_alt_inbox(tmp_inbox))
-        x, reply = receive(tmp_inbox)
+        send(actor, msg, self_with_alt_inbox(tmp_inbox))
+        x, reply = recv(tmp_inbox)
         reply
     finally
         close(tmp_inbox)
@@ -230,4 +230,4 @@ end
 Base.show(io::IO, actor::NullActor) = print(io, "null-actor")
 Base.wait(actor::NullActor) = begin return end
 
-tell(::NullActor, message::Any, replyto::Actor) = nothing
+send(::NullActor, message::Any, replyto::Actor) = nothing

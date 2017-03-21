@@ -1,25 +1,24 @@
 # This file is a part of Actors.jl, licensed under the MIT License (MIT).
 
 using Actors
-
 using Base.Test
 
 
 @testset "Basic Actor operations" begin
     echo_actor = @actor begin
         while true
-            const sender, msg = receive()
-            tell(sender, msg)
+            const sender, msg = actor_recv()
+            send(sender, msg)
         end
     end
 
     try
-        @testset "tell() and receive()" begin
-            tell(echo_actor, "foo")
-            tell(echo_actor, "bar")
+        @testset "send() and actor_recv()" begin
+            send(echo_actor, "foo")
+            send(echo_actor, "bar")
 
-            @test receive() == (echo_actor => "foo")
-            @test receive() == (echo_actor => "bar")
+            @test actor_recv() == (echo_actor => "foo")
+            @test actor_recv() == (echo_actor => "bar")
         end
 
         @testset "ask()" begin

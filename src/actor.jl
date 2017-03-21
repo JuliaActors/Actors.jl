@@ -15,7 +15,8 @@ export NullActor
 
 export @actor
 
-import Base: send, recv
+import Base: send
+export actor_recv
 
 export actor_id
 export actor_inbox
@@ -154,12 +155,12 @@ self_with_alt_inbox(inbox::ActorInbox) = LocalActorAltInbox(self(), inbox)
 
 
 
-function recv(inbox::ActorInbox)
+function actor_recv(inbox::ActorInbox)
     const message = take!(inbox)::ActorMsgFrame
     Pair(message.replyto, message.message)
 end
 
-recv() = recv(self_inbox())
+actor_recv() = actor_recv(self_inbox())
 
 
 
@@ -185,7 +186,7 @@ function ask(actor::Actor, msg::Any)
     const result = Ref{Any}()
     const queryactor = @actor begin
         send(actor, msg)
-        const x, reply = recv()
+        const x, reply = actor_recv()
         result.x = reply
     end
     wait(queryactor)
@@ -208,7 +209,7 @@ function ask(actor::LocalActor, msg::Any)
     const tmp_inbox = ActorInbox(1)
     try
         send(actor, msg, self_with_alt_inbox(tmp_inbox))
-        x, reply = recv(tmp_inbox)
+        x, reply = actor_recv(tmp_inbox)
         reply
     finally
         close(tmp_inbox)

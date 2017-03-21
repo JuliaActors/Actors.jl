@@ -1,4 +1,7 @@
 # This file is a part of Actors.jl, licensed under the MIT License (MIT).
 
-import EasyPkg
-EasyPkg.run_all_tests()
+@Base.Test.testset "Package Actors" begin
+    include.([
+        "test_actor.jl",
+    ])
+end

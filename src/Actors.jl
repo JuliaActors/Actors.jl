@@ -1,13 +1,11 @@
 # This file is a part of Actors.jl, licensed under the MIT License (MIT).
 
-__precompile__()
+__precompile__(true)
 
 module Actors
 
-import EasyPkg
-EasyPkg.include_all_sources()
-
-function __init__()
-end
+include.([
+    "actor.jl",
+])
 
 end # module

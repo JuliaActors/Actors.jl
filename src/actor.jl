@@ -1,6 +1,8 @@
 # This file is a part of Actors.jl, licensed under the MIT License (MIT).
 
 
+using Compat
+
 export Actor
 export ActorMsgFrame
 export ActorID
@@ -27,7 +29,7 @@ export tell
 export ask
 
 
-abstract Actor
+@compat abstract type Actor end
 
 
 immutable ActorMsgFrame
@@ -36,10 +38,10 @@ immutable ActorMsgFrame
 end
 
 
-typealias ActorID UInt64
+const ActorID = UInt64
 
 
-typealias ActorInbox Channel{Any}
+const ActorInbox = Channel{Any}
 
 
 abstract AbstractLocalActor <: Actor

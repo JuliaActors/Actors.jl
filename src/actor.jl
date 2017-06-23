@@ -47,6 +47,26 @@ abstract AbstractLocalActor <: Actor
 
 immutable LocalActor <: AbstractLocalActor
    task::Task
+
+   LocalActor(task::Task) = new(task)
+end
+
+function LocalActor(body)
+    const contextch = Channel{ActorContext}(5)
+    try
+        const task = @schedule let
+            const context = actorize_current_task(false)
+            put!(contextch, context)
+            try
+                body()
+            finally
+                close(context)
+            end
+        end
+        localactor(take!(contextch))
+    finally
+        close(contextch)
+    end
 end
 
 
@@ -143,25 +163,6 @@ receive() = receive(self_inbox())
 
 function Base.close(context::ActorContext)
     close(actor_inbox(context))
-end
-
-
-function LocalActor(body)
-    const contextch = Channel{ActorContext}(5)
-    try
-        const task = @schedule let
-            const context = actorize_current_task(false)
-            put!(contextch, context)
-            try
-                body()
-            finally
-                close(context)
-            end
-        end
-        localactor(take!(contextch))
-    finally
-        close(contextch)
-    end
 end
 
 

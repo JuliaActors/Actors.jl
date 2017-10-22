@@ -2,7 +2,7 @@
 
 using Actors
 
-using Base.Test
+using Compat.Test
 
 
 @testset "Basic Actor operations" begin

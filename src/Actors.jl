@@ -4,8 +4,6 @@ __precompile__(true)
 
 module Actors
 
-include.([
-    "actor.jl",
-])
+include("actor.jl")
 
 end # module

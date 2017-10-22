@@ -2,7 +2,5 @@
 
 import Compat.Test
 Test.@testset "Package Actors" begin
-    include.([
-        "test_actor.jl",
-    ])
+    include("test_actor.jl")
 end

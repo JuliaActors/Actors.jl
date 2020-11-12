@@ -1,9 +1,36 @@
-# This file is a part of Actors.jl, licensed under the MIT License (MIT).
+#
+# This file is part of the Actors.jl Julia package, 
+# MIT license, part of https://github.com/JuliaActors
+#
+"""
+    Actors
 
-__precompile__(true)
+A Julia library implementing the classical Actor Model.
 
+The current stable, registered version is installed with
+```julia
+pkg> add Actors
+```
+
+The development version is installed with:
+```julia
+pkg> add("https://github.com/JuliaActors/Actors.jl")
+```
+"""
 module Actors
 
+"Gives the package version."
+const version = v"0.1.1"
+
+using Distributed, .Threads
+
+include("interface.jl")
+include("messages.jl")
+include("links.jl")
+include("com.jl")
 include("actor.jl")
 
-end # module
+export  Msg, Response, Link, Func, 
+        spawn, send!, become!, become, self, onmessage 
+
+end

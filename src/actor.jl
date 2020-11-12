@@ -1,233 +1,96 @@
-# This file is a part of Actors.jl, licensed under the MIT License (MIT).
+#
+# This file is part of the Actors.jl Julia package, 
+# MIT license, part of https://github.com/JuliaActors
+#
 
+"""
+    _ACT()
 
-using Compat
+Internal actor status variable.
 
-export Actor
-export ActorMsgFrame
-export ActorID
-export ActorInbox
-export AbstractLocalActor
-export LocalActor
-export LocalActorAltInbox
-export ActorContext
-export NullActor
+# Fields
 
-export @actor
+1. `bhv::Func` : the behavior function and its internal arguments,
+2. `init::Func`: the init function and its arguments,
+3. `term::Func`: the terminate function and its arguments,
+4. `self::Link`: the actor's (local or remote) self,
+5. `name::Symbol`: the actor's registered name.
+6. `res::Any`: the result of the last behavior execution,
+7. `usr::Any`: user variable for plugging in something.
 
-export actor_id
-export actor_inbox
-export localactor
-export actor_context
-export actor_id
-export actor_inbox
-export localactor
-export actor_task
-export self
-export receive
-export tell
-export ask
+see also: [`Func`](@ref), [`Link`](@ref)
+"""
+mutable struct _ACT
+    bhv::Func
+    init::Union{Nothing,Func}
+    term::Union{Nothing,Func}
+    self::Union{Nothing,Link}
+    name::Union{Nothing,Symbol}
+    res::Any
+    usr::Any
 
+    _ACT() = new(Func(+), fill(nothing, 6)...)
+end
 
-@compat abstract type Actor end
+onmessage(A::_ACT, msg::Become) = A.bhv = msg.x
+onmessage(A::_ACT, msg::Diag) = send!(msg.from, A)
+onmessage(A::_ACT, msg::Msg) = A.res = A.bhv.f((A.bhv.args..., msg)...; A.bhv.kwargs...)
+onmessage(A::_ACT, msg::Update) = onmessage(A, msg, Val(msg.s))
+onmessage(A::_ACT, msg) = A.res = A.bhv.f((A.bhv.args..., msg...)...; A.bhv.kwargs...)
 
+# dispatch on Update message
+onmessage(A::_ACT, msg::Update, ::Val{:self}) = A.self = msg.x
+onmessage(A::_ACT, msg::Update, x) = nothing
 
-immutable ActorMsgFrame
-    replyto::Actor
-    message::Any
+# this is the actor loop
+function _act(ch::Channel)
+    A = _ACT()
+    task_local_storage("_ACT", A)
+    while true
+        msg = take!(ch)
+        onmessage(A, msg)
+        msg isa Exit && break
+    end
+    isnothing(A.name) || call!(_REG, unregister, A.name)
 end
 
 
-const ActorID = UInt64
-
-
-const ActorInbox = Channel{Any}
-
-
-abstract AbstractLocalActor <: Actor
-
-
-immutable LocalActor <: AbstractLocalActor
-   task::Task
-
-   LocalActor(task::Task) = new(task)
-end
-
-function LocalActor(body)
-    const contextch = Channel{ActorContext}(5)
-    try
-        const task = @schedule let
-            const context = actorize_current_task(false)
-            put!(contextch, context)
-            try
-                body()
-            finally
-                close(context)
+function spawn(bhv::Func; pid=myid(), thrd=false, sticky=false, taskref=nothing)
+    if pid == myid()
+        lk = Link(32)
+        if Bool(thrd) && thrd in 1:nthreads()
+            spawnonthread(thrd, lk, taskref)
+            @threads for i in 1:nthreads()
+                if i == thrd 
+                    t = @async _act(lk)
+                    isnothing(taskref) || (taskref[] = t)
+                    bind(lk.chn, t)
+                end
             end
+        else
+            t = Task(()->_act(lk.chn))
+            isnothing(taskref) || (taskref[] = t)
+            pid == 1 && (t.sticky = sticky)
+            bind(lk.chn, t)
+            schedule(t)
         end
-        localactor(take!(contextch))
-    finally
-        close(contextch)
+    else
+        lk = Link(RemoteChannel(()->Channel(func, size), pid),
+                  pid, :remote)
     end
+    # put!(lk.chn, Update(:self, lk))
+    become!(lk, bhv)
+    return lk
 end
+spawn(m::Val{:Actors}, args...; kwargs...) = spawn(args...; kwargs...)
+spawn(m::Module, args...; kwargs...) = spawn(Val(first(fullname(m))), args...; kwargs...)
 
+become!(lk::Link, bhv::Func) = send!(lk, Become(bhv))
+become!(lk::Link, func, args...; kwargs...) = become!(lk, Func(func, args...; kwargs...))
 
-immutable LocalActorAltInbox <: AbstractLocalActor
-    actor::LocalActor
-    inbox::ActorInbox
+self() = task_local_storage("_ACT").self
+
+function become(bhv, args...; kwargs...)
+    act = task_local_storage("_ACT")
+    act.bhv = Func(bhv, args...; kwargs...)
 end
-
-
-immutable ActorContext
-   id::ActorID
-   inbox::ActorInbox
-   self_ref::LocalActor
-end
-
-@inline actor_id(context::ActorContext) = context.id
-
-@inline actor_inbox(context::ActorContext) = context.inbox
-
-@inline localactor(context::ActorContext) = context.self_ref
-
-
-actor_context(task::Task) = task.storage[:_actor_context]::ActorContext
-
-@inline actor_id(task::Task) = actor_id(actor_context(task))
-
-@inline actor_inbox(task::Task) = actor_inbox(actor_context(task))
-
-@inline localactor(task::Task) = localactor(actor_context(task))
-
-
-Base.show(io::IO, actor::LocalActor) = print(io, "local-actor-$(hex(actor_id(actor)))")
-Base.show(io::IO, actor::LocalActorAltInbox) = print(io, "local-actor-alt-$(hex(actor_id(actor)))")
-
-@inline Base.wait(actor::AbstractLocalActor) = wait(actor_task(actor))
-
-function Serializer.serialize(s::SerializationState, actor::LocalActor)
-    info("Serializing $actor (dummy implementation)")
-    serialize(s, actor_id(actor))
-end
-
-
-@inline actor_task(actor::LocalActor) = actor.task
-
-@inline actor_context(actor::AbstractLocalActor) = actor_context(actor_task(actor))
-@inline actor_id(actor::AbstractLocalActor) = actor_id(actor_task(actor))
-
-@inline actor_inbox(actor::LocalActor) = actor_inbox(actor_task(actor))
-
-@inline actor_task(actor::LocalActorAltInbox) = actor_task(actor.actor)
-@inline actor_inbox(actor::LocalActorAltInbox) = actor.inbox
-
-
-function actorize_current_task(autoclose::Bool, chsize = 100)
-    try
-        task_local_storage(:_actor_context)::ActorContext
-    catch
-        const task = current_task()
-
-        const id = rand(UInt64)
-        const inbox = ActorInbox(chsize)
-        const self_ref = LocalActor(task)
-        const context = ActorContext(id, inbox, self_ref)
-        task_local_storage(:_actor_context, context)
-
-        autoclose && @schedule begin
-            wait(task)
-            close(context)
-        end
-
-        context::ActorContext
-    end
-end
-
-
-self_context() = actorize_current_task(true)
-
-@inline self() = localactor(self_context())
-
-@inline self_inbox() = actor_inbox(self_context())
-
-self_with_alt_inbox(inbox::ActorInbox) = LocalActorAltInbox(self(), inbox)
-
-
-
-function receive(inbox::ActorInbox)
-    const message = take!(inbox)::ActorMsgFrame
-    Pair(message.replyto, message.message)
-end
-
-receive() = receive(self_inbox())
-
-
-
-function Base.close(context::ActorContext)
-    close(actor_inbox(context))
-end
-
-
-macro actor(body)
-    quote
-        LocalActor(() -> let
-                $body
-            end
-        )
-    end
-end
-
-
-tell(to::Actor, message::Any) = tell(to, message, self())
-
-
-function ask(actor::Actor, msg::Any)
-    const result = Ref{Any}()
-    const queryactor = @actor begin
-        tell(actor, msg)
-        const x, reply = receive()
-        result.x = reply
-    end
-    wait(queryactor)
-    result.x
-end
-
-
-
-function tell(to::AbstractLocalActor, message::Any, replyto::Actor)
-    try
-        put!(actor_inbox(to), ActorMsgFrame(replyto, message))
-    catch
-        # info("Dead letter from $sender to $actor: $message")
-    end
-    return
-end
-
-
-function ask(actor::LocalActor, msg::Any)
-    const tmp_inbox = ActorInbox(1)
-    try
-        tell(actor, msg, self_with_alt_inbox(tmp_inbox))
-        x, reply = receive(tmp_inbox)
-        reply
-    finally
-        close(tmp_inbox)
-    end
-end
-
-
-function Base.kill(actor::LocalActor, exc = InterruptException())
-    Base.throwto(actor_task(actor), exc)
-    return
-end
-
-
-immutable NullActor <: Actor
-end
-
-@inline actor_id(::NullActor) = 0x0
-
-Base.show(io::IO, actor::NullActor) = print(io, "null-actor")
-Base.wait(actor::NullActor) = begin return end
-
-tell(::NullActor, message::Any, replyto::Actor) = nothing

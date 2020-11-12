@@ -1,48 +1,25 @@
-Actors
--------
+# Actors.jl
 
-[![Build Status](https://travis-ci.org/daqcore/Actors.jl.svg?branch=master)](https://travis-ci.org/daqcore/Actors.jl)
-[![Build status](https://ci.appveyor.com/api/projects/status/github/daqcore/Actors.jl?branch=master&svg=true)](https://ci.appveyor.com/project/oschulz/actors-jl/branch/master)
-[![codecov](https://codecov.io/gh/daqcore/Actors.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/daqcore/Actors.jl)
+Concurrent computing in Julia based on the Actor Model
 
-A Julia implementation of the Actor Model, based on Julia Tasks. Currently,
-only very basic functionality is implemented. This is likely to end up as
-something of a hybrid between Erlang- and Scala/Akka-style actors.
+[![stable docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaActors.github.io/Actors.jl/stable/)
+[![dev docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaActors.github.io/Actors.jl/dev)
+![CI](https://github.com/JuliaActors/Actors.jl/workflows/CI/badge.svg)
+[![Coverage](https://codecov.io/gh/JuliaActors/Actors.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaActors/Actors.jl)
 
-The following features are currently missing (but planned):
+This is an ongoing rewrite of the old Actors.jl in order to provide
 
-* Actor supervision
+- an implementation of the **classical [Actor Model](https://en.wikipedia.org/wiki/Actor_model)** based on Julia's primitives `Task` and `Channel`,
+- a **minimal interface** through which actors implemented in different Julia libraries can communicate,
+- a **standard and common API** for actors for building a modern actor infrastructure.
 
-* Actor communication beyond current process (on Julia clusters)
+`Actors` is part of the Julia GitHub group [`JuliaActors`](https://github.com/JuliaActors).
 
-* Truly parallel actors on shared memory (once Julia multi-threading lands)
+## Authors
 
-Usage example:
+- Oliver Schulz (until v0.1, Oct 2017)
+- Paul Bayer (rewrite since v0.1.1, Nov 2020)
 
-```julia
-    using Actors
+## License
 
-    echo_actor = @actor begin
-        info("Myself: $(self())")
-        while true
-            const sender, msg = receive()
-            info("Received from $sender: $msg")
-            tell(sender, msg)
-        end
-    end
-
-    silent_actor = @actor begin
-        info("Myself: $(self())")
-        while true
-            const sender, msg = receive()
-            tell(sender, msg)
-        end
-    end
-
-
-    tell(echo_actor, "Hello!")
-    info("Reply: $(receive())")
-
-    reply = ask(echo_actor, "bar")
-    info("Query reply: $reply")
-```
+MIT

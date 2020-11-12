@@ -1,6 +1,18 @@
-# This file is a part of Actors.jl, licensed under the MIT License (MIT).
+#
+# This file is part of the Actors.jl Julia package, 
+# MIT license, part of https://github.com/JuliaActors
+#
 
-import Compat.Test
-Test.@testset "Package Actors" begin
-    include("test_actor.jl")
+using Test, SafeTestsets, Distributed
+
+function redirect_devnull(f)
+    open(@static(Sys.iswindows() ? "nul" : "/dev/null"), "w") do io
+        redirect_stdout(io) do
+            f()
+        end
+    end
 end
+
+length(procs()) == 1 && addprocs(1)
+
+@safetestset "Basics"        begin include("test_basics.jl") end

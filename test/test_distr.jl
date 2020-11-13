@@ -7,17 +7,19 @@ using Actors, Distributed, Test
 
 length(procs()) == 1 && addprocs(1)
 
-# @everywhere using Pkg
-# @everywhere Pkg.activate(".")
-@everywhere using Actors
+if length(workers) > 0
+    # @everywhere using Pkg
+    # @everywhere Pkg.activate(".")
+    @everywhere using Actors
 
-@everywhere mutate(a) = a[:] = a .+ 1
-a = [1, 1, 1]
-mutate(a)
-@test a == [2,2,2]
+    @everywhere mutate(a) = a[:] = a .+ 1
+    a = [1, 1, 1]
+    mutate(a)
+    @test a == [2,2,2]
 
-mut = spawn(Func(mutate), pid=2)
-@test request!(mut, a) == [3,3,3]
-@test a == [2,2,2]
-become!(mut, myid)
-@test request!(mut) == 2
+    mut = spawn(Func(mutate), pid=2)
+    @test request!(mut, a) == [3,3,3]
+    @test a == [2,2,2]
+    become!(mut, myid)
+    @test request!(mut) == 2
+end

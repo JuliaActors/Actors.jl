@@ -7,7 +7,7 @@ using Actors, Distributed, Test
 
 length(procs()) == 1 && addprocs(1)
 
-if length(workers) > 0
+if length(workers()) > 0
     # @everywhere using Pkg
     # @everywhere Pkg.activate(".")
     @everywhere using Actors

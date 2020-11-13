@@ -24,13 +24,19 @@ const version = v"0.1.1"
 
 using Distributed, .Threads
 
+include("types.jl")
 include("interface.jl")
 include("messages.jl")
 include("links.jl")
 include("com.jl")
 include("actor.jl")
 
-export  Msg, Response, Link, Func, 
-        spawn, send!, become!, become, self, onmessage 
+export  
+    # types
+    Msg, Request, Response, Link, Func, _ACT,
+    # interface primitives
+    spawn, send!, become!, become, self, onmessage,
+    # API
+    receive!, request!
 
 end

@@ -3,6 +3,8 @@
 # MIT license, part of https://github.com/JuliaActors
 #
 
+# those are the internal messages
+
 """
 Become(x::Func)
 
@@ -35,6 +37,13 @@ struct Exit{T,U} <: Msg
     stack::U
 end
 Exit() = Exit(:ok, nothing)
+
+"""
+    Timeout()
+
+A return value to signal that a timeout has occurred.
+"""
+struct Timeout <: Msg end
 
 """
     Update(s::Symbol, x)

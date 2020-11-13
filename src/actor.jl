@@ -3,39 +3,14 @@
 # MIT license, part of https://github.com/JuliaActors
 #
 
-"""
-    _ACT()
-
-Internal actor status variable.
-
-# Fields
-
-1. `bhv::Func` : the behavior function and its internal arguments,
-2. `init::Func`: the init function and its arguments,
-3. `term::Func`: the terminate function and its arguments,
-4. `self::Link`: the actor's (local or remote) self,
-5. `name::Symbol`: the actor's registered name.
-6. `res::Any`: the result of the last behavior execution,
-7. `usr::Any`: user variable for plugging in something.
-
-see also: [`Func`](@ref), [`Link`](@ref)
-"""
-mutable struct _ACT
-    bhv::Func
-    init::Union{Nothing,Func}
-    term::Union{Nothing,Func}
-    self::Union{Nothing,Link}
-    name::Union{Nothing,Symbol}
-    res::Any
-    usr::Any
-
-    _ACT() = new(Func(+), fill(nothing, 6)...)
-end
-
 onmessage(A::_ACT, msg::Become) = A.bhv = msg.x
 onmessage(A::_ACT, msg::Diag) = send!(msg.from, A)
 onmessage(A::_ACT, msg::Msg) = A.res = A.bhv.f((A.bhv.args..., msg)...; A.bhv.kwargs...)
 onmessage(A::_ACT, msg::Update) = onmessage(A, msg, Val(msg.s))
+function onmessage(A::_ACT, msg::Request)
+    A.res = A.bhv.f((A.bhv.args..., msg.x...)...; A.bhv.kwargs...)
+    send!(msg.from, Response(A.res, A.self))
+end
 onmessage(A::_ACT, msg) = A.res = A.bhv.f((A.bhv.args..., msg...)...; A.bhv.kwargs...)
 
 # dispatch on Update message
@@ -58,11 +33,10 @@ end
 function spawn(bhv::Func; pid=myid(), thrd=false, sticky=false, taskref=nothing)
     if pid == myid()
         lk = Link(32)
-        if Bool(thrd) && thrd in 1:nthreads()
-            spawnonthread(thrd, lk, taskref)
+        if thrd > 0 && thrd in 1:nthreads()
             @threads for i in 1:nthreads()
                 if i == thrd 
-                    t = @async _act(lk)
+                    t = @async _act(lk.chn)
                     isnothing(taskref) || (taskref[] = t)
                     bind(lk.chn, t)
                 end
@@ -75,10 +49,10 @@ function spawn(bhv::Func; pid=myid(), thrd=false, sticky=false, taskref=nothing)
             schedule(t)
         end
     else
-        lk = Link(RemoteChannel(()->Channel(func, size), pid),
+        lk = Link(RemoteChannel(()->Channel(_act, 32), pid),
                   pid, :remote)
     end
-    # put!(lk.chn, Update(:self, lk))
+    put!(lk.chn, Update(:self, lk))
     become!(lk, bhv)
     return lk
 end

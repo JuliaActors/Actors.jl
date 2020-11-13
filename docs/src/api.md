@@ -1,4 +1,4 @@
-# API
+# Actor API
 
 ```@meta
 CurrentModule = Actors
@@ -15,6 +15,7 @@ Actors.version
 
 ```@docs
 Msg
+Request
 Response
 Link
 Func
@@ -32,6 +33,13 @@ self
 onmessage
 ```
 
+## User API
+
+```@docs
+receive!
+request!
+```
+
 ## Internal Messages
 
 ```@docs
@@ -39,6 +47,7 @@ Become
 Diag
 Exit
 Update
+Timeout
 ```
 
 ## Diagnosis

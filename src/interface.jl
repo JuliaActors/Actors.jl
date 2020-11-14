@@ -69,3 +69,10 @@ An application can extend this by further methods and use
 it to plugin the `Actors.jl` API.
 """
 onmessage  # see actor.jl
+
+"""
+    stop(reason::Symbol)
+
+Cause your actor to stop with a `reason`.
+"""
+stop       # see actor.jl

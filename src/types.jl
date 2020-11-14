@@ -83,7 +83,6 @@ struct Request <: Msg
     x
     from::Link
 end
-Request(from) = Request((),from)
 
 """
     Response(y, from::Link=self())

@@ -3,8 +3,8 @@
 # MIT license, part of https://github.com/JuliaActors
 #
 
-
-send!(lk::Link, msg) = put!(lk.chn, msg)
+send!(lk::Link, msg::Msg) = put!(lk.chn, msg)
+send!(lk::Link, msg...) = put!(lk.chn, msg)
 
 _match(msg::Msg, ::Nothing, ::Nothing) = true
 _match(msg::Msg, M::Type{<:Msg}, ::Nothing) = msg isa M
@@ -104,4 +104,4 @@ function request!(lk::L, M::Type{<:Msg}, args...; kwargs...)  where L<:Link
             Link(RemoteChannel(()->Channel(1)), myid(), :remote)
     request!(lk, isempty(args) ? M(me) : M(args, me); kwargs...)
 end
-request!(lk::L, args...; kwargs...) where L<:Link = request!(lk, Request, args...; kwargs...)
+request!(lk::L, args...; kwargs...) where L<:Link = request!(lk, Call, args...; kwargs...)

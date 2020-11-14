@@ -6,7 +6,7 @@
 # those are the internal messages
 
 """
-Become(x::Func)
+    Become(x::Func)
 
 An asynchronous [`Msg`](@ref) to an actor to change its 
 behavior.
@@ -14,6 +14,19 @@ behavior.
 struct Become <: Msg
     x::Func
 end
+
+"""
+    Call(arg, from::Link)
+
+A synchronous [`Msg`](@ref) to an actor to execute its 
+behavior with `arg...` and to send the result as a [`Response`](@ref) 
+message to `from`.
+"""
+struct Call <: Msg
+    x
+    from::Link
+end
+Call(from) = Call((),from)
 
 """
     Diag(from::Link)

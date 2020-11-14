@@ -5,13 +5,22 @@
 
 onmessage(A::_ACT, msg::Become) = A.bhv = msg.x
 onmessage(A::_ACT, msg::Diag) = send!(msg.from, A)
-onmessage(A::_ACT, msg::Msg) = A.res = A.bhv.f((A.bhv.args..., msg)...; A.bhv.kwargs...)
 onmessage(A::_ACT, msg::Update) = onmessage(A, msg, Val(msg.s))
-function onmessage(A::_ACT, msg::Request)
-    A.res = A.bhv.f((A.bhv.args..., msg.x...)...; A.bhv.kwargs...)
+function onmessage(A::_ACT, msg::Call)
+    res = A.bhv.f((A.bhv.args..., msg.x...)...; A.bhv.kwargs...)
+    A.res = res
     send!(msg.from, Response(A.res, A.self))
 end
-onmessage(A::_ACT, msg) = A.res = A.bhv.f((A.bhv.args..., msg...)...; A.bhv.kwargs...)
+# dispatch on Request or user defined Msg
+function onmessage(A::_ACT, msg::Msg)
+    res = A.bhv.f((A.bhv.args..., msg)...; A.bhv.kwargs...)
+    A.res = res
+end
+# default dispatch on Any 
+function onmessage(A::_ACT, msg) 
+    res = A.bhv.f((A.bhv.args..., msg...)...; A.bhv.kwargs...)
+    A.res = res
+end
 
 # dispatch on Update message
 onmessage(A::_ACT, msg::Update, ::Val{:self}) = A.self = msg.x
@@ -68,3 +77,5 @@ function become(bhv, args...; kwargs...)
     act = task_local_storage("_ACT")
     act.bhv = Func(bhv, args...; kwargs...)
 end
+
+stop(reason::Symbol=:ok) = send!(self(), Exit(reason))

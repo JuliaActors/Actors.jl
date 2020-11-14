@@ -30,6 +30,7 @@ send!
 become!
 become
 self
+stop
 onmessage
 ```
 
@@ -44,6 +45,7 @@ request!
 
 ```@docs
 Become
+Call
 Diag
 Exit
 Update

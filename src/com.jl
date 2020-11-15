@@ -100,8 +100,8 @@ function request!(lk::L, msg::Msg;
 end
 function request!(lk::L, M::Type{<:Msg}, args...; kwargs...)  where L<:Link
     me = lk isa Link{Channel} ?
-            Link(1) : 
-            Link(RemoteChannel(()->Channel(1)), myid(), :remote)
+            newLink(1) :
+            newLink(1, remote=true)
     request!(lk, isempty(args) ? M(me) : M(args, me); kwargs...)
 end
 request!(lk::L, args...; kwargs...) where L<:Link = request!(lk, Call, args...; kwargs...)

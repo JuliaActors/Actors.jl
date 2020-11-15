@@ -7,6 +7,7 @@
 # This is Agha's example 3.2.2, a recursive factorial
 #
 using Actors
+import Actors: spawn, newLink
 
 # implement the behaviors
 function rec_factorial(f::Request)
@@ -25,7 +26,7 @@ end
 
 # setup factorial actor and response link
 F = spawn(Func(rec_factorial))
-resp = Link()
+resp = newLink()
 
 for i ∈ 0:5:50      # send and receive loop
     send!(F, Request(big(i), resp))

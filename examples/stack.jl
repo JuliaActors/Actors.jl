@@ -8,6 +8,7 @@
 #
 
 using Actors, Printf
+import Actors: spawn, newLink
 
 mutable struct StackNode{T}
     content::T
@@ -37,9 +38,9 @@ function stack_node(sn::StackNode, msg::Push)
     become(stack_node, StackNode(msg.content, P))
 end
 
-mystack = spawn(Func(stack_node, StackNode(nothing, Link())))
+mystack = spawn(Func(stack_node, StackNode(nothing, newLink())))
 
-response = Link()
+response = newLink()
 
 send!(mystack, Pop(response))  # new stack
 receive!(response).y           # returns nothing

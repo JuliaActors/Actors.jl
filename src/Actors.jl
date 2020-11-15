@@ -34,8 +34,8 @@ include("actor.jl")
 export  
     # types
     Msg, Request, Response, Link, Func, _ACT,
-    # interface primitives
-    spawn, send!, become!, become, self, onmessage, stop,
+    # exported interface primitives
+    send!, become!, become, self, onmessage, stop,
     # API
     receive!, request!
 

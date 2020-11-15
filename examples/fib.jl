@@ -4,6 +4,7 @@
 #
 
 using Actors
+import Actors: spawn
 
 function fib(D::Dict{Int,BigInt}, n::Int)
     get!(D, n) do

@@ -4,6 +4,7 @@
 #
 
 using Actors, Distributed, Test
+import Actors: spawn
 
 length(procs()) == 1 && addprocs(1)
 

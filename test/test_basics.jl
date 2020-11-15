@@ -4,6 +4,7 @@
 #
 
 using Actors, Test, .Threads
+import Actors: spawn, newLink
 
 t = Ref{Task}()
 a = Ref{Int}()

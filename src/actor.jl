@@ -7,19 +7,16 @@ onmessage(A::_ACT, msg::Become) = A.bhv = msg.x
 onmessage(A::_ACT, msg::Diag) = send!(msg.from, A)
 onmessage(A::_ACT, msg::Update) = onmessage(A, msg, Val(msg.s))
 function onmessage(A::_ACT, msg::Call)
-    res = A.bhv.f((A.bhv.args..., msg.x...)...; A.bhv.kwargs...)
-    A.res = res
+    A.res = A.bhv.f((A.bhv.args..., msg.x...)...; A.bhv.kwargs...)
     send!(msg.from, Response(A.res, A.self))
 end
 # dispatch on Request or user defined Msg
 function onmessage(A::_ACT, msg::Msg)
-    res = A.bhv.f((A.bhv.args..., msg)...; A.bhv.kwargs...)
-    A.res = res
+    A.res = A.bhv.f((A.bhv.args..., msg)...; A.bhv.kwargs...)
 end
 # default dispatch on Any 
 function onmessage(A::_ACT, msg) 
-    res = A.bhv.f((A.bhv.args..., msg...)...; A.bhv.kwargs...)
-    A.res = res
+    A.res = A.bhv.f((A.bhv.args..., msg...)...; A.bhv.kwargs...)
 end
 
 # dispatch on Update message
@@ -41,7 +38,7 @@ end
 
 function spawn(bhv::Func; pid=myid(), thrd=false, sticky=false, taskref=nothing)
     if pid == myid()
-        lk = Link(32)
+        lk = newLink(32)
         if thrd > 0 && thrd in 1:nthreads()
             @threads for i in 1:nthreads()
                 if i == thrd 
@@ -65,8 +62,6 @@ function spawn(bhv::Func; pid=myid(), thrd=false, sticky=false, taskref=nothing)
     become!(lk, bhv)
     return lk
 end
-spawn(m::Val{:Actors}, args...; kwargs...) = spawn(args...; kwargs...)
-spawn(m::Module, args...; kwargs...) = spawn(Val(first(fullname(m))), args...; kwargs...)
 
 become!(lk::Link, bhv::Func) = send!(lk, Become(bhv))
 become!(lk::Link, func, args...; kwargs...) = become!(lk, Func(func, args...; kwargs...))

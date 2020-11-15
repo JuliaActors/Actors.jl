@@ -4,6 +4,7 @@
 #
 
 using Actors, Printf
+import Actors: spawn
 
 # define two functions for printing a message
 function pr(msg)

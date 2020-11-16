@@ -14,7 +14,7 @@ pkg> add Actors
 
 The development version is installed with:
 ```julia
-pkg> add("https://github.com/JuliaActors/Actors.jl")
+pkg> add "https://github.com/JuliaActors/Actors.jl"
 ```
 """
 module Actors

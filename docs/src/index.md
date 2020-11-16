@@ -5,11 +5,14 @@ Concurrent programming in Julia with the [Actor model](https://en.wikipedia.org/
 ## Overview
 
 - A [quick introduction](intro.md) to `Actors`,
+- How to use [actors](actors.md),
+- How to use [behaviors](behaviors.md),
 - `Actors` API: [detailed documentation](api.md),
 - Internals
+    - The actor [protocol](protocol.md),
     - [Interface](interface.md) for Julia actor libraries.
 
-## Group
+## JuliaActors
 
 `Actors` is part of the Julia GitHub group [`JuliaActors`](https://github.com/JuliaActors).
 

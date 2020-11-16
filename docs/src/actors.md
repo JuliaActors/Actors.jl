@@ -10,16 +10,28 @@ CurrentModule = Actors
 
 To create an actor we [`spawn`](@ref) it with a [behavior](behaviors.md) function:
 
-```@repl
-using Actors, .Threads
-import Actors: spawn
-act1 = spawn(Func(threadid))             # start an actor which returns its threadid
-request!(act1)                           # call it
-using Distributed
-addprocs(1);
-@everywhere using Actors
-act2 = spawn(Func(println), pid=2)       # start a remote actor on pid 2 with a println behavior
-request!(act2, "Tell me where you are!") # and call it with an argument
+```julia
+julia> using Actors, .Threads
+
+julia> import Actors: spawn
+
+julia> act1 = spawn(Func(threadid))             # start an actor which returns its threadid
+Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :local)
+
+julia> request!(act1)                           # call it
+2
+
+julia> using Distributed
+
+julia> addprocs(1);
+
+julia> @everywhere using Actors
+
+julia> act2 = spawn(Func(println), pid=2)       # start a remote actor on pid 2 with a println behavior
+Link{RemoteChannel{Channel{Any}}}(RemoteChannel{Channel{Any}}(2, 1, 232), 2, :remote)
+
+julia> request!(act2, "Tell me where you are!") # and call it with an argument
+      From worker 2:    Tell me where you are!
 ```
 
 Actors are created with a behavior function and eventually partial arguments to it. We can then send them the remaining arguments later.
@@ -80,10 +92,12 @@ What if you want to receive a reply from an actor? Then there are two possibilit
 
 The [API](api.md) functions allow to work with actors without using messages explicitly:
 
-```@repl
-using Actors, .Threads # hide
-act4 = spawn(Func(+, 4))       # start an actor adding to 4
-request!(act4, 4)
+```julia
+julia> act4 = spawn(Func(+, 4))       # start an actor adding to 4
+Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :local)
+
+julia> request!(act4, 4)
+8
 ```
 
 ## Actor Registry

@@ -7,17 +7,25 @@
 # Basic Types
 # -----------------------------------------------
 """
-    Func(f, args...; kwargs...)
+    Func(func, args...; kwargs...)
 
-A structure for passing a function `f` and its arguments
-to an actor.
+A structure to represent an actor behavior.
+
+# Parameters
+
+- `func`: a callable object (function, functor ...),
+- `args...`: arguments to `func`. Those can be no, partial
+    or full arguments. Eventually missing arguments must be
+    sent with a message in order to execute `func` with all
+    needed arguments.
+- `kwargs...`: keyword arguments.
 """
 struct Func{X,Y,Z}
     f::X
     args::Y
     kwargs::Z
 
-    Func(f::F, args...; kwargs...) where F<:Function =
+    Func(f, args...; kwargs...) =
         new{typeof(f),typeof(args),typeof(kwargs)}(f, args, kwargs)
 end
 
@@ -52,7 +60,8 @@ Internal actor status variable.
 4. `self::Link`: the actor's (local or remote) self,
 5. `name::Symbol`: the actor's registered name.
 6. `res::Any`: the result of the last behavior execution,
-7. `usr::Any`: user variable for plugging in something.
+7. `sta::Any`: a variable for representing state,
+8. `usr::Any`: user variable for plugging in something.
 
 see also: [`Func`](@ref), [`Link`](@ref)
 """
@@ -63,9 +72,10 @@ mutable struct _ACT
     self::Union{Nothing,Link}
     name::Union{Nothing,Symbol}
     res::Any
+    sta::Any
     usr::Any
 
-    _ACT() = new(Func(+), fill(nothing, 6)...)
+    _ACT() = new(Func(+), fill(nothing, 7)...)
 end
 
 # -----------------------------------------------

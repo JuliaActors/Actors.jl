@@ -5,7 +5,24 @@
 
 # -----------------------------------------------
 # Interface primitives
+# 
+#     Other actor libraries sharing actors with
+#     Actors.jl must reimplement newLink, spawn
+#     and send! with their own concrete Link type.
 # -----------------------------------------------
+
+"""
+    newLink(size=32; remote=false)
+
+Create a local Link with a buffered `Channel` `size ≥ 1`.
+
+# Parameters
+- `size=32`: the size of the channel buffer,
+- `remote=false`: should a remote link be created,
+- `pid=myid()`: optional pid of the remote worker.
+"""
+newLink
+
 """
 ```
 spawn(bhv::Func; pid=myid(), thrd=false, sticky=false, taskref=nothing)
@@ -34,45 +51,19 @@ Send a message to an actor.
 """
 send!   # see com.jl
 
-"""
-    become!(lk::Link, bhv::Func)
-
-Tell an actor `lk` to assume the behavior function `bhv`.
-"""
-become!  # see actor.jl
-
-"""
-    become(bhv::Function, args...; kwargs...)
-
-Cause your actor to take on a new behavior. This can only be
-called from inside an actor/behavior.
-
-# Arguments
-- `bhv::Function`: function implementing the new behavior,
-- `args...`: arguments to `bhv` (without `msg`),
-- `kwargs...`: keyword arguments to `bhv`.
-"""
-become   # see actor.jl
-
-"""
-    self()
-
-Get the [`Link`](@ref) of your actor.
-"""
-self    # see actor.jl
+# -----------------------------------------------
+# API primitives
+#
+#       Other actor libraries wanting to use the
+#       Actors.jl API must execute onmessage with
+#       an _ACT variable and the received message.
+# -----------------------------------------------
 
 """
     onmessage(A::_ACT, msg)
 
 An actor executes this function when a message arrives.
-An application can extend this by further methods and use 
-it to plugin the `Actors.jl` API.
+An application can extend this by further methods and must
+use it to plugin the `Actors.jl` API.
 """
 onmessage  # see actor.jl
-
-"""
-    stop(reason::Symbol)
-
-Cause your actor to stop with a `reason`.
-"""
-stop       # see actor.jl

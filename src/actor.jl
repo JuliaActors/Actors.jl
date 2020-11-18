@@ -3,12 +3,35 @@
 # MIT license, part of https://github.com/JuliaActors
 #
 
+_terminate!(A::_ACT, reason) = !isnothing(A.term) && A.term.f((A.term.args..., reason)...; kwargs...)
+
 onmessage(A::_ACT, msg::Become) = A.bhv = msg.x
-onmessage(A::_ACT, msg::Diag) = send!(msg.from, A)
-onmessage(A::_ACT, msg::Update) = onmessage(A, msg, Val(msg.s))
 function onmessage(A::_ACT, msg::Call)
     A.res = A.bhv.f((A.bhv.args..., msg.x...)...; A.bhv.kwargs...)
     send!(msg.from, Response(A.res, A.self))
+end
+onmessage(A::_ACT, msg::Cast) = (A.res = A.bhv.f((A.bhv.args..., msg.x...)...; A.bhv.kwargs...))
+onmessage(A::_ACT, msg::Diag) = send!(msg.from, Response(msg.x == 0 ? :ok : A, A.self))
+onmessage(A::_ACT, msg::Exec) = send!(msg.from, Response(msg.func.f(msg.func.args...; msg.func.kwargs...), A.self))
+onmessage(A::_ACT, msg::Exit) = _terminate!(A, msg.reason)
+function onmessage(A::_ACT, msg::Init)
+    A.init = msg.x
+    A.sta  = A.init.f(A.init.args...; A.init.kwargs...)
+end
+function onmessage(A::_ACT, msg::Query)
+    msg.x in (:res,:bhv,:sta,:usr) ?
+        send!(msg.from, Response(getfield(A, msg.x), A.self)) :
+        send!(msg.from, Response("$(msg.x) not available", A.self))
+end
+function onmessage(A::_ACT, msg::Update)
+    if msg.s in (:name,:self,:sta,:usr)
+        setfield!(A, msg.s, msg.x)
+    elseif msg.s == :arg
+        A.bhv = Func(A.bhv.f, msg.x.args...;
+            pairs((; merge(A.bhv.kwargs, msg.x.kwargs)...))...)
+    else
+        nothing
+    end
 end
 # dispatch on Request or user defined Msg
 function onmessage(A::_ACT, msg::Msg)
@@ -19,11 +42,12 @@ function onmessage(A::_ACT, msg)
     A.res = A.bhv.f((A.bhv.args..., msg...)...; A.bhv.kwargs...)
 end
 
-# dispatch on Update message
-onmessage(A::_ACT, msg::Update, ::Val{:self}) = A.self = msg.x
-onmessage(A::_ACT, msg::Update, x) = nothing
-
+#
 # this is the actor loop
+#
+# Note: when an actor task starts, it must put its _ACT
+#       status variable into the task local storage.
+#
 function _act(ch::Channel)
     A = _ACT()
     task_local_storage("_ACT", A)
@@ -63,14 +87,48 @@ function spawn(bhv::Func; pid=myid(), thrd=false, sticky=false, taskref=nothing)
     return lk
 end
 
-become!(lk::Link, bhv::Func) = send!(lk, Become(bhv))
-become!(lk::Link, func, args...; kwargs...) = become!(lk, Func(func, args...; kwargs...))
+"""
+    self()
 
+Get the [`Link`](@ref) of your actor.
+"""
 self() = task_local_storage("_ACT").self
+# 
+# Note: a reference to the actor's status variable must be
+#       available as task_local_storage("_ACT") for this to 
+#       work.
+# 
 
-function become(bhv, args...; kwargs...)
+"""
+```
+become(bhv::Func)
+become(func, args...; kwargs...)
+```
+
+Cause your actor to take on a new behavior. This can only be
+called from inside an actor/behavior.
+
+# Arguments
+- `bhv::Func`: [`Func`](@ref) implementing the new behavior,
+- `func`: callable object,
+- `args1...`: (partial) arguments to `func`,
+- `kwargs...`: keyword arguments to `func`.
+"""
+function become(bhv::Func)
     act = task_local_storage("_ACT")
-    act.bhv = Func(bhv, args...; kwargs...)
+    act.bhv = bhv
 end
+become(func, args...; kwargs...) = become(Func(func, args...; kwargs...))
+# 
+# Note: a reference to the actor's status variable must be
+#       available as task_local_storage("_ACT") for this to 
+#       work.
+# 
 
+
+"""
+    stop(reason::Symbol)
+
+Cause your actor to stop with a `reason`.
+"""
 stop(reason::Symbol=:ok) = send!(self(), Exit(reason))

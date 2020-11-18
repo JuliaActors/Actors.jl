@@ -20,23 +20,35 @@ pkg> add "https://github.com/JuliaActors/Actors.jl"
 module Actors
 
 "Gives the package version."
-const version = v"0.1.1"
+const version = v"0.1.2"
 
 using Distributed, .Threads
 
 include("types.jl")
 include("interface.jl")
 include("messages.jl")
+include("api.jl")
 include("links.jl")
 include("com.jl")
 include("actor.jl")
 
 export  
-    # types
-    Msg, Request, Response, Link, Func, _ACT,
+    # common types
+    Msg, Request, Response, Link, Func,
+    # -------------------------------
     # exported interface primitives
-    send!, become!, become, self, onmessage, stop,
+    send!,  
+    # the following ones must be imported explicitly:
+    # - newLink, 
+    # - spawn,
+    # - _ACT,
+    # - onmessage
+    # -------------------------------
+    # API primitives
+    receive!, request!,
     # API
-    receive!, request!
-
+    Args, become, self, stop,
+    become!, call!, cast!, exec!, exit!, init!, 
+    query!, update! 
+    
 end

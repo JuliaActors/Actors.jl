@@ -11,7 +11,14 @@ Actors
 Actors.version
 ```
 
+```@repl
+using Actors
+Actors.version
+```
+
 ## Types
+
+The following types are needed for using and extending `Actors`:
 
 ```@docs
 Msg
@@ -24,23 +31,25 @@ _ACT
 
 ## Starting Actors, creating links
 
-`Actors.jl` doesn't export its functions to start actors and to create links. Thereby other libraries building on it can implement their own actors and links.
+`Actors.jl` doesn't export its functions to start actors and to create links. Thus other libraries building on it can implement their own actors and links.
 
-If you want to use standard actors and links, you can import them explicitly:
+To use `Actors`'s actors and links you import them explicitly:
 
 ```julia
 using Actors
 import Actors: spawn, newLink
 ```
 
-Then you can create them as follows:
+Then you can create them with the following functions:
 
 ```@docs
 spawn
 newLink
 ```
 
-## Primitives
+## Actor Primitives
+
+The following primitives characterize actors in the classical Actor Model:
 
 ```@docs
 send!
@@ -51,22 +60,43 @@ stop
 onmessage
 ```
 
-## User API
+## API Primitives
+
+To receive messages from actors the following two functions for synchronous and asynchronous communication are useful:
 
 ```@docs
 receive!
 request!
 ```
 
-## Internal Messages
+## User API
+
+Actors has a user interface allowing you to control actors:
 
 ```@docs
-Become
-Call
-Diag
-Exit
-Update
-Timeout
+call!
+cast!
+exec!
+exit!
+query!
+update!
+```
+
+The following is needed for updating arguments:
+
+```@docs
+Args
+```
+
+## Actor Registry
+
+## Actor Supervision
+
+This is not yet implemented.
+
+```@docs
+init!
+term!
 ```
 
 ## Diagnosis

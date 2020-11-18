@@ -70,7 +70,11 @@ julia> send!(mystack, Push(1))        # push 1 on the stack
 Actors can be controlled with the following functions:
 
 - [`become!`](@ref): cause an actor to switch its behavior,
-- ...
+- [`cast!`](@ref): cause an actor to execute its behavior function,
+- [`exit!`](@ref): cause an actor to terminate,
+- [`init!`](@ref): tell an actor to execute a function at startup,
+- [`term!`](@ref): tell an actor to execute a function when it terminates,
+- [`update!`](@ref): update an actor's internal state.
 
 Those functions are wrappers to [internal messages](protocol.md) and to [`send!`](@ref).
 
@@ -87,6 +91,14 @@ What if you want to receive a reply from an actor? Then there are two possibilit
 1. [`send!`](@ref) a message to an actor and then [`receive!`](@ref) the [`Response`](@ref) asynchronously,
 2. [`request!`](@ref): send a message to an actor, **block** and receive the result synchronously.
 
+The following functions do this for specific duties:
+
+- [`call!`](@ref) an actor to execute its behavior function and to send the result,
+- [`exec!`](@ref): tell an actor to execute a function and to send the result,
+- [`query!`](@ref) tell an actor's to send one of its internal state variables.
+
+If you provide those functions with a return link, they will use [`send!`](@ref) and you can then [`receive!`](@ref) the [`Response`](@ref) from the return link later. If you 
+don't provide a return link, they will use [`request!`](@ref) to block and return the result. Note that you should not use blocking when you need to be strictly responsive.
 
 ## Using the API
 

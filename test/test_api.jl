@@ -6,7 +6,7 @@
 using Actors, Test
 
 t = Ref{Task}()                # this is for debugging
-const sleeptime = 0.2
+const sleeptime = 0.4
 
 arg = Args(1, 2, c=3, d=4)
 @test arg.args == (1, 2)

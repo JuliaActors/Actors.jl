@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - master
+      - dev
     tags: '*'
 env:
   JULIA_NUM_THREADS: 2

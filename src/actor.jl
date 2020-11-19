@@ -5,8 +5,14 @@
 
 _terminate!(A::_ACT, reason) = !isnothing(A.term) && A.term.f((A.term.args..., reason)...; kwargs...)
 
+#
+# default dispatch ignores the mode argument
+# such a user can implement methods such as
+# onmessage(A::_ACT, ::Val{:mymode}, msg::Call)
+#
+onmessage(A::_ACT, mode, msg) = onmessage(A, msg) 
 onmessage(A::_ACT, msg::Become) = A.bhv = msg.x
-function onmessage(A::_ACT, msg::Call)
+function onmessage(A::_ACT, mode, msg::Call)
     A.res = A.bhv.f((A.bhv.args..., msg.x...)...; A.bhv.kwargs...)
     send!(msg.from, Response(A.res, A.self))
 end
@@ -19,12 +25,12 @@ function onmessage(A::_ACT, msg::Init)
     A.sta  = A.init.f(A.init.args...; A.init.kwargs...)
 end
 function onmessage(A::_ACT, msg::Query)
-    msg.x in (:res,:bhv,:sta,:usr) ?
+    msg.x in (:mode,:bhv,:res,:sta,:usr) ?
         send!(msg.from, Response(getfield(A, msg.x), A.self)) :
         send!(msg.from, Response("$(msg.x) not available", A.self))
 end
 function onmessage(A::_ACT, msg::Update)
-    if msg.s in (:name,:self,:sta,:usr)
+    if msg.s in (:mode,:name,:self,:sta,:usr)
         setfield!(A, msg.s, msg.x)
     elseif msg.s == :arg
         A.bhv = Func(A.bhv.f, msg.x.args...;
@@ -53,14 +59,14 @@ function _act(ch::Channel)
     task_local_storage("_ACT", A)
     while true
         msg = take!(ch)
-        onmessage(A, msg)
+        onmessage(A, A.mode, msg)
         msg isa Exit && break
     end
-    isnothing(A.name) || call!(_REG, unregister, A.name)
+    # isnothing(A.name) || call!(_REG, unregister, A.name)
 end
 
 
-function spawn(bhv::Func; pid=myid(), thrd=false, sticky=false, taskref=nothing)
+function spawn(bhv::Func; pid=myid(), thrd=false, sticky=false, taskref=nothing, mode=:default)
     if pid == myid()
         lk = newLink(32)
         if thrd > 0 && thrd in 1:nthreads()
@@ -83,6 +89,7 @@ function spawn(bhv::Func; pid=myid(), thrd=false, sticky=false, taskref=nothing)
                   pid, :remote)
     end
     put!(lk.chn, Update(:self, lk))
+    mode == :default || put!(lk.chn, Update(:mode, mode))
     become!(lk, bhv)
     return lk
 end

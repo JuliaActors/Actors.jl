@@ -25,7 +25,7 @@ newLink
 
 """
 ```
-spawn(bhv::Func; pid=myid(), thrd=false, sticky=false, taskref=nothing)
+spawn(bhv::Func; pid=myid(), thrd=false, sticky=false, taskref=nothing, mode=:default)
 spawn(m::Val(:Actors), args...; kwargs...)
 spawn(m::Module, args...; kwargs...)
 ```
@@ -40,7 +40,7 @@ to it.
 - `thrd=false`: thread number the actor should be started on or `false`,
 - `sticky=false`: if `true` the actor is started on the current thread,
 - `taskref=nothing`: if a `Ref{Task}()` is given here, it gets the started `Task`,
-- `m::Module`: the `Module` implementing `spawn`.
+- `mode=:default`: the actor mode.
 """
 spawn   # see actor.jl
 

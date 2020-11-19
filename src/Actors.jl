@@ -31,6 +31,7 @@ include("api.jl")
 include("links.jl")
 include("com.jl")
 include("actor.jl")
+include("task.jl")
 
 export  
     # common types
@@ -49,6 +50,8 @@ export
     # API
     Args, become, self, stop,
     become!, call!, cast!, exec!, exit!, init!, 
-    query!, update! 
+    query!, update!,
+    # Tasks
+    ATask, async, await
     
 end

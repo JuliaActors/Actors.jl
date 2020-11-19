@@ -112,6 +112,17 @@ julia> request!(act4, 4)
 8
 ```
 
+## Actor Tasks
+
+You can start actor tasks with [`async`](@ref) and get their result with [`await`](@ref).
+
+```julia
+julia> t = async(Func(^, 123, 456));
+
+julia> await(t)
+2409344748064316129
+```
+
 ## Actor Registry
 
 ...

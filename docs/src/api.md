@@ -88,6 +88,14 @@ The following is needed for updating arguments:
 Args
 ```
 
+## Actor Tasks
+
+```@docs
+ATask
+async
+await
+```
+
 ## Actor Registry
 
 ## Actor Supervision

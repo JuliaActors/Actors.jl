@@ -135,7 +135,7 @@ Query the `lk` actor about an internal state variable `s`.
 # Parameters
 - `lk::Link`: actor link,
 - `from::Link`: sender link,
-- `s::Symbol` can be one of `:bhv`, `:res`, `:sta`.
+- `s::Symbol` one of `:mode`,`:bhv`,`:res`,`:sta`,`:usr`.
 - `timeout::Real=5.0`: 
 
 **Note:** If `from` is omitted, `query!` blocks and returns 
@@ -190,7 +190,7 @@ Update an actor's internal state `s` with `args...`.
 - `lk::Link` an actor link,
 - `x`: value/variable to update the choosen state with,
 - `arg::Args`: arguments to update,
-- `s::Symbol`: can be one of `:sta`, `:dsp`, `:arg`, `:self`, `:name`.
+- `s::Symbol`: one of `:arg`,`:mode`,`:name`,`:self`,`:sta`,`:usr`.
 
 *Note:* If you want to update the stored arguments to the 
 behavior function with `s=:arg`, you must pass an [`Args`](@ref) 

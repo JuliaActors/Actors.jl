@@ -15,6 +15,9 @@ inca(a, b) = a[] = a[] + b
 act = spawn(Func(inca, a), taskref=t)
 
 @test t[].state == :runnable
+A = request!(act, Actors.Diag, 1)
+@test A.mode == :default
+
 send!(act, 1)
 sleep(0.1)
 @test a[] == 2

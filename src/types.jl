@@ -54,18 +54,20 @@ Internal actor status variable.
 
 # Fields
 
-1. `bhv::Func` : the behavior function and its internal arguments,
-2. `init::Func`: the init function and its arguments,
-3. `term::Func`: the terminate function and its arguments,
-4. `self::Link`: the actor's (local or remote) self,
-5. `name::Symbol`: the actor's registered name.
-6. `res::Any`: the result of the last behavior execution,
-7. `sta::Any`: a variable for representing state,
-8. `usr::Any`: user variable for plugging in something.
+1. `mode::Symbol`: the actor mode,
+2. `bhv::Func` : the behavior function and its internal arguments,
+3. `init::Func`: the init function and its arguments,
+4. `term::Func`: the terminate function and its arguments,
+5. `self::Link`: the actor's (local or remote) self,
+6. `name::Symbol`: the actor's registered name.
+7. `res::Any`: the result of the last behavior execution,
+8. `sta::Any`: a variable for representing state,
+9. `usr::Any`: user variable for plugging in something.
 
 see also: [`Func`](@ref), [`Link`](@ref)
 """
 mutable struct _ACT
+    mode::Symbol
     bhv::Func
     init::Union{Nothing,Func}
     term::Union{Nothing,Func}
@@ -75,7 +77,7 @@ mutable struct _ACT
     sta::Any
     usr::Any
 
-    _ACT() = new(Func(+), fill(nothing, 7)...)
+    _ACT(mode=:default) = new(mode, Func(+), fill(nothing, 7)...)
 end
 
 # -----------------------------------------------

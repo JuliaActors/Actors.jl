@@ -114,6 +114,8 @@ julia> request!(act4, 4)
 
 ## Actor Tasks
 
+Actor tasks execute one computation, mostly without communicating with other actors. They can be used to compute values asynchronously.
+
 You can start actor tasks with [`async`](@ref) and get their result with [`await`](@ref).
 
 ```julia

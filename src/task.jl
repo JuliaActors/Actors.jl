@@ -15,7 +15,7 @@ end
 Start a task to execute `func` and return an [`ATask`](@ref) 
 variable.
 
-An actor task finishes sends its result to the `back` link 
+An actor task sends its result to the `back` link 
 of the `ATask` variable and exits immediately.
 
 # Parameters
@@ -34,7 +34,7 @@ function async(func::Func; pid=myid(), thrd=false, sticky=false, taskref=nothing
 end
 
 """
-await(t::ATask; timeout::Real=5.0)
+    await(t::ATask; timeout::Real=5.0)
 
 Await a task reply and return it.
 """

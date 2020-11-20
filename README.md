@@ -7,11 +7,11 @@ Concurrent computing in Julia based on the Actor Model
 ![CI](https://github.com/JuliaActors/Actors.jl/workflows/CI/badge.svg)
 [![Coverage](https://codecov.io/gh/JuliaActors/Actors.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaActors/Actors.jl)
 
-This is an ongoing rewrite of the old Actors.jl in order to provide
+This is a rewrite of the old Actors.jl in order to provide
 
-- an implementation of the **classical [Actor Model](https://en.wikipedia.org/wiki/Actor_model)** based on Julia's primitives `Task` and `Channel`,
-- a **minimal interface** through which actors implemented in different Julia libraries can communicate,
-- a **standard and common API** for actors for building a modern actor infrastructure.
+- an implementation of the **classical [Actor Model](https://en.wikipedia.org/wiki/Actor_model)** based on Julia's primitives,
+- a **minimal interface** through which actors implemented in different Julia libraries can communicate, 
+- a **standard and common API** for building a modern actor infrastructure.
 
 `Actors` is part of the Julia GitHub group [`JuliaActors`](https://github.com/JuliaActors).
 

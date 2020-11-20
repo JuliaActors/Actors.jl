@@ -62,7 +62,9 @@ jobs:
             Pkg.instantiate()'
       - run: |
           julia --project=docs -e '
-            using Documenter: doctest '
+            using Documenter: doctest
+            using Actors
+            doctest(Actors)' # change MYPACKAGE to the name of your package
       - run: julia --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

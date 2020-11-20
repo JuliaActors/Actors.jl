@@ -30,13 +30,14 @@ function onmessage(A::_ACT, msg::Query)
         send!(msg.from, Response("$(msg.x) not available", A.self))
 end
 function onmessage(A::_ACT, msg::Update)
-    if msg.s in (:mode,:name,:self,:sta,:usr)
+    if msg.s in (:name,:self,:sta,:usr)
         setfield!(A, msg.s, msg.x)
+    elseif msg.s == :mode
+        A.mode = msg.x
+        A.self.mode = msg.x
     elseif msg.s == :arg
         A.bhv = Func(A.bhv.f, msg.x.args...;
             pairs((; merge(A.bhv.kwargs, msg.x.kwargs)...))...)
-    else
-        nothing
     end
 end
 # dispatch on Request or user defined Msg
@@ -84,9 +85,10 @@ function spawn(bhv::Func; pid=myid(), thrd=false, sticky=false, taskref=nothing,
             bind(lk.chn, t)
             schedule(t)
         end
+        lk.mode = mode
     else
         lk = Link(RemoteChannel(()->Channel(_act, 32), pid),
-                  pid, :remote)
+                  pid, mode)
     end
     put!(lk.chn, Update(:self, lk))
     mode == :default || put!(lk.chn, Update(:mode, mode))

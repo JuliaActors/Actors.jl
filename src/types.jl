@@ -39,12 +39,12 @@ this must be returned by an actor on creation with [`spawn`](@ref).
 - `chn::C`: C can be any type and characterizes the interface
     to an actor,
 - `pid::Int`: the pid of the actor, 
-- `type::Symbol`: an arbitrary symbol characterizing the actor.
+- `mode::Symbol`: a symbol characterizing the actor mode.
 """
-struct Link{C}
+mutable struct Link{C}
     chn::C
     pid::Int
-    type::Symbol
+    mode::Symbol
 end
 
 """

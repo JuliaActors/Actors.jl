@@ -20,7 +20,7 @@ pkg> add "https://github.com/JuliaActors/Actors.jl"
 module Actors
 
 "Gives the package version."
-const version = v"0.1.2"
+const version = v"0.1.3"
 
 using Distributed, .Threads
 

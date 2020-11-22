@@ -12,14 +12,16 @@
 # -----------------------------------------------
 
 """
-    newLink(size=32; remote=false)
+    newLink(size=32; remote=false, pid=myid(), mode=nothing)
 
 Create a local Link with a buffered `Channel` `size ≥ 1`.
 
 # Parameters
 - `size=32`: the size of the channel buffer,
 - `remote=false`: should a remote link be created,
-- `pid=myid()`: optional pid of the remote worker.
+- `pid=myid()`: optional pid of the remote worker,
+- `mode=nothing`: if mode==nothing the mode is automatically
+    set to `:local` or `:remote`.
 """
 newLink
 
@@ -40,7 +42,7 @@ to it.
 - `thrd=false`: thread number the actor should be started on or `false`,
 - `sticky=false`: if `true` the actor is started on the current thread,
 - `taskref=nothing`: if a `Ref{Task}()` is given here, it gets the started `Task`,
-- `mode=:default`: the actor mode.
+- `mode=:default`: mode, the actor should operate in.
 """
 spawn   # see actor.jl
 

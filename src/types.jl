@@ -41,7 +41,7 @@ this must be returned by an actor on creation with [`spawn`](@ref).
 - `pid::Int`: the pid of the actor, 
 - `mode::Symbol`: a symbol characterizing the actor mode.
 """
-mutable struct Link{C}
+mutable struct Link{C} <: Addr
     chn::C
     pid::Int
     mode::Symbol
@@ -66,7 +66,7 @@ Internal actor status variable.
 
 see also: [`Func`](@ref), [`Link`](@ref)
 """
-mutable struct _ACT
+mutable struct _ACT <: Actor
     mode::Symbol
     bhv::Func
     init::Union{Nothing,Func}
@@ -81,7 +81,7 @@ mutable struct _ACT
 end
 
 # -----------------------------------------------
-# Message types
+# Public message types
 # -----------------------------------------------
 "Abstract type for messages to actors."
 abstract type Msg end

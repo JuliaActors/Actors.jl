@@ -3,6 +3,10 @@
 # MIT license, part of https://github.com/JuliaActors
 #
 
+"""
+    send!(lk::Link, msg)
+Send a message to an actor.
+"""
 send!(lk::Link, msg::Msg) = put!(lk.chn, msg)
 send!(lk::Link, msg...) = put!(lk.chn, msg)
 

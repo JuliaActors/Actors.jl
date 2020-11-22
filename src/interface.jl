@@ -9,7 +9,7 @@
 #
 
 abstract type Addr end
-abstract type Actor end
+abstract type Actor{T} end
 function send! end
 function spawn end
 function become end

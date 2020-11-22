@@ -20,13 +20,12 @@ A structure to represent an actor behavior.
     needed arguments.
 - `kwargs...`: keyword arguments.
 """
-struct Func{X,Y,Z}
-    f::X
-    args::Y
-    kwargs::Z
+struct Func
+    f
+    args::Tuple
+    kwargs::Base.Iterators.Pairs
 
-    Func(f, args...; kwargs...) =
-        new{typeof(f),typeof(args),typeof(kwargs)}(f, args, kwargs)
+    Func(f, args...; kwargs...) =new(f, args, kwargs)
 end
 
 """
@@ -48,17 +47,18 @@ mutable struct Link{C} <: Addr
 end
 
 """
-    _ACT()
-
+```
+_ACT{T} <: Actor{T}
+```
 Internal actor status variable.
 
 # Fields
 
 1. `mode::Symbol`: the actor mode,
-2. `bhv::Func` : the behavior function and its internal arguments,
-3. `init::Func`: the init function and its arguments,
-4. `term::Func`: the terminate function and its arguments,
-5. `self::Link`: the actor's (local or remote) self,
+2. `bhv::T` : the behavior function and its internal arguments,
+3. `init::T`: the init function and its arguments,
+4. `term::T`: the terminate function and its arguments,
+5. `self::Addr`: the actor's (local or remote) self,
 6. `name::Symbol`: the actor's registered name.
 7. `res::Any`: the result of the last behavior execution,
 8. `sta::Any`: a variable for representing state,
@@ -66,19 +66,24 @@ Internal actor status variable.
 
 see also: [`Func`](@ref), [`Link`](@ref)
 """
-mutable struct _ACT <: Actor
+mutable struct _ACT{T} <: Actor{T}
     mode::Symbol
-    bhv::Func
-    init::Union{Nothing,Func}
-    term::Union{Nothing,Func}
+    bhv::T
+    init::Union{Nothing,T}
+    term::Union{Nothing,T}
     self::Union{Nothing,Link}
     name::Union{Nothing,Symbol}
     res::Any
     sta::Any
     usr::Any
-
-    _ACT(mode=:default) = new(mode, Func(+), fill(nothing, 7)...)
 end
+
+"""
+    _ACT(mode=:default)
+
+Return a actor variable `_ACT{Func}`.
+"""
+_ACT(mode=:default) = _ACT(mode, Func(+), fill(nothing, 7)...)
 
 # -----------------------------------------------
 # Public message types

@@ -7,26 +7,34 @@
 # Basic Types
 # -----------------------------------------------
 """
-    Func(func, args...; kwargs...)
+    Func(func, a...; kw...)(c...)
 
-A structure to represent an actor behavior.
+A callable struct to represent actor behavior. It is executed
+with parameters from the incoming communication.
 
 # Parameters
 
-- `func`: a callable object (function, functor ...),
-- `args...`: arguments to `func`. Those can be no, partial
-    or full arguments. Eventually missing arguments must be
-    sent with a message in order to execute `func` with all
-    needed arguments.
-- `kwargs...`: keyword arguments.
+- `f`: a callable object (function, functor ...),
+- `a...`: acquaintance parameters to `f`. Those are stored,
+- `kw...`: keyword arguments,
+- `c...`: parameters from the incoming communication.
 """
 struct Func
     f
-    args::Tuple
-    kwargs::Base.Iterators.Pairs
+    a::Tuple
+    kw::Base.Iterators.Pairs
+    ϕ::Function
 
-    Func(f, args...; kwargs...) =new(f, args, kwargs)
+    Func(f, a...; kw...) =new(f, a, kw, (c)->f(a..., c...; kw...))
 end
+(p::Func)(c...) = p.ϕ(c)
+
+#
+# Since Func contains an anonymous function, the following 
+# is needed to make it executable in another thread or worker.
+# It returns a Func for the current world age.
+# 
+_current(p::Func) = Func(p.f, p.a...; p.kw...)
 
 """
     Link{C}(chn::C, pid::Int, type::Symbol)

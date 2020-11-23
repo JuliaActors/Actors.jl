@@ -7,18 +7,18 @@
 # those functions realize the Msg protocol
 # this is the 2nd actor layer
 #
-onmessage(A::_ACT, msg::Become) = A.bhv = msg.x
-function onmessage(A::_ACT, mode, msg::Call)
-    A.res = A.bhv.f((A.bhv.args..., msg.x...)...; A.bhv.kwargs...)
+onmessage(A::_ACT, msg::Become) = A.bhv = _current(msg.x)
+function onmessage(A::_ACT, msg::Call)
+    A.res = A.bhv(msg.x...)
     send!(msg.from, Response(A.res, A.self))
 end
-onmessage(A::_ACT, msg::Cast) = (A.res = A.bhv.f((A.bhv.args..., msg.x...)...; A.bhv.kwargs...))
+onmessage(A::_ACT, msg::Cast) = A.res = A.bhv(msg.x...)
 onmessage(A::_ACT, msg::Diag) = send!(msg.from, Response(msg.x == 0 ? :ok : A, A.self))
-onmessage(A::_ACT, msg::Exec) = send!(msg.from, Response(msg.func.f(msg.func.args...; msg.func.kwargs...), A.self))
+onmessage(A::_ACT, msg::Exec) = send!(msg.from, Response(_current(msg.func)(), A.self))
 onmessage(A::_ACT, msg::Exit) = _terminate!(A, msg.reason)
 function onmessage(A::_ACT, msg::Init)
-    A.init = msg.x
-    A.sta  = A.init.f(A.init.args...; A.init.kwargs...)
+    A.init = _current(msg.x)
+    A.sta  = A.init()
 end
 function onmessage(A::_ACT, msg::Query)
     msg.x in (:mode,:bhv,:res,:sta,:usr) ?
@@ -33,10 +33,8 @@ function onmessage(A::_ACT, msg::Update)
         A.self.mode = msg.x
     elseif msg.s == :arg
         A.bhv = Func(A.bhv.f, msg.x.args...;
-            pairs((; merge(A.bhv.kwargs, msg.x.kwargs)...))...)
+            pairs((; merge(A.bhv.kw, msg.x.kwargs)...))...)
     end
 end
 # dispatch on Request or user defined Msg
-function onmessage(A::_ACT, msg::Msg)
-    A.res = A.bhv.f((A.bhv.args..., msg)...; A.bhv.kwargs...)
-end
+onmessage(A::_ACT, msg::Msg) = A.res = A.bhv(msg)

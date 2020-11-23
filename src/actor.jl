@@ -16,9 +16,7 @@ An actor executes this function when a message arrives.
 An application can extend this by further methods and must
 use it to plugin the `Actors.jl` API.
 """
-function onmessage(A::_ACT, msg) 
-    A.res = A.bhv.f((A.bhv.args..., msg...)...; A.bhv.kwargs...)
-end
+onmessage(A::_ACT, msg) = (A.res = A.bhv(msg...))
 
 # 
 # the 2nd actor layer is realized by the Msg protocol 

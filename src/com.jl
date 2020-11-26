@@ -3,12 +3,37 @@
 # MIT license, part of https://github.com/JuliaActors
 #
 
+function _send!(chn::Channel, msg)
+    # reimplements Base.put_buffered with a modification
+    lock(chn)
+    try
+        while length(chn.data) ≥ chn.sz_max  # modification: allow buffer overflow
+            Base.check_channel_state(chn)
+            wait(chn.cond_put)
+        end
+        push!(chn.data, msg)
+        # notify all, since some of the waiters may be on a "fetch" call.
+        notify(chn.cond_take, nothing, true, false)
+    finally
+        unlock(chn)
+    end
+    return msg
+end
+function _send!(rch::RemoteChannel, msg)
+    if rch.where != myid() && msg isa Msg
+        # change any local links in m to remote links
+        msg = typeof(msg)((_rlink(getfield(msg,i)) for i in fieldnames(typeof(msg)))...)
+    end
+    put!(rch, msg)
+end
+
 """
     send!(lk::Link, msg)
 Send a message to an actor.
 """
-send!(lk::Link, msg::Msg) = put!(lk.chn, msg)
-send!(lk::Link, msg...) = put!(lk.chn, msg)
+send!(lk::Link, msg::Msg) = _send!(lk.chn, msg)
+send!(lk::Link, msg...) = _send!(lk.chn, msg)
+send!(name::Symbol, msg...) = _send!(whereis(name).chn, msg...)
 
 _match(msg::Msg, ::Nothing, ::Nothing) = true
 _match(msg::Msg, M::Type{<:Msg}, ::Nothing) = msg isa M
@@ -96,16 +121,16 @@ Send a message to an actor, block, receive and return the result.
 - `kwargs...`: `full` or `timeout`.
 
 """
-function request!(lk::L, msg::Msg; 
-                full=false, timeout::Real=5.0) where L<:Link
+function request!(lk::Link, msg::Msg; full=false, timeout::Real=5.0)
     send!(lk, msg)
     resp = receive!(msg.from, timeout=timeout)
     return resp isa Timeout || full ? resp : resp.y
 end
-function request!(lk::L, M::Type{<:Msg}, args...; kwargs...)  where L<:Link
+function request!(lk::Link, M::Type{<:Msg}, args...; kwargs...)
     me = lk isa Link{Channel} ?
             newLink(1) :
             newLink(1, remote=true)
     request!(lk, isempty(args) ? M(me) : M(args, me); kwargs...)
 end
-request!(lk::L, args...; kwargs...) where L<:Link = request!(lk, Call, args...; kwargs...)
+request!(lk::Link, args...; kwargs...) = request!(lk, Call, args...; kwargs...)
+request!(name::Symbol, args...; kwargs...) = request!(whereis(name), args...; kwargs...)

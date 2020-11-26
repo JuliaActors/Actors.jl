@@ -20,7 +20,7 @@ end
 # test registry with one local actor
 #
 @test register(:act1, spawn(Func(ident, 1)))
-a1 = Actors.diag!(:act1)
+a1 = Actors.diag!(:act1, 1)
 @test a1.name == :act1  # does it have its name ?
 @test call!(:act1, myid()) == ("local actor", 1, 1)
 act1 = whereis(:act1)
@@ -55,6 +55,9 @@ let
     @test :act2 in l
     r = fetch(@spawnat 2 registered())
     @test length(r) == 2
+    @test all([i[2].chn for i in r]) do x
+        x isa RemoteChannel
+    end
 end
 unregister(:act1)
 unregister(:act2)
@@ -64,7 +67,7 @@ unregister(:act2)
 # 
 f(a, b) = a + b
 @test register(:act1, spawn(Func(f, 1)))
-a1 = Actors.diag!(:act1)
+a1 = Actors.diag!(:act1, 1)
 send!(:act1, Actors.Cast((1,)))
 sleep(0.1)
 @test a1.res == 2

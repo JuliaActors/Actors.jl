@@ -27,11 +27,13 @@ end
 
 """
 ```
-diag!(lk::Link)
-diag!(name::Symbol)
+diag!(lk::Link, check=0)
+diag!(name::Symbol, ....)
 ```
-Return the internal `_ACT` variable of the `lk` actor.
-This is only for diagnosis and testing.
+Give an actor state or stacktrace.
+
+If `check != 0` return the internal `_ACT` variable of the 
+actor. This is for diagnosis and testing only!
 """
-diag!(lk::Link) = request!(lk, Diag, 1)
-diag!(name::Symbol) = request!(name, Diag, 1)
+diag!(lk::Link, check=0) = request!(lk, Diag, check)
+diag!(name::Symbol, args...) = diag!(whereis(name), args...)

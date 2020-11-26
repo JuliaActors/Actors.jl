@@ -27,15 +27,15 @@ act = request!(A, Actors.Diag, 1)
 sleep(sleeptime)
 @test act.sta == nothing
 @test act.bhv.f == incx
-@test act.bhv.args == (1,)
-@test act.bhv.kwargs == pairs((y=1,z=1))
+@test act.bhv.a == (1,)
+@test act.bhv.kw == pairs((y=1,z=1))
 
 # test explicitly become!
 become!(A, subx, a, b, z=c)
 sleep(sleeptime)
 @test act.bhv.f == subx
-@test act.bhv.args == (1,1) 
-@test act.bhv.kwargs == pairs((z=1,))
+@test act.bhv.a == (1,1) 
+@test act.bhv.kw == pairs((z=1,))
 
 # test update!
 update!(A, (1, 2, 3))
@@ -43,8 +43,8 @@ sleep(sleeptime)
 @test act.sta == (1,2,3)
 update!(A, Args(2,3, x=1, y=2), s=:arg)
 sleep(sleeptime)
-@test act.bhv.args == (2,3)
-@test act.bhv.kwargs == pairs((x=1,y=2,z=1))
+@test act.bhv.a == (2,3)
+@test act.bhv.kw == pairs((x=1,y=2,z=1))
 
 # test query!
 @test query!(A) == (1,2,3)

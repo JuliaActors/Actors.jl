@@ -7,27 +7,34 @@
 # Basic Types
 # -----------------------------------------------
 """
-    Func(func, args...; kwargs...)
+    Func(func, a...; kw...)(c...)
 
-A structure to represent an actor behavior.
+A callable struct to represent actor behavior. It is executed
+with parameters from the incoming communication.
 
 # Parameters
 
-- `func`: a callable object (function, functor ...),
-- `args...`: arguments to `func`. Those can be no, partial
-    or full arguments. Eventually missing arguments must be
-    sent with a message in order to execute `func` with all
-    needed arguments.
-- `kwargs...`: keyword arguments.
+- `f`: a callable object (function, functor ...),
+- `a...`: acquaintance parameters to `f`. Those are stored,
+- `kw...`: keyword arguments,
+- `c...`: parameters from the incoming communication.
 """
-struct Func{X,Y,Z}
-    f::X
-    args::Y
-    kwargs::Z
+struct Func
+    f
+    a::Tuple
+    kw::Base.Iterators.Pairs
+    ϕ::Function
 
-    Func(f, args...; kwargs...) =
-        new{typeof(f),typeof(args),typeof(kwargs)}(f, args, kwargs)
+    Func(f, a...; kw...) =new(f, a, kw, (c)->f(a..., c...; kw...))
 end
+(p::Func)(c...) = p.ϕ(c)
+
+#
+# Since Func contains an anonymous function, the following 
+# is needed to make it executable in another thread or worker.
+# It returns a Func for the current world age.
+# 
+_current(p::Func) = Func(p.f, p.a...; p.kw...)
 
 """
     Link{C}(chn::C, pid::Int, type::Symbol)
@@ -41,24 +48,25 @@ this must be returned by an actor on creation with [`spawn`](@ref).
 - `pid::Int`: the pid of the actor, 
 - `mode::Symbol`: a symbol characterizing the actor mode.
 """
-mutable struct Link{C}
+mutable struct Link{C} <: Addr
     chn::C
     pid::Int
     mode::Symbol
 end
 
 """
-    _ACT()
-
+```
+_ACT{T} <: Actor{T}
+```
 Internal actor status variable.
 
 # Fields
 
 1. `mode::Symbol`: the actor mode,
-2. `bhv::Func` : the behavior function and its internal arguments,
-3. `init::Func`: the init function and its arguments,
-4. `term::Func`: the terminate function and its arguments,
-5. `self::Link`: the actor's (local or remote) self,
+2. `bhv::T` : the behavior function and its internal arguments,
+3. `init::T`: the init function and its arguments,
+4. `term::T`: the terminate function and its arguments,
+5. `self::Addr`: the actor's (local or remote) self,
 6. `name::Symbol`: the actor's registered name.
 7. `res::Any`: the result of the last behavior execution,
 8. `sta::Any`: a variable for representing state,
@@ -66,22 +74,27 @@ Internal actor status variable.
 
 see also: [`Func`](@ref), [`Link`](@ref)
 """
-mutable struct _ACT
+mutable struct _ACT{T} <: Actor{T}
     mode::Symbol
-    bhv::Func
-    init::Union{Nothing,Func}
-    term::Union{Nothing,Func}
+    bhv::T
+    init::Union{Nothing,T}
+    term::Union{Nothing,T}
     self::Union{Nothing,Link}
     name::Union{Nothing,Symbol}
     res::Any
     sta::Any
     usr::Any
-
-    _ACT(mode=:default) = new(mode, Func(+), fill(nothing, 7)...)
 end
 
+"""
+    _ACT(mode=:default)
+
+Return a actor variable `_ACT{Func}`.
+"""
+_ACT(mode=:default) = _ACT(mode, Func(+), fill(nothing, 7)...)
+
 # -----------------------------------------------
-# Message types
+# Public message types
 # -----------------------------------------------
 "Abstract type for messages to actors."
 abstract type Msg end

@@ -24,14 +24,15 @@ const version = v"0.1.3"
 
 using Distributed, .Threads
 
-include("types.jl")
 include("interface.jl")
+include("types.jl")
 include("messages.jl")
-include("api.jl")
 include("links.jl")
 include("com.jl")
 include("actor.jl")
+include("protocol.jl")
 include("task.jl")
+include("api.jl")
 
 export  
     # common types

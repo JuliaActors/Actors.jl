@@ -6,48 +6,31 @@
 _terminate!(A::_ACT, reason) = !isnothing(A.term) && A.term.f((A.term.args..., reason)...; kwargs...)
 
 #
-# default dispatch ignores the mode argument
-# such a user can implement methods such as
+# default dispatch on Any, this is the 1st actor layer 
+# analog to the classical Actor Model
+# 
+"""
+    onmessage(A::_ACT, msg)
+
+An actor executes this function when a message arrives.
+An application can extend this by further methods and must
+use it to plugin the `Actors.jl` API.
+"""
+onmessage(A::_ACT, msg) = (A.res = A.bhv(msg...))
+
+# 
+# the 2nd actor layer is realized by the Msg protocol 
+# (see protocol.jl) and enables the API
+#
+
+#
+# the 3rd actor layer is bound to the mode argument.
+# This enables 3rd libraries to implement methods such as
 # onmessage(A::_ACT, ::Val{:mymode}, msg::Call)
+# If no such methods are implemented it defaults to the
+# 1st and 2nd layer.
 #
 onmessage(A::_ACT, mode, msg) = onmessage(A, msg) 
-onmessage(A::_ACT, msg::Become) = A.bhv = msg.x
-function onmessage(A::_ACT, mode, msg::Call)
-    A.res = A.bhv.f((A.bhv.args..., msg.x...)...; A.bhv.kwargs...)
-    send!(msg.from, Response(A.res, A.self))
-end
-onmessage(A::_ACT, msg::Cast) = (A.res = A.bhv.f((A.bhv.args..., msg.x...)...; A.bhv.kwargs...))
-onmessage(A::_ACT, msg::Diag) = send!(msg.from, Response(msg.x == 0 ? :ok : A, A.self))
-onmessage(A::_ACT, msg::Exec) = send!(msg.from, Response(msg.func.f(msg.func.args...; msg.func.kwargs...), A.self))
-onmessage(A::_ACT, msg::Exit) = _terminate!(A, msg.reason)
-function onmessage(A::_ACT, msg::Init)
-    A.init = msg.x
-    A.sta  = A.init.f(A.init.args...; A.init.kwargs...)
-end
-function onmessage(A::_ACT, msg::Query)
-    msg.x in (:mode,:bhv,:res,:sta,:usr) ?
-        send!(msg.from, Response(getfield(A, msg.x), A.self)) :
-        send!(msg.from, Response("$(msg.x) not available", A.self))
-end
-function onmessage(A::_ACT, msg::Update)
-    if msg.s in (:name,:self,:sta,:usr)
-        setfield!(A, msg.s, msg.x)
-    elseif msg.s == :mode
-        A.mode = msg.x
-        A.self.mode = msg.x
-    elseif msg.s == :arg
-        A.bhv = Func(A.bhv.f, msg.x.args...;
-            pairs((; merge(A.bhv.kwargs, msg.x.kwargs)...))...)
-    end
-end
-# dispatch on Request or user defined Msg
-function onmessage(A::_ACT, msg::Msg)
-    A.res = A.bhv.f((A.bhv.args..., msg)...; A.bhv.kwargs...)
-end
-# default dispatch on Any 
-function onmessage(A::_ACT, msg) 
-    A.res = A.bhv.f((A.bhv.args..., msg...)...; A.bhv.kwargs...)
-end
 
 #
 # this is the actor loop
@@ -66,7 +49,25 @@ function _act(ch::Channel)
     # isnothing(A.name) || call!(_REG, unregister, A.name)
 end
 
+"""
+```
+spawn(bhv::Func; pid=myid(), thrd=false, sticky=false, taskref=nothing, mode=:default)
+spawn(m::Val(:Actors), args...; kwargs...)
+spawn(m::Module, args...; kwargs...)
+```
 
+Start a function `bhv` as an actor and return a [`Link`](@ref)
+to it.
+
+# Parameters
+
+- `bhv::Func`: behavior function,
+- `pid=myid()`: pid of worker process the actor should be started on,
+- `thrd=false`: thread number the actor should be started on or `false`,
+- `sticky=false`: if `true` the actor is started on the current thread,
+- `taskref=nothing`: if a `Ref{Task}()` is given here, it gets the started `Task`,
+- `mode=:default`: mode, the actor should operate in.
+"""
 function spawn(bhv::Func; pid=myid(), thrd=false, sticky=false, taskref=nothing, mode=:default)
     if pid == myid()
         lk = newLink(32)

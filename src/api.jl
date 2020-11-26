@@ -32,6 +32,7 @@ Cause an actor to change behavior.
 """
 become!(lk::Link, bhv::Func) = send!(lk, Become(bhv))
 become!(lk::Link, func, args...; kwargs...) = become!(lk, Func(func, args...; kwargs...))
+become!(name::Symbol, args...; kwargs...) = become!(whereis(name), args...; kwargs...)
 
 """
 ```
@@ -62,6 +63,7 @@ without sending a response.
 **Note:** you can prompt the returned value with [`query!`](@ref).
 """
 cast!(lk::Link, args...) = send!(lk, Cast(args))
+cast!(name::Symbol, args...) = cast!(whereis(name), args...)
 
 """
 ```
@@ -92,6 +94,7 @@ exec!(lk::Link, from::Link, func, args...; kwargs...) =
 exec!(lk::Link, from::Link, fu::Func) = send!(lk, Exec(fu, from))
 exec!(lk::Link, f::Func; timeout::Real=5.0) =
     request!(lk, Exec, f; timeout=timeout)
+exec!(name::Symbol, args...; kwargs...) = exec!(whereis(name), args...; kwargs...)
 
 """
 ```
@@ -106,6 +109,7 @@ function, it calls it with `reason` as last argument.
 
 """
 exit!(lk::Link, reason=:ok) = send!(lk, Exit(reason))
+exit!(name::Symbol, code=0) = exit!(whereis(name), code)
 
 """
 ```
@@ -145,24 +149,11 @@ the response. In that case there is a `timeout`.
 # Examples
 
 ```julia
-julia> f(x, y; u=0, v=0) = x+y+u+v  # implement a behavior
-f (generic function with 1 method)
-
-julia> fact = Actor(f, 1)     # start an actor with it
-Channel{Message}(sz_max:32,sz_curr:0)
-
-julia> cast!(fact, 1)         # cast a second parameter to it
-YAActL.Cast{Tuple{Int64}}((1,))
-
-julia> query!(fact, :res)     # query the result
-2
-
-julia> query!(fact, :bhv)     # query the behavior
-f (generic function with 1 method)
 ```
 """
 query!(lk::Link, from::Link, s::Symbol=:sta) = send!(lk, Query(s, from))
 query!(lk::Link, s::Symbol=:sta; timeout::Real=5.0) = request!(lk, Query, s, timeout=timeout)
+query!(name::Symbol, args...; kwargs...) = query!(whereis(name), args...; kwargs...)
     
 """
 ```
@@ -178,6 +169,7 @@ when it [`exit!`](@ref)s.
 """
 term!(lk::Link, func, args...; kwargs...) = 
     send!(lk, Term(Func(func, args...; kwargs...)))
+term!(name::Symbol, args...; kwargs...) = term!(whereis(name), args...; kwargs...)
 
 """
 ```
@@ -199,17 +191,8 @@ with existing keyword arguments to the behavior function.
 
 # Example
 ```julia
-julia> update!(fact, 5)       # note that fact is in state dispatch
-YAActL.Update{Int64}(:sta, 5)
-
-julia> call!(fact, 5)         # call it with 5
-10
-
-julia> update!(fact, Args(0, u=5));  # update arguments
-
-julia> call!(fact, 5)         # add the last result, 5 and u=5
-20
 ```
 """
 update!(lk::Link, x; s::Symbol=:sta) = send!(lk, Update(s, x))
 update!(lk::Link, arg::Args) = send!(lk, Update(:arg, arg))
+update!(name::Symbol, args...; kwargs...) = update!(whereis(name), args...; kwargs...)

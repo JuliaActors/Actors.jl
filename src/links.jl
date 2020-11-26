@@ -21,3 +21,9 @@ function newLink(size=32; remote=false, pid=myid(), mode=nothing)
         Link(RemoteChannel(()->Channel(max(1, size))), pid, mode) :
         Link(Channel(max(1, size)), myid(), mode)
 end
+
+# make a remote link from a local one
+_rlink(lk::Link) = lk.chn isa Channel ?
+        Link(RemoteChannel(()->lk.chn), myid(), lk.mode) : lk
+_rlink(x) = x
+

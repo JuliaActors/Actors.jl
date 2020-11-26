@@ -33,6 +33,9 @@ include("actor.jl")
 include("protocol.jl")
 include("task.jl")
 include("api.jl")
+include("registry.jl")
+include("init.jl")
+include("diag.jl")
 
 export  
     # common types
@@ -53,6 +56,8 @@ export
     become!, call!, cast!, exec!, exit!, init!, 
     query!, update!,
     # Tasks
-    ATask, async, await
+    ATask, async, await,
+    # Registry
+    register, unregister, whereis, registered
     
 end

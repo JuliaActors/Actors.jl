@@ -14,7 +14,7 @@ From this we get for a behavior function ``f`` at instance ``i``:
 
 ```math
 \begin{array}{lrl}
-f_i(a_i, c_i) & \rightarrow &\{a_{i+1},\{\tau_u,\tau_v, ...\},\{\alpha_x,\alpha_y,...\},\phi_{i+1}\} \quad\\
+f_i(a_i, c_i) & \rightarrow &\{a_{i+1},\{\tau_u,\tau_v, ...\},\{\alpha_x,\alpha_y,...\},f_{i+1}\} \quad\\
 \textrm{with} & a: & \textrm{acquaintance list,} \\
  & c: & \textrm{communication list,} \\
  & \tau: & \textrm{tasks created,} \\
@@ -22,16 +22,16 @@ f_i(a_i, c_i) & \rightarrow &\{a_{i+1},\{\tau_u,\tau_v, ...\},\{\alpha_x,\alpha_
 \end{array}
 ```
 
-The behavior function may change its acquaintances or make new ones and thus change its acquaintance list from ``a_i`` to ``a_{i+1}`` and may also specify a replacement behavior ``\phi_{i+1}`` for the subsequent communication.
+The behavior function may change its acquaintances or make new ones and thus change its acquaintance list from ``a_i`` to ``a_{i+1}`` and may also specify a replacement behavior ``f_{i+1}`` for the subsequent communication.
 
 ## Behavior representation
 
 `Actors` represents a behavior as a [`Func`](@ref) containing
 
-- a callable object `f` together with 
+- a callable object `f` (function, functor, ...) together with 
 - acquaintance arguments `a...` and `kw...` (keyword arguments) to it. 
 
-From those a `Func` creates a partial function (a closure) `ϕ(a...; kw...)` which can be executed with the communication arguments `c...`:
+From those a `Func` creates a partial function (a closure) `ϕ(a...; kw...)` which then can be executed with the communication arguments `c...`:
 
 ```@repl
 using Actors

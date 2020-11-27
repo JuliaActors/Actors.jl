@@ -7,13 +7,15 @@ Concurrent computing in Julia based on the Actor Model
 ![CI](https://github.com/JuliaActors/Actors.jl/workflows/CI/badge.svg)
 [![Coverage](https://codecov.io/gh/JuliaActors/Actors.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaActors/Actors.jl)
 
-This is a rewrite of the old Actors.jl in order to provide
+The classical [Actor Model](https://en.wikipedia.org/wiki/Actor_model) can be described as follows:
 
-- an implementation of the **classical [Actor Model](https://en.wikipedia.org/wiki/Actor_model)** based on Julia's primitives,
-- a **minimal interface** through which actors implemented in different Julia libraries can communicate, 
-- a **standard and common API** for building a modern actor infrastructure.
+> An actor is a computational entity that, in response to a message it receives, can concurrently:
+>
+> - send a finite number of messages to other actors;
+> - create a finite number of new actors;
+> - designate the behavior to be used for the next message it receives.
 
-`Actors` is part of the Julia GitHub group [`JuliaActors`](https://github.com/JuliaActors).
+`Actors` implements this based on Julia's concurrency primitives, and provides  a standard and common API for building a modern actor infrastructure. It is part of the Julia GitHub group [`JuliaActors`](https://github.com/JuliaActors).
 
 ## Authors
 

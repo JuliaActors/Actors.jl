@@ -28,12 +28,12 @@ function _send!(rch::RemoteChannel, msg)
 end
 
 """
-    send!(lk::Link, msg)
+    send(lk::Link, msg)
 Send a message to an actor.
 """
-send!(lk::Link, msg::Msg) = _send!(lk.chn, msg)
-send!(lk::Link, msg...) = _send!(lk.chn, msg)
-send!(name::Symbol, msg...) = _send!(whereis(name).chn, msg...)
+send(lk::Link, msg::Msg) = _send!(lk.chn, msg)
+send(lk::Link, msg...) = _send!(lk.chn, msg)
+send(name::Symbol, msg...) = _send!(whereis(name).chn, msg...)
 
 _match(msg::Msg, ::Nothing, ::Nothing) = true
 _match(msg::Msg, M::Type{<:Msg}, ::Nothing) = msg isa M
@@ -49,14 +49,14 @@ end
 
 """
 ```
-receive!(lk; timeout=5.0)
-receive!(lk, from; timeout=5.0)
-receive!(lk, M; timeout=5.0)
-receive!(lk, M, from; timeout=5.0)
+receive(lk; timeout=5.0)
+receive(lk, from; timeout=5.0)
+receive(lk, M; timeout=5.0)
+receive(lk, M, from; timeout=5.0)
 ```
 Receive a message over a link `lk`.
 
-If `M` or `from` are provided, `receive!` returns only a 
+If `M` or `from` are provided, `receive` returns only a 
 matching message. Other messages in `lk` are restored to it in their
 previous order.
 
@@ -72,10 +72,10 @@ previous order.
 # Returns
 - received message or `Timeout()`.
 """
-receive!(lk::L; kwargs...) where L<:Link = receive!(lk, nothing, nothing; kwargs...)
-receive!(lk::L, from::Link; kwargs...) where L<:Link = receive!(lk, nothing, from; kwargs...)
-receive!(lk::L, M::Type{<:Msg}; kwargs...) where L<:Link = receive!(lk, M, nothing; kwargs...)
-function receive!(lk::L1, M::MT, from::L2; 
+receive(lk::L; kwargs...) where L<:Link = receive(lk, nothing, nothing; kwargs...)
+receive(lk::L, from::Link; kwargs...) where L<:Link = receive(lk, nothing, from; kwargs...)
+receive(lk::L, M::Type{<:Msg}; kwargs...) where L<:Link = receive(lk, M, nothing; kwargs...)
+function receive(lk::L1, M::MT, from::L2; 
     timeout::Real=5.0) where {L1<:Link,MT<:Union{Nothing,Type{<:Msg}},L2<:Union{Nothing,Link}}
 
     done = [false]
@@ -105,8 +105,8 @@ end
 
 """
 ```
-request!(lk::Link, msg::Msg; full=false, timeout::Real=5.0)
-request!(lk::Link, M::Type{<:Msg}, args...; kwargs...)
+request(lk::Link, msg::Msg; full=false, timeout::Real=5.0)
+request(lk::Link, M::Type{<:Msg}, args...; kwargs...)
 ```
 Send a message to an actor, block, receive and return the result.
 
@@ -121,16 +121,16 @@ Send a message to an actor, block, receive and return the result.
 - `kwargs...`: `full` or `timeout`.
 
 """
-function request!(lk::Link, msg::Msg; full=false, timeout::Real=5.0)
-    send!(lk, msg)
-    resp = receive!(msg.from, timeout=timeout)
+function request(lk::Link, msg::Msg; full=false, timeout::Real=5.0)
+    send(lk, msg)
+    resp = receive(msg.from, timeout=timeout)
     return resp isa Timeout || full ? resp : resp.y
 end
-function request!(lk::Link, M::Type{<:Msg}, args...; kwargs...)
+function request(lk::Link, M::Type{<:Msg}, args...; kwargs...)
     me = lk isa Link{Channel} ?
             newLink(1) :
             newLink(1, remote=true)
-    request!(lk, isempty(args) ? M(me) : M(args, me); kwargs...)
+    request(lk, isempty(args) ? M(me) : M(args, me); kwargs...)
 end
-request!(lk::Link, args...; kwargs...) = request!(lk, Call, args...; kwargs...)
-request!(name::Symbol, args...; kwargs...) = request!(whereis(name), args...; kwargs...)
+request(lk::Link, args...; kwargs...) = request(lk, Call, args...; kwargs...)
+request(name::Symbol, args...; kwargs...) = request(whereis(name), args...; kwargs...)

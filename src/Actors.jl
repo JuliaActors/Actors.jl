@@ -42,7 +42,7 @@ export
     Msg, Request, Response, Link, Func,
     # -------------------------------
     # exported interface primitives
-    send!,  
+    send,  
     # the following ones must be imported explicitly:
     # - newLink, 
     # - spawn,
@@ -50,11 +50,11 @@ export
     # - onmessage
     # -------------------------------
     # API primitives
-    receive!, request!,
+    receive, request,
     # API
     Args, become, self, stop,
     become!, call!, cast!, exec!, exit!, init!, 
-    query!, update!,
+    query, update!,
     # Tasks
     ATask, async, await,
     # Registry

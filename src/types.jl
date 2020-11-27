@@ -56,7 +56,7 @@ end
 
 """
 ```
-_ACT{T} <: Actor{T}
+_ACT{T}
 ```
 Internal actor status variable.
 
@@ -74,7 +74,7 @@ Internal actor status variable.
 
 see also: [`Func`](@ref), [`Link`](@ref)
 """
-mutable struct _ACT{T} <: Actor{T}
+mutable struct _ACT{T}
     mode::Symbol
     bhv::T
     init::Union{Nothing,T}

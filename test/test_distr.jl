@@ -19,8 +19,8 @@ if length(workers()) > 0
     @test a == [2,2,2]
 
     mut = spawn(Func(mutate), pid=2)
-    @test request!(mut, a) == [3,3,3]
+    @test request(mut, a) == [3,3,3]
     @test a == [2,2,2]
     become!(mut, myid)
-    @test request!(mut) == 2
+    @test request(mut) == 2
 end

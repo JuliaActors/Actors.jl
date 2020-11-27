@@ -52,7 +52,7 @@ newLink
 The following primitives characterize actors in the classical Actor Model:
 
 ```@docs
-send!
+send
 become!
 become
 self
@@ -65,8 +65,8 @@ onmessage
 To receive messages from actors the following two functions for synchronous and asynchronous communication are useful:
 
 ```@docs
-receive!
-request!
+receive
+request
 ```
 
 ## User API
@@ -78,7 +78,7 @@ call!
 cast!
 exec!
 exit!
-query!
+query
 update!
 ```
 

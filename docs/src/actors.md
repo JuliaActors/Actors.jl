@@ -18,7 +18,7 @@ julia> import Actors: spawn
 julia> act1 = spawn(Func(threadid))             # start an actor which returns its threadid
 Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :local)
 
-julia> request!(act1)                           # call it
+julia> request(act1)                           # call it
 2
 
 julia> using Distributed
@@ -30,7 +30,7 @@ julia> @everywhere using Actors
 julia> act2 = spawn(Func(println), pid=2)       # start a remote actor on pid 2 with a println behavior
 Link{RemoteChannel{Channel{Any}}}(RemoteChannel{Channel{Any}}(2, 1, 232), 2, :remote)
 
-julia> request!(act2, "Tell me where you are!") # and call it with an argument
+julia> request(act2, "Tell me where you are!") # and call it with an argument
       From worker 2:    Tell me where you are!
 ```
 
@@ -44,8 +44,8 @@ The actor returned a [`Link`](@ref) over which it can receive messages. This is 
 
 Actors act and communicate asynchronously. There are only two functions to interact with them:
 
-- [`send!`](@ref): send a message to an actor,
-- [`receive!`](@ref): receive a message from an actor.
+- [`send`](@ref): send a message to an actor,
+- [`receive`](@ref): receive a message from an actor.
 
 Actors follow a message [protocol](protocol.md) if they get a message of type [`Msg`](@ref). This can be extended by a user.
 
@@ -60,7 +60,7 @@ julia> mystack = spawn(Func(stack_node, StackNode(nothing, Link()))); # create a
 `mystack` represents an actor with a `stack_node` behavior and a partial argument `StackNode(nothing, Link())`. When it eventually receives a message ...
 
 ```julia
-julia> send!(mystack, Push(1))        # push 1 on the stack
+julia> send(mystack, Push(1))        # push 1 on the stack
 ```
 
 ..., it executes `stack_node(StackNode(nothing, Link()), Push(1))`.
@@ -76,7 +76,7 @@ Actors can be controlled with the following functions:
 - [`term!`](@ref): tell an actor to execute a function when it terminates,
 - [`update!`](@ref): update an actor's internal state.
 
-Those functions are wrappers to [internal messages](protocol.md) and to [`send!`](@ref).
+Those functions are wrappers to [internal messages](protocol.md) and to [`send`](@ref).
 
 Actors can also operate on themselves, or rather they send messages to themselves:
 
@@ -88,17 +88,17 @@ Actors can also operate on themselves, or rather they send messages to themselve
 
 What if you want to receive a reply from an actor? Then there are two possibilities:
 
-1. [`send!`](@ref) a message to an actor and then [`receive!`](@ref) the [`Response`](@ref) asynchronously,
-2. [`request!`](@ref): send a message to an actor, **block** and receive the result synchronously.
+1. [`send`](@ref) a message to an actor and then [`receive`](@ref) the [`Response`](@ref) asynchronously,
+2. [`request`](@ref): send a message to an actor, **block** and receive the result synchronously.
 
 The following functions do this for specific duties:
 
 - [`call!`](@ref) an actor to execute its behavior function and to send the result,
 - [`exec!`](@ref): tell an actor to execute a function and to send the result,
-- [`query!`](@ref) tell an actor's to send one of its internal state variables.
+- [`query`](@ref) tell an actor's to send one of its internal state variables.
 
-If you provide those functions with a return link, they will use [`send!`](@ref) and you can then [`receive!`](@ref) the [`Response`](@ref) from the return link later. If you 
-don't provide a return link, they will use [`request!`](@ref) to block and return the result. Note that you should not use blocking when you need to be strictly responsive.
+If you provide those functions with a return link, they will use [`send`](@ref) and you can then [`receive`](@ref) the [`Response`](@ref) from the return link later. If you 
+don't provide a return link, they will use [`request`](@ref) to block and return the result. Note that you should not use blocking when you need to be strictly responsive.
 
 ## Using the API
 
@@ -108,7 +108,7 @@ The [API](api.md) functions allow to work with actors without using messages exp
 julia> act4 = spawn(Func(+, 4))       # start an actor adding to 4
 Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :local)
 
-julia> request!(act4, 4)
+julia> request(act4, 4)
 8
 ```
 

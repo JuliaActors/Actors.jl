@@ -16,5 +16,5 @@ end
 
 myfib = spawn(Func(fib, Dict{Int,BigInt}()))
 
-request!(myfib, 1000)
+request(myfib, 1000)
 

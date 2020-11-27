@@ -60,25 +60,25 @@ lk2 = Actors.newLink()
 
 writeLk(lk1)
 @test length(lk1.chn.data) == 9
-msg = receive!(lk1, MySource, lk2)
+msg = receive(lk1, MySource, lk2)
 @test msg == MySource(10, lk2)
 @test length(lk1.chn.data) == 8
 @test readLk(lk1) == collect(1:8)
 @test length(lk1.chn.data) == 0
 
-msg = receive!(lk1, MySource, lk2, timeout=1)
+msg = receive(lk1, MySource, lk2, timeout=1)
 @test msg == Actors.Timeout()
 
 writeLk(lk1, false)
 @test length(lk1.chn.data) == 8
-msg = receive!(lk1, MySource, lk2, timeout=0)
+msg = receive(lk1, MySource, lk2, timeout=0)
 @test msg == Actors.Timeout()
 @test length(lk1.chn.data) == 8
 @test readLk(lk1) == collect(1:8)
 @test length(lk1.chn.data) == 0
 
 @async writeLk(lk1, true, true)
-msg = receive!(lk1, MySource, lk2)
+msg = receive(lk1, MySource, lk2)
 @test msg == MySource(10, lk2)
 sleep(1)
 @test length(lk1.chn.data) == 8
@@ -89,27 +89,27 @@ comtest(msg::MySource) = nothing
 function comtest(msg::Request)
     res = (1, (2), (3,4,5), [6,7,8])
     if msg.x in 1:4
-        send!(msg.from, Response(res[msg.x], self()))
+        send(msg.from, Response(res[msg.x], self()))
     else
-        send!(msg.from, Response("test", self()))
+        send(msg.from, Response("test", self()))
     end
     return nothing
 end
 
 A = Actors.spawn(Func(comtest))
-send!(A, MySource(1, lk2))
-msg = receive!(lk2, timeout=1)
+send(A, MySource(1, lk2))
+msg = receive(lk2, timeout=1)
 @test msg == Actors.Timeout()
-send!(A, Request(10, lk2))
-msg = receive!(lk2, timeout=1)
+send(A, Request(10, lk2))
+msg = receive(lk2, timeout=1)
 @test msg == Response("test", A)
 
-res = request!(A, MySource(1, lk2), timeout=1)
+res = request(A, MySource(1, lk2), timeout=1)
 @test res == Actors.Timeout()
-res = request!(A, Request(1, lk2), full=true, timeout=1)
+res = request(A, Request(1, lk2), full=true, timeout=1)
 @test res == Response(1, A)
-@test request!(A, Request(1, lk2), timeout=1) == 1
-@test request!(A, Request(2, lk2), timeout=1) == 2
-@test request!(A, Request(3, lk2), timeout=1) == (3,4,5)
-@test request!(A, Request(4, lk2), timeout=1) == [6,7,8]
-@test request!(A, Request(99, lk2), timeout=1) == "test"
+@test request(A, Request(1, lk2), timeout=1) == 1
+@test request(A, Request(2, lk2), timeout=1) == 2
+@test request(A, Request(3, lk2), timeout=1) == (3,4,5)
+@test request(A, Request(4, lk2), timeout=1) == [6,7,8]
+@test request(A, Request(99, lk2), timeout=1) == "test"

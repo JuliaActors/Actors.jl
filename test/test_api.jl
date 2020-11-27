@@ -23,7 +23,7 @@ sleep(sleeptime)
 @test t[].state == :runnable
 
 # test diag and actor startup, become! (implicitly)
-act = request!(A, Actors.Diag, 1)
+act = request(A, Actors.Diag, 1)
 sleep(sleeptime)
 @test act.sta == nothing
 @test act.bhv.f == incx
@@ -46,28 +46,28 @@ sleep(sleeptime)
 @test act.bhv.a == (2,3)
 @test act.bhv.kw == pairs((x=1,y=2,z=1))
 
-# test query!
-@test query!(A) == (1,2,3)
-@test query!(A, :res) == nothing
-@test query!(A, :bhv).f == subx
+# test query
+@test query(A) == (1,2,3)
+@test query(A, :res) == nothing
+@test query(A, :bhv).f == subx
 
 # test call!
 become!(A, incx, a, y=b, z=c)
 @test call!(A, 1) == 4
-@test query!(A, :res) == 4
-@test query!(A) == (1,2,3)
+@test query(A, :res) == 4
+@test query(A) == (1,2,3)
 
 # test cast!
 cast!(A, 2)
-@test query!(A, :res) == 5
+@test query(A, :res) == 5
 update!(A, Args(5, y=1,z=1), s=:arg)
 cast!(A, 3)
-@test query!(A, :res) == 10
+@test query(A, :res) == 10
 
 update!(A, Args(a, y=3,z=3), s=:arg)
 cast!(A, 3)
-@test query!(A, :res) == 10
-@test query!(A) == (1,2,3)
+@test query(A, :res) == 10
+@test query(A) == (1,2,3)
 
 # test exec!
 @test exec!(A, Func(cos, 2pi)) == 1

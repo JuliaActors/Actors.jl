@@ -38,4 +38,4 @@ end
 
 Await a task reply and return it.
 """
-await(t::ATask; timeout::Real=5.0) = receive!(t.back, timeout=timeout).y
+await(t::ATask; timeout::Real=5.0) = receive(t.back, timeout=timeout).y

@@ -31,7 +31,7 @@ Cause an actor to change behavior.
 - `args1...`: (partial) arguments to `func`,
 - `kwargs...`: keyword arguments to `func`.
 """
-become!(lk::Link, bhv::Func) = send!(lk, Become(bhv))
+become!(lk::Link, bhv::Func) = send(lk, Become(bhv))
 become!(lk::Link, func, args...; kwargs...) = become!(lk, Func(func, args...; kwargs...))
 become!(name::Symbol, args...; kwargs...) = become!(whereis(name), args...; kwargs...)
 
@@ -51,8 +51,8 @@ Call an actor to execute its behavior and to send a
 
 **Note:** If `from` is omitted, `call!` blocks and returns the result
 """
-call!(lk::Link, from::Link, args...) = send!(lk, Call(args, from))
-call!(lk::Link, args...; timeout::Real=5.0) = request!(lk, Call, args...; timeout=timeout)
+call!(lk::Link, from::Link, args...) = send(lk, Call(args, from))
+call!(lk::Link, args...; timeout::Real=5.0) = request(lk, Call, args...; timeout=timeout)
 call!(name::Symbol, args...; kwargs...) = call!(whereis(name), args...; kwargs...)
 
 """
@@ -64,9 +64,9 @@ Cast `args2...` to the actor `lk` (or `name` if registered)
 to execute its behavior with `args2...` without sending a 
 response. 
 
-**Note:** you can prompt the returned value with [`query!`](@ref).
+**Note:** you can prompt the returned value with [`query`](@ref).
 """
-cast!(lk::Link, args...) = send!(lk, Cast(args))
+cast!(lk::Link, args...) = send(lk, Cast(args))
 cast!(name::Symbol, args...) = cast!(whereis(name), args...)
 
 """
@@ -95,10 +95,10 @@ arbitrary function and to send the returned value as
 returns the result (with a `timeout`).
 """
 exec!(lk::Link, from::Link, func, args...; kwargs...) =
-    send!(lk, Exec(Func(func, args...; kwargs...), from))
-exec!(lk::Link, from::Link, fu::Func) = send!(lk, Exec(fu, from))
+    send(lk, Exec(Func(func, args...; kwargs...), from))
+exec!(lk::Link, from::Link, fu::Func) = send(lk, Exec(fu, from))
 exec!(lk::Link, f::Func; timeout::Real=5.0) =
-    request!(lk, Exec, f; timeout=timeout)
+    request(lk, Exec, f; timeout=timeout)
 exec!(name::Symbol, args...; kwargs...) = exec!(whereis(name), args...; kwargs...)
 
 """
@@ -115,7 +115,7 @@ has a [`term`](@ref _ACT) function, it calls it with
     It is needed for supervision.
 
 """
-exit!(lk::Link, reason=:ok) = send!(lk, Exit(reason))
+exit!(lk::Link, reason=:ok) = send(lk, Exit(reason))
 exit!(name::Symbol, code=0) = exit!(whereis(name), code)
 
 """
@@ -134,13 +134,13 @@ The `init` function will be called at actor restart.
     It is needed for supervision.
 """
 init!(lk::Link, f::F, args...; kwargs...) where F<:Function = 
-    send!(lk, Init(Func(f, args...; kwargs...)))
+    send(lk, Init(Func(f, args...; kwargs...)))
 init!(name::Symbol, args...; kwargs...) = init!(whereis(name), args...; kwargs...)
 
 """
 ```
-query!(lk::Link, [from::Link,] s::Symbol; timeout::Real=5.0)
-query!(name::Symbol, ....)
+query(lk::Link, [from::Link,] s::Symbol; timeout::Real=5.0)
+query(name::Symbol, ....)
 ```
 
 Query an actor about an internal state variable `s`. 
@@ -151,7 +151,7 @@ Query an actor about an internal state variable `s`.
 - `s::Symbol` one of `:mode`,`:bhv`,`:res`,`:sta`,`:usr`.
 - `timeout::Real=5.0`: 
 
-**Note:** If `from` is omitted, `query!` blocks and returns 
+**Note:** If `from` is omitted, `query` blocks and returns 
 the response. In that case there is a `timeout`.
 
 # Examples
@@ -159,9 +159,9 @@ the response. In that case there is a `timeout`.
 ```julia
 ```
 """
-query!(lk::Link, from::Link, s::Symbol=:sta) = send!(lk, Query(s, from))
-query!(lk::Link, s::Symbol=:sta; timeout::Real=5.0) = request!(lk, Query, s, timeout=timeout)
-query!(name::Symbol, args...; kwargs...) = query!(whereis(name), args...; kwargs...)
+query(lk::Link, from::Link, s::Symbol=:sta) = send(lk, Query(s, from))
+query(lk::Link, s::Symbol=:sta; timeout::Real=5.0) = request(lk, Query, s, timeout=timeout)
+query(name::Symbol, args...; kwargs...) = query(whereis(name), args...; kwargs...)
     
 """
 ```
@@ -180,7 +180,7 @@ exits.
     It is needed for supervision.
 """
 term!(lk::Link, func, args...; kwargs...) = 
-    send!(lk, Term(Func(func, args...; kwargs...)))
+    send(lk, Term(Func(func, args...; kwargs...)))
 term!(name::Symbol, args...; kwargs...) = term!(whereis(name), args...; kwargs...)
 
 """
@@ -206,6 +206,6 @@ with existing keyword arguments to the behavior function.
 ```julia
 ```
 """
-update!(lk::Link, x; s::Symbol=:sta) = send!(lk, Update(s, x))
-update!(lk::Link, arg::Args) = send!(lk, Update(:arg, arg))
+update!(lk::Link, x; s::Symbol=:sta) = send(lk, Update(s, x))
+update!(lk::Link, arg::Args) = send(lk, Update(:arg, arg))
 update!(name::Symbol, args...; kwargs...) = update!(whereis(name), args...; kwargs...)

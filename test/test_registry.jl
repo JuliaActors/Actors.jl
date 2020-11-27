@@ -20,7 +20,7 @@ end
 # test registry with one local actor
 #
 @test register(:act1, spawn(Func(ident, 1)))
-a1 = Actors.diag!(:act1, 1)
+a1 = Actors.diag(:act1, 1)
 @test a1.name == :act1  # does it have its name ?
 @test call!(:act1, myid()) == ("local actor", 1, 1)
 act1 = whereis(:act1)
@@ -67,16 +67,16 @@ unregister(:act2)
 # 
 f(a, b) = a + b
 @test register(:act1, spawn(Func(f, 1)))
-a1 = Actors.diag!(:act1, 1)
-send!(:act1, Actors.Cast((1,)))
+a1 = Actors.diag(:act1, 1)
+send(:act1, Actors.Cast((1,)))
 sleep(0.1)
 @test a1.res == 2
-@test request!(:act1, Actors.Call, 2) == 3
+@test request(:act1, Actors.Call, 2) == 3
 become!(:act1, f, 0)
 @test call!(:act1, 1) == 1
 cast!(:act1, 2)
 sleep(0.1)
 @test a1.res == 2
 @test exec!(:act1, Func(f, 5, 5)) == 10
-@test query!(:act1, :res) == 2
+@test query(:act1, :res) == 2
 unregister(:act1)

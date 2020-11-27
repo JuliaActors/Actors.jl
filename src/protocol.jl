@@ -13,7 +13,7 @@ function onmessage(A::_ACT, msg::Call)
     send(msg.from, Response(A.res, A.self))
 end
 onmessage(A::_ACT, msg::Cast) = A.res = A.bhv(msg.x...)
-onmessage(A::_ACT, msg::Diag) = send(msg.from, Response(msg.x == 0 ? :ok : A, A.self))
+onmessage(A::_ACT, msg::Diag) = send(msg.from, Response(first(msg.x) == 0 ? :ok : A, A.self))
 onmessage(A::_ACT, msg::Exec) = send(msg.from, Response(_current(msg.func)(), A.self))
 onmessage(A::_ACT, msg::Exit) = _terminate!(A, msg.reason)
 function onmessage(A::_ACT, msg::Init)

@@ -4,7 +4,7 @@
 CurrentModule = Actors
 ```
 
-`Actors` implements the classical Actor Model [^1]. Actors are *created* as Julia tasks running on a computer or in a network and are represented by links over which they can *send* messages [^2]. If they receive a message, they execute a *behavior function*. 
+`Actors` implements the classical Actor Model [^1]. Actors are *created* as Julia tasks running on a computer or in a network and are represented by links over which they can *send* messages [^2]. If they receive a message, they execute a *behavior function*.
 
 ## Start
 
@@ -34,11 +34,11 @@ julia> request(act2, "Tell me where you are!") # and call it with an argument
       From worker 2:    Tell me where you are!
 ```
 
-Actors are created with a behavior function and eventually partial arguments to it. We can then send them the remaining arguments later.
+Actors are created with a behavior function and eventually partial arguments to it. We send them the remaining arguments later with a message.
 
 ## Links
 
-The actor returned a [`Link`](@ref) over which it can receive messages. This is its only representation.
+Creating an actor returnes a [`Link`](@ref) over which it can receive messages. This is its only representation.
 
 ## Messages
 
@@ -46,6 +46,41 @@ Actors act and communicate asynchronously. There are only two functions to inter
 
 - [`send`](@ref): send a message to an actor,
 - [`receive`](@ref): receive a message from an actor.
+
+If you send an actor any message, it tries to execute its behavior function with it.
+
+```julia
+julia> f(a, b, c) = a + b + c
+f (generic function with 1 method)
+
+julia> act3 = spawn(Func(f, 1))   # create an actor with f(1)
+Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
+
+julia> send(act3, 2, 3)           # now it executes f(1, 2, 3)
+(2, 3)
+
+julia> query(act3, :res)          # query the result
+6
+
+julia> call!(act3, 2, 2)          # call! does a synchronous communication
+5
+
+julia> send(act3, 2, 3, 4, 5)     # this makes the actor fail
+(2, 3, 4, 5)
+
+julia> query(act3, :res)          # it doesn't respond anymore
+Actors.Timeout()
+
+julia> istaskfailed(act3)
+true
+
+ulia> Actors.info(act3)           # get the stacktrace
+Task (failed) @0x0000000106e37190
+MethodError: no method matching f(::Int64, ::Int64, ::Int64, ::Int64, ::Int64)
+Closest candidates are:
+  f(::Any, ::Any, ::Any) at REPL[48]:1
+....
+```
 
 Actors follow a message [protocol](protocol.md) if they get a message of type [`Msg`](@ref). This can be extended by a user.
 
@@ -76,7 +111,7 @@ Actors can be controlled with the following functions:
 - [`term!`](@ref): tell an actor to execute a function when it terminates,
 - [`update!`](@ref): update an actor's internal state.
 
-Those functions are wrappers to [internal messages](protocol.md) and to [`send`](@ref).
+Those functions are wrappers to the message [protocol](protocol.md) and to [`send`](@ref).
 
 Actors can also operate on themselves, or rather they send messages to themselves:
 
@@ -104,12 +139,20 @@ don't provide a return link, they will use [`request`](@ref) to block and return
 
 The [API](api.md) functions allow to work with actors without using messages explicitly:
 
-```julia
-julia> act4 = spawn(Func(+, 4))       # start an actor adding to 4
-Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :local)
-
-julia> request(act4, 4)
-8
+```@repl actors
+using Actors, .Threads
+import Actors: spawn
+act4 = spawn(Func(+, 4))       # start an actor adding to 4
+exec!(act4, Func(threadid))    # ask it its threadid
+cast!(act4, 4)                 # cast it 4
+query(act4, :res)              # query the result
+become!(act4, *, 4);           # switch the behavior to *
+call!(act4, 4)                 # call it with 4
+exec!(act4, Func(broadcast, cos, pi .* (-2:2))) # tell it to exec any function
+Actors.diag(act4)              # check it
+exit!(act4)                    # stop it
+act4.chn.state
+Actors.diag(act4)              # try to check it again
 ```
 
 ## Actor Tasks
@@ -118,11 +161,9 @@ Actor tasks execute one computation, mostly without communicating with other act
 
 You can start actor tasks with [`async`](@ref) and get their result with [`await`](@ref).
 
-```julia
-julia> t = async(Func(^, 123, 456));
-
-julia> await(t)
-2409344748064316129
+```@repl actors
+t = async(Func(^, 123, 456));
+await(t)
 ```
 
 ## Actor Registry

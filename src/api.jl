@@ -157,6 +157,25 @@ the response. In that case there is a `timeout`.
 # Examples
 
 ```julia
+julia> f(x, y; u=0, v=0) = x+y+u+v  # implement a behavior
+f (generic function with 1 method)
+
+julia> fact = spawn(Func(f, 1))     # start an actor with it
+Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
+
+julia> query(fact, :mode)           # query the mode
+:default
+
+julia> cast(fact, 1)                # cast a 2nd argument to it
+Actors.Cast((1,))
+
+julia> query(fact, :res)            # query the result
+2
+
+julia> query(fact, :sta)            # query the state
+
+julia> query(fact, :bhv)            # query the behavior
+Func(f, (1,), Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}(), Actors.var"#2#4"{Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}},typeof(f),Tuple{Int64}}(Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}(), f, (1,)))
 ```
 """
 query(lk::Link, from::Link, s::Symbol=:sta) = send(lk, Query(s, from))
@@ -204,6 +223,16 @@ with existing keyword arguments to the behavior function.
 
 # Example
 ```julia
+julia> update!(fact, 5)       # update the state variable
+Actors.Update(:sta, 5)
+
+julia> query(fact, :sta)      # query it
+5
+
+julia> update!(fact, Args(0, u=5, v=5));  # update arguments to the behavior 
+
+julia> call(fact, 0)          # call the actor with 0
+10
 ```
 """
 update!(lk::Link, x; s::Symbol=:sta) = send(lk, Update(s, x))

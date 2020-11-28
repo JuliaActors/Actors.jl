@@ -28,7 +28,7 @@ of the `ATask` variable and exits immediately.
 function async(func::Func; pid=myid(), thrd=false, sticky=false, taskref=nothing)
     lk = pid == myid() ? newLink(1) : newLink(1, remote=true)
     task = spawn(func, pid=pid, thrd=thrd, sticky=sticky, taskref=taskref)
-    call!(task, lk)
+    call(task, lk)
     exit!(task)
     return ATask(task, lk)
 end

@@ -18,8 +18,8 @@ registration succeeds, `false` if `name` is already in use.
 """
 function register(name::Symbol, lk::Link) 
     res = myid() == 1 ?
-        call!(_REG, register, name, lk) :
-        call!(_REG, register, name, Link(RemoteChannel(()->lk.chn),myid(),:remote))
+        call(_REG, register, name, lk) :
+        call(_REG, register, name, Link(RemoteChannel(()->lk.chn),myid(),:remote))
     update!(lk, name, s=:name)
     return res
 end
@@ -32,7 +32,7 @@ Remove any registrations associated with `name`.
 function unregister(name::Symbol)
     lk = whereis(name)
     if !ismissing(lk)
-        call!(_REG, unregister, name)
+        call(_REG, unregister, name)
         update!(lk, nothing, s=:name)
     end
 end
@@ -43,14 +43,14 @@ end
 Find out whether name is registered. Return the actor link 
 `lk` or `missing` if not found.
 """
-whereis(name::Symbol) = call!(_REG, whereis, name)
+whereis(name::Symbol) = call(_REG, whereis, name)
 
 """
     registered()
 
 Return an Array of all registered actors in the system.
 """
-registered() = call!(_REG, registered, myid())
+registered() = call(_REG, registered, myid())
 
 # behavior functions  
 function _reg(d::Dict{Symbol,Link}, ::typeof(register), name::Symbol, lk::L) where L<:Link

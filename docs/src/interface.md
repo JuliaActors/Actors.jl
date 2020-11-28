@@ -4,10 +4,17 @@
 CurrentModule = Actors
 ```
 
-Actors provides an interface to other actor libraries working in two directions:
+!!! warning "The interface is yet experimental!"
 
-1. Libraries with **different actor primitives** can interface Actors to enable actors of both worlds to communicate with each other and to use the same API.
-2. Libraries can **change the actor mode and behavior**.  
+    Most of the following needs yet work and will be demonstrable with the upcoming v0.2 release.
+
+`Actors` provides a versatile interface to work with other actor libraries in the [`JuliaActors`](https://github.com/JuliaActors) ecosystem or to allow programmers and users alike to extend its functionality:
+
+1. It is written against `ActorInterfaces.Classic`. Thus it can execute programs written with the primitives in that interface.
+2. Actors from other libraries written with that interface have actor level compatibility. Thus they can exchange messages, use the Actors registry (and upcoming supervision).
+3. Other libraries written against that interface can plugin the `Actors`' `onmessage` protocol and thus inherit the user API functions: [`call`](@ref), [`cast`](@ref) ...
+4. Other party libraries can start actors in another mode and implement a different `onmessage` protocol to make their actors do different things.
+5. Users can enhance the [`Msg`] types implemented and extend the `onmessage` methods for working with those messages.
 
 ## Different actor primitives
 

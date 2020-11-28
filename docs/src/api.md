@@ -74,9 +74,9 @@ request
 Actors has a user interface allowing you to control actors:
 
 ```@docs
-call!
-cast!
-exec!
+call
+cast
+exec
 exit!
 query
 update!

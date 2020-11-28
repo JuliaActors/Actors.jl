@@ -11,7 +11,7 @@ function __init__()
             1, :registry)
     else
         tmp = spawn(Func(()->Actors._REG), pid=1)
-        global _REG = call!(tmp)
+        global _REG = call(tmp)
         exit!(tmp)
     end
 end

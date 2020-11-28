@@ -43,7 +43,7 @@ end
 Cast() = Cast(())
 
 """
-    Diag(from::Link)
+    Diag(x, from::Link)
 
 A synchronous [`Msg`](@ref) to an actor to send diagnostic
 information.
@@ -54,11 +54,11 @@ struct Diag <: Msg
 end
 
 """
-    Exit(reason=:ok, stack)
+    Exit(reason=:ok, stack=nothing)
 
 A [`Msg`](@ref) causing an actor to stop with an exit
-`code`. If present, it calls its [`term!`](@ref) function with
-`code` as last argument.
+`reason`. If present, it calls its [`term!`](@ref) 
+function with `reason` as last argument.
 """
 struct Exit{T,U} <: Msg 
     reason::T

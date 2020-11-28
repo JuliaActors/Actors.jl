@@ -53,7 +53,7 @@ export
     receive, request,
     # API
     Args, become, self, stop,
-    become!, call!, cast!, exec!, exit!, init!, 
+    become!, call, cast, exec, exit!, init!, 
     query, update!,
     # Tasks
     ATask, async, await,

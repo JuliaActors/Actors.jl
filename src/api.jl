@@ -37,8 +37,8 @@ become!(name::Symbol, args...; kwargs...) = become!(whereis(name), args...; kwar
 
 """
 ```
-call!(lk::Link, [from::Link,] args2...; timeout::Real=5.0)
-call!(name::Symbol, ....)
+call(lk::Link, [from::Link,] args2...; timeout::Real=5.0)
+call(name::Symbol, ....)
 ```
 Call an actor to execute its behavior and to send a 
 [`Response`](@ref) with the result. 
@@ -49,16 +49,16 @@ Call an actor to execute its behavior and to send a
 - `args2...`: remaining arguments to the actor.
 - `timeout::Real=5.0`: timeout in seconds.
 
-**Note:** If `from` is omitted, `call!` blocks and returns the result
+**Note:** If `from` is omitted, `call` blocks and returns the result
 """
-call!(lk::Link, from::Link, args...) = send(lk, Call(args, from))
-call!(lk::Link, args...; timeout::Real=5.0) = request(lk, Call, args...; timeout=timeout)
-call!(name::Symbol, args...; kwargs...) = call!(whereis(name), args...; kwargs...)
+call(lk::Link, from::Link, args...) = send(lk, Call(args, from))
+call(lk::Link, args...; timeout::Real=5.0) = request(lk, Call, args...; timeout=timeout)
+call(name::Symbol, args...; kwargs...) = call(whereis(name), args...; kwargs...)
 
 """
 ```
-cast!(lk::Link, args2...)
-cast!(name::Symbol, args2...)
+cast(lk::Link, args2...)
+cast(name::Symbol, args2...)
 ```
 Cast `args2...` to the actor `lk` (or `name` if registered) 
 to execute its behavior with `args2...` without sending a 
@@ -66,15 +66,15 @@ response.
 
 **Note:** you can prompt the returned value with [`query`](@ref).
 """
-cast!(lk::Link, args...) = send(lk, Cast(args))
-cast!(name::Symbol, args...) = cast!(whereis(name), args...)
+cast(lk::Link, args...) = send(lk, Cast(args))
+cast(name::Symbol, args...) = cast(whereis(name), args...)
 
 """
 ```
-exec!(lk::Link, from::Link, func, args...; kwargs...)
-exec!(lk::Link, from::Link, f::Func)
-exec!(lk::Link, f::Func; timeout::Real=5.0)
-exec!(name::Symbol, ....)
+exec(lk::Link, from::Link, func, args...; kwargs...)
+exec(lk::Link, from::Link, f::Func)
+exec(lk::Link, f::Func; timeout::Real=5.0)
+exec(name::Symbol, ....)
 ```
 
 Ask an actor `lk` (or `name` if registered) to execute an 
@@ -91,15 +91,15 @@ arbitrary function and to send the returned value as
 - `timeout::Real=5.0`: timeout in seconds. Set `timeout=Inf` 
     if you don't want to timeout.
 
-**Note:** If `from` is ommitted, `exec!` blocks, waits and 
+**Note:** If `from` is ommitted, `exec` blocks, waits and 
 returns the result (with a `timeout`).
 """
-exec!(lk::Link, from::Link, func, args...; kwargs...) =
+exec(lk::Link, from::Link, func, args...; kwargs...) =
     send(lk, Exec(Func(func, args...; kwargs...), from))
-exec!(lk::Link, from::Link, fu::Func) = send(lk, Exec(fu, from))
-exec!(lk::Link, f::Func; timeout::Real=5.0) =
+exec(lk::Link, from::Link, fu::Func) = send(lk, Exec(fu, from))
+exec(lk::Link, f::Func; timeout::Real=5.0) =
     request(lk, Exec, f; timeout=timeout)
-exec!(name::Symbol, args...; kwargs...) = exec!(whereis(name), args...; kwargs...)
+exec(name::Symbol, args...; kwargs...) = exec(whereis(name), args...; kwargs...)
 
 """
 ```
@@ -157,6 +157,25 @@ the response. In that case there is a `timeout`.
 # Examples
 
 ```julia
+julia> f(x, y; u=0, v=0) = x+y+u+v  # implement a behavior
+f (generic function with 1 method)
+
+julia> fact = spawn(Func(f, 1))     # start an actor with it
+Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
+
+julia> query(fact, :mode)           # query the mode
+:default
+
+julia> cast(fact, 1)                # cast a 2nd argument to it
+Actors.Cast((1,))
+
+julia> query(fact, :res)            # query the result
+2
+
+julia> query(fact, :sta)            # query the state
+
+julia> query(fact, :bhv)            # query the behavior
+Func(f, (1,), Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}(), Actors.var"#2#4"{Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}},typeof(f),Tuple{Int64}}(Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}(), f, (1,)))
 ```
 """
 query(lk::Link, from::Link, s::Symbol=:sta) = send(lk, Query(s, from))
@@ -204,6 +223,16 @@ with existing keyword arguments to the behavior function.
 
 # Example
 ```julia
+julia> update!(fact, 5)       # update the state variable
+Actors.Update(:sta, 5)
+
+julia> query(fact, :sta)      # query it
+5
+
+julia> update!(fact, Args(0, u=5, v=5));  # update arguments to the behavior 
+
+julia> call(fact, 0)          # call the actor with 0
+10
 ```
 """
 update!(lk::Link, x; s::Symbol=:sta) = send(lk, Update(s, x))

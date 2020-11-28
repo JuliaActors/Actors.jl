@@ -62,7 +62,7 @@ julia> send(act3, 2, 3)           # now it executes f(1, 2, 3)
 julia> query(act3, :res)          # query the result
 6
 
-julia> call!(act3, 2, 2)          # call! does a synchronous communication
+julia> call(act3, 2, 2)          # call does a synchronous communication
 5
 
 julia> send(act3, 2, 3, 4, 5)     # this makes the actor fail
@@ -105,7 +105,7 @@ julia> send(mystack, Push(1))        # push 1 on the stack
 Actors can be controlled with the following functions:
 
 - [`become!`](@ref): cause an actor to switch its behavior,
-- [`cast!`](@ref): cause an actor to execute its behavior function,
+- [`cast`](@ref): cause an actor to execute its behavior function,
 - [`exit!`](@ref): cause an actor to terminate,
 - [`init!`](@ref): tell an actor to execute a function at startup,
 - [`term!`](@ref): tell an actor to execute a function when it terminates,
@@ -128,8 +128,8 @@ What if you want to receive a reply from an actor? Then there are two possibilit
 
 The following functions do this for specific duties:
 
-- [`call!`](@ref) an actor to execute its behavior function and to send the result,
-- [`exec!`](@ref): tell an actor to execute a function and to send the result,
+- [`call`](@ref) an actor to execute its behavior function and to send the result,
+- [`exec`](@ref): tell an actor to execute a function and to send the result,
 - [`query`](@ref) tell an actor's to send one of its internal state variables.
 
 If you provide those functions with a return link, they will use [`send`](@ref) and you can then [`receive`](@ref) the [`Response`](@ref) from the return link later. If you 
@@ -143,12 +143,12 @@ The [API](api.md) functions allow to work with actors without using messages exp
 using Actors, .Threads
 import Actors: spawn
 act4 = spawn(Func(+, 4))       # start an actor adding to 4
-exec!(act4, Func(threadid))    # ask it its threadid
-cast!(act4, 4)                 # cast it 4
+exec(act4, Func(threadid))    # ask it its threadid
+cast(act4, 4)                 # cast it 4
 query(act4, :res)              # query the result
 become!(act4, *, 4);           # switch the behavior to *
-call!(act4, 4)                 # call it with 4
-exec!(act4, Func(broadcast, cos, pi .* (-2:2))) # tell it to exec any function
+call(act4, 4)                 # call it with 4
+exec(act4, Func(broadcast, cos, pi .* (-2:2))) # tell it to exec any function
 Actors.diag(act4)              # check it
 exit!(act4)                    # stop it
 act4.chn.state
@@ -190,19 +190,19 @@ julia> @everywhere function ident(id, from)
 julia> register(:act1, spawn(Func(ident, 1))) # a registered local actor
 true
 
-julia> call!(:act1, myid())                   # call! it
+julia> call(:act1, myid())                   # call it
 ("local actor", 1, 1)
 
 julia> register(:act2, spawn(Func(ident, 2), pid=2)) # a registered remote actor on pid 2
 true
 
-julia> call!(:act2, myid())                   # call! it
+julia> call(:act2, myid())                   # call it
 ("remote actor", 2, 1)
 
-julia> fetch(@spawnat 2 call!(:act1, myid())) # call! :act1 on pid 2
+julia> fetch(@spawnat 2 call(:act1, myid())) # call :act1 on pid 2
 ("remote actor", 1, 2)
 
-julia> fetch(@spawnat 2 call!(:act2, myid())) # call! :act2 on pid 2
+julia> fetch(@spawnat 2 call(:act2, myid())) # call :act2 on pid 2
 ("local actor", 2, 2)
 
 julia> whereis(:act1)                         # get a link to :act1

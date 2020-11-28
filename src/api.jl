@@ -37,8 +37,8 @@ become!(name::Symbol, args...; kwargs...) = become!(whereis(name), args...; kwar
 
 """
 ```
-call!(lk::Link, [from::Link,] args2...; timeout::Real=5.0)
-call!(name::Symbol, ....)
+call(lk::Link, [from::Link,] args2...; timeout::Real=5.0)
+call(name::Symbol, ....)
 ```
 Call an actor to execute its behavior and to send a 
 [`Response`](@ref) with the result. 
@@ -49,16 +49,16 @@ Call an actor to execute its behavior and to send a
 - `args2...`: remaining arguments to the actor.
 - `timeout::Real=5.0`: timeout in seconds.
 
-**Note:** If `from` is omitted, `call!` blocks and returns the result
+**Note:** If `from` is omitted, `call` blocks and returns the result
 """
-call!(lk::Link, from::Link, args...) = send(lk, Call(args, from))
-call!(lk::Link, args...; timeout::Real=5.0) = request(lk, Call, args...; timeout=timeout)
-call!(name::Symbol, args...; kwargs...) = call!(whereis(name), args...; kwargs...)
+call(lk::Link, from::Link, args...) = send(lk, Call(args, from))
+call(lk::Link, args...; timeout::Real=5.0) = request(lk, Call, args...; timeout=timeout)
+call(name::Symbol, args...; kwargs...) = call(whereis(name), args...; kwargs...)
 
 """
 ```
-cast!(lk::Link, args2...)
-cast!(name::Symbol, args2...)
+cast(lk::Link, args2...)
+cast(name::Symbol, args2...)
 ```
 Cast `args2...` to the actor `lk` (or `name` if registered) 
 to execute its behavior with `args2...` without sending a 
@@ -66,15 +66,15 @@ response.
 
 **Note:** you can prompt the returned value with [`query`](@ref).
 """
-cast!(lk::Link, args...) = send(lk, Cast(args))
-cast!(name::Symbol, args...) = cast!(whereis(name), args...)
+cast(lk::Link, args...) = send(lk, Cast(args))
+cast(name::Symbol, args...) = cast(whereis(name), args...)
 
 """
 ```
-exec!(lk::Link, from::Link, func, args...; kwargs...)
-exec!(lk::Link, from::Link, f::Func)
-exec!(lk::Link, f::Func; timeout::Real=5.0)
-exec!(name::Symbol, ....)
+exec(lk::Link, from::Link, func, args...; kwargs...)
+exec(lk::Link, from::Link, f::Func)
+exec(lk::Link, f::Func; timeout::Real=5.0)
+exec(name::Symbol, ....)
 ```
 
 Ask an actor `lk` (or `name` if registered) to execute an 
@@ -91,15 +91,15 @@ arbitrary function and to send the returned value as
 - `timeout::Real=5.0`: timeout in seconds. Set `timeout=Inf` 
     if you don't want to timeout.
 
-**Note:** If `from` is ommitted, `exec!` blocks, waits and 
+**Note:** If `from` is ommitted, `exec` blocks, waits and 
 returns the result (with a `timeout`).
 """
-exec!(lk::Link, from::Link, func, args...; kwargs...) =
+exec(lk::Link, from::Link, func, args...; kwargs...) =
     send(lk, Exec(Func(func, args...; kwargs...), from))
-exec!(lk::Link, from::Link, fu::Func) = send(lk, Exec(fu, from))
-exec!(lk::Link, f::Func; timeout::Real=5.0) =
+exec(lk::Link, from::Link, fu::Func) = send(lk, Exec(fu, from))
+exec(lk::Link, f::Func; timeout::Real=5.0) =
     request(lk, Exec, f; timeout=timeout)
-exec!(name::Symbol, args...; kwargs...) = exec!(whereis(name), args...; kwargs...)
+exec(name::Symbol, args...; kwargs...) = exec(whereis(name), args...; kwargs...)
 
 """
 ```

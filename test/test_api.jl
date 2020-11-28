@@ -51,26 +51,26 @@ sleep(sleeptime)
 @test query(A, :res) == nothing
 @test query(A, :bhv).f == subx
 
-# test call!
+# test call
 become!(A, incx, a, y=b, z=c)
-@test call!(A, 1) == 4
+@test call(A, 1) == 4
 @test query(A, :res) == 4
 @test query(A) == (1,2,3)
 
-# test cast!
-cast!(A, 2)
+# test cast
+cast(A, 2)
 @test query(A, :res) == 5
 update!(A, Args(5, y=1,z=1), s=:arg)
-cast!(A, 3)
+cast(A, 3)
 @test query(A, :res) == 10
 
 update!(A, Args(a, y=3,z=3), s=:arg)
-cast!(A, 3)
+cast(A, 3)
 @test query(A, :res) == 10
 @test query(A) == (1,2,3)
 
-# test exec!
-@test exec!(A, Func(cos, 2pi)) == 1
+# test exec
+@test exec(A, Func(cos, 2pi)) == 1
 
 # test exit!
 exit!(A)

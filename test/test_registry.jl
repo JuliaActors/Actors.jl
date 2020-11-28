@@ -22,7 +22,7 @@ end
 @test register(:act1, spawn(Func(ident, 1)))
 a1 = Actors.diag(:act1, 1)
 @test a1.name == :act1  # does it have its name ?
-@test call!(:act1, myid()) == ("local actor", 1, 1)
+@test call(:act1, myid()) == ("local actor", 1, 1)
 act1 = whereis(:act1)
 unregister(:act1)
 sleep(0.1)
@@ -40,9 +40,9 @@ sleep(0.1)
 # 
 @test register(:act1, spawn(Func(ident, 1)))
 @test register(:act2, spawn(Func(ident, 2), pid=2))
-@test call!(:act2, myid()) == ("remote actor", 2, 1)
-@test fetch(@spawnat 2 call!(:act1, myid())) == ("remote actor", 1, 2)
-@test fetch(@spawnat 2 call!(:act2, myid())) == ("local actor", 2, 2)
+@test call(:act2, myid()) == ("remote actor", 2, 1)
+@test fetch(@spawnat 2 call(:act1, myid())) == ("remote actor", 1, 2)
+@test fetch(@spawnat 2 call(:act2, myid())) == ("local actor", 2, 2)
 @test whereis(:act1).pid == 1
 @test whereis(:act2).pid == 2
 @test fetch(@spawnat 2 whereis(:act1)).pid == 1
@@ -73,10 +73,10 @@ sleep(0.1)
 @test a1.res == 2
 @test request(:act1, Actors.Call, 2) == 3
 become!(:act1, f, 0)
-@test call!(:act1, 1) == 1
-cast!(:act1, 2)
+@test call(:act1, 1) == 1
+cast(:act1, 2)
 sleep(0.1)
 @test a1.res == 2
-@test exec!(:act1, Func(f, 5, 5)) == 10
+@test exec(:act1, Func(f, 5, 5)) == 10
 @test query(:act1, :res) == 2
 unregister(:act1)

@@ -46,7 +46,7 @@ function _act(ch::Channel)
         onmessage(A, A.mode, msg)
         msg isa Exit && break
     end
-    isnothing(A.name) || call!(_REG, unregister, A.name)
+    isnothing(A.name) || call(_REG, unregister, A.name)
 end
 
 """

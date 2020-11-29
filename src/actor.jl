@@ -43,7 +43,7 @@ function _act(ch::Channel)
     task_local_storage("_ACT", A)
     while true
         msg = take!(ch)
-        onmessage(A, A.mode, msg)
+        onmessage(A, Val(A.mode), msg)
         msg isa Exit && break
     end
     isnothing(A.name) || call(_REG, unregister, A.name)

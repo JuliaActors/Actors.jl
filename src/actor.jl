@@ -51,7 +51,7 @@ end
 
 """
 ```
-spawn(bhv::Func; pid=myid(), thrd=false, sticky=false, taskref=nothing, mode=:default)
+spawn(bhv::Bhv; pid=myid(), thrd=false, sticky=false, taskref=nothing, mode=:default)
 spawn(m::Val(:Actors), args...; kwargs...)
 spawn(m::Module, args...; kwargs...)
 ```
@@ -61,14 +61,14 @@ to it.
 
 # Parameters
 
-- `bhv::Func`: behavior function,
+- `bhv::Bhv`: behavior function,
 - `pid=myid()`: pid of worker process the actor should be started on,
 - `thrd=false`: thread number the actor should be started on or `false`,
 - `sticky=false`: if `true` the actor is started on the current thread,
 - `taskref=nothing`: if a `Ref{Task}()` is given here, it gets the started `Task`,
 - `mode=:default`: mode, the actor should operate in.
 """
-function spawn(bhv::Func; pid=myid(), thrd=false, sticky=false, taskref=nothing, mode=:default)
+function spawn(bhv::Bhv; pid=myid(), thrd=false, sticky=false, taskref=nothing, mode=:default)
     if pid == myid()
         lk = newLink(32)
         if thrd > 0 && thrd in 1:nthreads()
@@ -111,7 +111,7 @@ self() = task_local_storage("_ACT").self
 
 """
 ```
-become(bhv::Func)
+become(bhv::Bhv)
 become(func, args...; kwargs...)
 ```
 
@@ -119,16 +119,16 @@ Cause your actor to take on a new behavior. This can only be
 called from inside an actor/behavior.
 
 # Arguments
-- `bhv::Func`: [`Func`](@ref) implementing the new behavior,
+- `bhv::Bhv`: [`Bhv`](@ref) implementing the new behavior,
 - `func`: callable object,
 - `args1...`: (partial) arguments to `func`,
 - `kwargs...`: keyword arguments to `func`.
 """
-function become(bhv::Func)
+function become(bhv::Bhv)
     act = task_local_storage("_ACT")
     act.bhv = bhv
 end
-become(func, args...; kwargs...) = become(Func(func, args...; kwargs...))
+become(func, args...; kwargs...) = become(Bhv(func, args...; kwargs...))
 # 
 # Note: a reference to the actor's status variable must be
 #       available as task_local_storage("_ACT") for this to 

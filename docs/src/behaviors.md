@@ -26,19 +26,19 @@ The behavior function may change its acquaintances or make new ones and thus cha
 
 ## Behavior representation
 
-`Actors` represents a behavior as a [`Func`](@ref) containing
+`Actors` represents a behavior as a [`Bhv`](@ref) containing
 
 - a callable object `f` (function, functor, ...) together with 
 - acquaintance arguments `a...` and `kw...` (keyword arguments) to it. 
 
-From those a `Func` creates a partial function (a closure) `ϕ(a...; kw...)` which then can be executed with the communication arguments `c...`:
+From those a `Bhv` creates a partial function (a closure) `ϕ(a...; kw...)` which then can be executed with the communication arguments `c...`:
 
 ```@repl
 using Actors
 f(s, t, u, v; w=1, x=1) = s + t + u + v + w + x   # a function
 a = (1, 1)                    # define acquaintance arguments
 kw = (w=2, x=2)               # define acquaintance keyword arguments
-func = Func(f, a...; kw...);  # create a Func with them
+func = Bhv(f, a...; kw...);  # create a Bhv with them
 c = (1, 1)                    # define communication arguments
 func(c...)                    # execute func with them
 f(a..., c...; kw...)          # this is how f gets dispatched

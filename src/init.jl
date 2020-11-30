@@ -7,10 +7,10 @@
 function __init__()
     if myid() == 1
         global _REG = Link(
-            RemoteChannel(()->spawn(Func(_reg, Dict{Symbol, Link}())).chn), 
+            RemoteChannel(()->spawn(Bhv(_reg, Dict{Symbol, Link}())).chn), 
             1, :registry)
     else
-        tmp = spawn(Func(()->Actors._REG), pid=1)
+        tmp = spawn(Bhv(()->Actors._REG), pid=1)
         global _REG = call(tmp)
         exit!(tmp)
     end

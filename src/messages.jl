@@ -6,13 +6,13 @@
 # those are the internal messages
 
 """
-    Become(x::Func)
+    Become(x::Bhv)
 
 An asynchronous [`Msg`](@ref) to an actor to change its 
 behavior.
 """
 struct Become <: Msg
-    x::Func
+    x::Bhv
 end
 
 """
@@ -67,7 +67,7 @@ end
 Exit(reason=:ok) = Exit(reason, nothing)
 
 """
-    Exec(func::Func, from::Link)
+    Exec(func::Bhv, from::Link)
 
 A synchronous [`Msg`](@ref) to an actor to execute `func`
 and to send a `Response` message with the return value to `from`.
@@ -79,14 +79,14 @@ end
 Exec(t::Tuple, from::Link) = Exec(first(t), from)
 
 """
-    Init(f::Func)
+    Init(f::Bhv)
 
 A [`Msg`](@ref) to an actor to execute the given
-[`Func`](@ref) and to register it in the [`_ACT`](@ref)
+[`Bhv`](@ref) and to register it in the [`_ACT`](@ref)
 variable.
 """
 struct Init <: Msg
-    x::Func
+    x::Bhv
 end
 
 """
@@ -105,13 +105,13 @@ end
 Query(t::Tuple, from::Link) = Query(first(t), from)
 
 """
-    Term(x::Func)
+    Term(x::Bhv)
 
-A [`Msg`](@ref) to an actor to save the given [`Func`](@ref) 
+A [`Msg`](@ref) to an actor to save the given [`Bhv`](@ref) 
 and to execute it upon termination.
 """
 struct Term <: Msg
-    x::Func
+    x::Bhv
 end
 
 """

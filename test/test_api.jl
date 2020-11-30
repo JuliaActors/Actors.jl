@@ -18,7 +18,7 @@ e = f = 2
 incx(x, by; y=0, z=0) = x+y+z + by
 subx(x, y, sub; z=0) = x+y+z - sub
 
-A = Actors.spawn(Func(incx, a, y=b, z=c), taskref=t)
+A = Actors.spawn(Bhv(incx, a, y=b, z=c), taskref=t)
 sleep(sleeptime)
 @test t[].state == :runnable
 
@@ -70,7 +70,7 @@ cast(A, 3)
 @test query(A) == (1,2,3)
 
 # test exec
-@test exec(A, Func(cos, 2pi)) == 1
+@test exec(A, Bhv(cos, 2pi)) == 1
 
 # test exit!
 exit!(A)

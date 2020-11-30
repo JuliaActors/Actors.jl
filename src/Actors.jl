@@ -20,7 +20,7 @@ pkg> add "https://github.com/JuliaActors/Actors.jl"
 module Actors
 
 "Gives the package version."
-const version = v"0.1.4"
+const version = v"0.1.5"
 
 using Distributed, .Threads
 
@@ -39,7 +39,7 @@ include("diag.jl")
 
 export  
     # common types
-    Msg, Request, Response, Link, Func,
+    Msg, Request, Response, Link, Bhv,
     # -------------------------------
     # exported interface primitives
     send,  

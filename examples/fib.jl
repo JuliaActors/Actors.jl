@@ -14,7 +14,7 @@ function fib(D::Dict{Int,BigInt}, n::Int)
     end
 end
 
-myfib = spawn(Func(fib, Dict{Int,BigInt}()))
+myfib = spawn(Bhv(fib, Dict{Int,BigInt}()))
 
 request(myfib, 1000)
 

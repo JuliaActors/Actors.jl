@@ -5,9 +5,9 @@ greet(greeting, msg) = greeting*", "*msg*"!"
 
 hello(greeter, to) = request(greeter, to)
 
-greeter = spawn(Func(greet, "Hello"))
+greeter = spawn(Bhv(greet, "Hello"))
 
-sayhello = spawn(Func(hello, greeter))
+sayhello = spawn(Bhv(hello, greeter))
 
 request(sayhello, "World")
 

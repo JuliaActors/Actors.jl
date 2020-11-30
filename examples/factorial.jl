@@ -14,7 +14,7 @@ function rec_factorial(f::Request)
     if f.x == 0
         send(f.from, Response(1))
     else
-        c = spawn(Func(rec_customer, f.x, f.from)) 
+        c = spawn(Bhv(rec_customer, f.x, f.from)) 
         send(self(), Request(f.x - 1, c))
     end
 end
@@ -25,7 +25,7 @@ function rec_customer(n::Integer, u::Link, k::Response)
 end
 
 # setup factorial actor and response link
-F = spawn(Func(rec_factorial))
+F = spawn(Bhv(rec_factorial))
 resp = newLink()
 
 for i ∈ 0:5:50      # send and receive loop

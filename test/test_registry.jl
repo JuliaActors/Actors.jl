@@ -19,7 +19,7 @@ end
 # 
 # test registry with one local actor
 #
-@test register(:act1, spawn(Func(ident, 1)))
+@test register(:act1, spawn(Bhv(ident, 1)))
 a1 = Actors.diag(:act1, 1)
 @test a1.name == :act1  # does it have its name ?
 @test call(:act1, myid()) == ("local actor", 1, 1)
@@ -38,8 +38,8 @@ sleep(0.1)
 # 
 # test registry across workers
 # 
-@test register(:act1, spawn(Func(ident, 1)))
-@test register(:act2, spawn(Func(ident, 2), pid=2))
+@test register(:act1, spawn(Bhv(ident, 1)))
+@test register(:act2, spawn(Bhv(ident, 2), pid=2))
 @test call(:act2, myid()) == ("remote actor", 2, 1)
 @test fetch(@spawnat 2 call(:act1, myid())) == ("remote actor", 1, 2)
 @test fetch(@spawnat 2 call(:act2, myid())) == ("local actor", 2, 2)
@@ -66,7 +66,7 @@ unregister(:act2)
 # test API functions with registered actors
 # 
 f(a, b) = a + b
-@test register(:act1, spawn(Func(f, 1)))
+@test register(:act1, spawn(Bhv(f, 1)))
 a1 = Actors.diag(:act1, 1)
 send(:act1, Actors.Cast((1,)))
 sleep(0.1)
@@ -77,6 +77,6 @@ become!(:act1, f, 0)
 cast(:act1, 2)
 sleep(0.1)
 @test a1.res == 2
-@test exec(:act1, Func(f, 5, 5)) == 10
+@test exec(:act1, Bhv(f, 5, 5)) == 10
 @test query(:act1, :res) == 2
 unregister(:act1)

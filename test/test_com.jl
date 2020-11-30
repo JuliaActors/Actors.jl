@@ -96,7 +96,7 @@ function comtest(msg::Request)
     return nothing
 end
 
-A = Actors.spawn(Func(comtest))
+A = Actors.spawn(Bhv(comtest))
 send(A, MySource(1, lk2))
 msg = receive(lk2, timeout=1)
 @test msg == Actors.Timeout()

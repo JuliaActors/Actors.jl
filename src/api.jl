@@ -1,7 +1,6 @@
 #
-# This file is part of the YAActL.jl Julia package, MIT license
-#
-# Paul Bayer, 2020
+# This file is part of the Actors.jl Julia package, 
+# MIT license, part of https://github.com/JuliaActors
 #
 
 """
@@ -18,7 +17,7 @@ end
 
 """
 ```
-become!(lk::Link, bhv::Func)
+become!(lk::Link, bhv::Bhv)
 become!(lk::Link, func, args1...; kwargs...)
 become!(name::Symbol, ....)
 ```
@@ -26,13 +25,13 @@ Cause an actor to change behavior.
 
 # Arguments
 - actor `lk::Link` (or `name::Symbol` if registered),
-- `bhv`: [`Func`](@ref) implementing the new behavior,
+- `bhv`: [`Bhv`](@ref) implementing the new behavior,
 - `func`: callable object,
 - `args1...`: (partial) arguments to `func`,
 - `kwargs...`: keyword arguments to `func`.
 """
-become!(lk::Link, bhv::Func) = send(lk, Become(bhv))
-become!(lk::Link, func, args...; kwargs...) = become!(lk, Func(func, args...; kwargs...))
+become!(lk::Link, bhv::Bhv) = send(lk, Become(bhv))
+become!(lk::Link, func, args...; kwargs...) = become!(lk, Bhv(func, args...; kwargs...))
 become!(name::Symbol, args...; kwargs...) = become!(whereis(name), args...; kwargs...)
 
 """
@@ -72,8 +71,8 @@ cast(name::Symbol, args...) = cast(whereis(name), args...)
 """
 ```
 exec(lk::Link, from::Link, func, args...; kwargs...)
-exec(lk::Link, from::Link, f::Func)
-exec(lk::Link, f::Func; timeout::Real=5.0)
+exec(lk::Link, from::Link, f::Bhv)
+exec(lk::Link, f::Bhv; timeout::Real=5.0)
 exec(name::Symbol, ....)
 ```
 
@@ -86,7 +85,7 @@ arbitrary function and to send the returned value as
 - `from::Link`: the link a `Response` should be sent to.
 - `func`: a callable object,
 - `args...; kwargs...`: arguments and keyword arguments to it,
-- `fu::Func`: a [`Func`](@ref) with a callable object and
+- `fu::Bhv`: a [`Bhv`](@ref) with a callable object and
     its arguments,
 - `timeout::Real=5.0`: timeout in seconds. Set `timeout=Inf` 
     if you don't want to timeout.
@@ -95,9 +94,9 @@ arbitrary function and to send the returned value as
 returns the result (with a `timeout`).
 """
 exec(lk::Link, from::Link, func, args...; kwargs...) =
-    send(lk, Exec(Func(func, args...; kwargs...), from))
-exec(lk::Link, from::Link, fu::Func) = send(lk, Exec(fu, from))
-exec(lk::Link, f::Func; timeout::Real=5.0) =
+    send(lk, Exec(Bhv(func, args...; kwargs...), from))
+exec(lk::Link, from::Link, fu::Bhv) = send(lk, Exec(fu, from))
+exec(lk::Link, f::Bhv; timeout::Real=5.0) =
     request(lk, Exec, f; timeout=timeout)
 exec(name::Symbol, args...; kwargs...) = exec(whereis(name), args...; kwargs...)
 
@@ -134,7 +133,7 @@ The `init` function will be called at actor restart.
     It is needed for supervision.
 """
 init!(lk::Link, f::F, args...; kwargs...) where F<:Function = 
-    send(lk, Init(Func(f, args...; kwargs...)))
+    send(lk, Init(Bhv(f, args...; kwargs...)))
 init!(name::Symbol, args...; kwargs...) = init!(whereis(name), args...; kwargs...)
 
 """
@@ -160,7 +159,7 @@ the response. In that case there is a `timeout`.
 julia> f(x, y; u=0, v=0) = x+y+u+v  # implement a behavior
 f (generic function with 1 method)
 
-julia> fact = spawn(Func(f, 1))     # start an actor with it
+julia> fact = spawn(Bhv(f, 1))     # start an actor with it
 Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
 
 julia> query(fact, :mode)           # query the mode
@@ -175,7 +174,7 @@ julia> query(fact, :res)            # query the result
 julia> query(fact, :sta)            # query the state
 
 julia> query(fact, :bhv)            # query the behavior
-Func(f, (1,), Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}(), Actors.var"#2#4"{Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}},typeof(f),Tuple{Int64}}(Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}(), f, (1,)))
+Bhv(f, (1,), Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}(), Actors.var"#2#4"{Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}},typeof(f),Tuple{Int64}}(Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}(), f, (1,)))
 ```
 """
 query(lk::Link, from::Link, s::Symbol=:sta) = send(lk, Query(s, from))
@@ -199,7 +198,7 @@ exits.
     It is needed for supervision.
 """
 term!(lk::Link, func, args...; kwargs...) = 
-    send(lk, Term(Func(func, args...; kwargs...)))
+    send(lk, Term(Bhv(func, args...; kwargs...)))
 term!(name::Symbol, args...; kwargs...) = term!(whereis(name), args...; kwargs...)
 
 """

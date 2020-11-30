@@ -32,7 +32,7 @@ function onmessage(A::_ACT, msg::Update)
         A.mode = msg.x
         A.self.mode = msg.x
     elseif msg.s == :arg
-        A.bhv = Func(A.bhv.f, msg.x.args...;
+        A.bhv = Bhv(A.bhv.f, msg.x.args...;
             pairs((; merge(A.bhv.kw, msg.x.kwargs)...))...)
     end
 end

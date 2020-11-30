@@ -12,7 +12,7 @@ a[] = 1
 
 inca(a, b) = a[] = a[] + b
 
-act = spawn(Func(inca, a), taskref=t)
+act = spawn(Bhv(inca, a), taskref=t)
 
 @test t[].state == :runnable
 A = request(act, Actors.Diag, 1)
@@ -26,7 +26,7 @@ sleep(0.1)
 become!(act, threadid)
 @test request(act) > 1
 
-act1 = spawn(Func(threadid), sticky=true)
+act1 = spawn(Bhv(threadid), sticky=true)
 @test request(act1) == 1
-act2 = spawn(Func(threadid), thrd=2)
+act2 = spawn(Bhv(threadid), thrd=2)
 @test request(act2) == 2

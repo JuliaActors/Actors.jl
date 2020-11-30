@@ -17,7 +17,7 @@ pr(info, msg) = print(@sprintf("%s: %s\n", info, msg))
 calc(op::F, x, y) where F<:Function = op(x, y)
 
 # start an actor with the first behavior
-myactor = spawn(Func(pr))
+myactor = spawn(Bhv(pr))
 
 send(myactor, "My first actor")     # send a message to it
 

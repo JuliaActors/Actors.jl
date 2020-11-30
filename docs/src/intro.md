@@ -27,7 +27,7 @@ pr (generic function with 2 methods)
 julia> calc(op, x, y) = op(x, y)            # a function for doing arithmetic
 calc (generic function with 1 method)
 
-julia> myactor = spawn(Func(pr))            # start an actor with the first behavior
+julia> myactor = spawn(Bhv(pr))            # start an actor with the first behavior
 Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :local)
 
 julia> send(myactor, "My first actor");     # send a message to it

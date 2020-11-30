@@ -15,7 +15,7 @@ julia> using Actors, .Threads
 
 julia> import Actors: spawn
 
-julia> act1 = spawn(Func(threadid))             # start an actor which returns its threadid
+julia> act1 = spawn(Bhv(threadid))             # start an actor which returns its threadid
 Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :local)
 
 julia> request(act1)                           # call it
@@ -27,7 +27,7 @@ julia> addprocs(1);
 
 julia> @everywhere using Actors
 
-julia> act2 = spawn(Func(println), pid=2)       # start a remote actor on pid 2 with a println behavior
+julia> act2 = spawn(Bhv(println), pid=2)       # start a remote actor on pid 2 with a println behavior
 Link{RemoteChannel{Channel{Any}}}(RemoteChannel{Channel{Any}}(2, 1, 232), 2, :remote)
 
 julia> request(act2, "Tell me where you are!") # and call it with an argument
@@ -53,7 +53,7 @@ If you send an actor any message, it tries to execute its behavior function with
 julia> f(a, b, c) = a + b + c
 f (generic function with 1 method)
 
-julia> act3 = spawn(Func(f, 1))   # create an actor with f(1)
+julia> act3 = spawn(Bhv(f, 1))   # create an actor with f(1)
 Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
 
 julia> send(act3, 2, 3)           # now it executes f(1, 2, 3)
@@ -89,7 +89,7 @@ Actors follow a message [protocol](protocol.md) if they get a message of type [`
 When an actor receives a message, it combines any partial arguments known to it with the message arguments and executes its behavior function.
 
 ```julia
-julia> mystack = spawn(Func(stack_node, StackNode(nothing, Link()))); # create an actor with a partial argument
+julia> mystack = spawn(Bhv(stack_node, StackNode(nothing, Link()))); # create an actor with a partial argument
 ```
 
 `mystack` represents an actor with a `stack_node` behavior and a partial argument `StackNode(nothing, Link())`. When it eventually receives a message ...
@@ -142,13 +142,13 @@ The [API](api.md) functions allow to work with actors without using messages exp
 ```@repl actors
 using Actors, .Threads
 import Actors: spawn
-act4 = spawn(Func(+, 4))       # start an actor adding to 4
-exec(act4, Func(threadid))    # ask it its threadid
+act4 = spawn(Bhv(+, 4))       # start an actor adding to 4
+exec(act4, Bhv(threadid))    # ask it its threadid
 cast(act4, 4)                 # cast it 4
 query(act4, :res)              # query the result
 become!(act4, *, 4);           # switch the behavior to *
 call(act4, 4)                 # call it with 4
-exec(act4, Func(broadcast, cos, pi .* (-2:2))) # tell it to exec any function
+exec(act4, Bhv(broadcast, cos, pi .* (-2:2))) # tell it to exec any function
 Actors.diag(act4)              # check it
 exit!(act4)                    # stop it
 act4.chn.state
@@ -162,7 +162,7 @@ Actor tasks execute one computation, mostly without communicating with other act
 You can start actor tasks with [`async`](@ref) and get their result with [`await`](@ref).
 
 ```@repl actors
-t = async(Func(^, 123, 456));
+t = async(Bhv(^, 123, 456));
 await(t)
 ```
 
@@ -187,13 +187,13 @@ julia> @everywhere function ident(id, from)
                ("remote actor", id, from)
        end
 
-julia> register(:act1, spawn(Func(ident, 1))) # a registered local actor
+julia> register(:act1, spawn(Bhv(ident, 1))) # a registered local actor
 true
 
 julia> call(:act1, myid())                   # call it
 ("local actor", 1, 1)
 
-julia> register(:act2, spawn(Func(ident, 2), pid=2)) # a registered remote actor on pid 2
+julia> register(:act2, spawn(Bhv(ident, 2), pid=2)) # a registered remote actor on pid 2
 true
 
 julia> call(:act2, myid())                   # call it

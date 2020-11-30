@@ -28,10 +28,10 @@ greet (generic function with 1 method)
 julia> hello(greeter, to) = request(greeter, to)    # a greetings client
 hello (generic function with 1 method)
 
-julia> greeter = spawn(Func(greet, "Hello"))  # spawn the server
+julia> greeter = spawn(Bhv(greet, "Hello"))  # spawn the server
 Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
 
-julia> sayhello = spawn(Func(hello, greeter)) # spawn the client
+julia> sayhello = spawn(Bhv(hello, greeter)) # spawn the client
 Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
 
 julia> request(sayhello, "World")

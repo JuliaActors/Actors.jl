@@ -34,11 +34,11 @@ function stack_node(sn::StackNode, msg::Pop)
 end
 
 function stack_node(sn::StackNode, msg::Push)
-    P = spawn(Func(stack_node, sn))
+    P = spawn(Bhv(stack_node, sn))
     become(stack_node, StackNode(msg.content, P))
 end
 
-mystack = spawn(Func(stack_node, StackNode(nothing, newLink())))
+mystack = spawn(Bhv(stack_node, StackNode(nothing, newLink())))
 
 response = newLink()
 

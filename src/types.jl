@@ -7,7 +7,7 @@
 # Basic Types
 # -----------------------------------------------
 """
-    Func(func, a...; kw...)(c...)
+    Bhv(func, a...; kw...)(c...)
 
 A callable struct to represent actor behavior. It is executed
 with parameters from the incoming communication.
@@ -19,22 +19,22 @@ with parameters from the incoming communication.
 - `kw...`: keyword arguments,
 - `c...`: parameters from the incoming communication.
 """
-struct Func
+struct Bhv
     f
     a::Tuple
     kw::Base.Iterators.Pairs
     ϕ::Function
 
-    Func(f, a...; kw...) =new(f, a, kw, (c)->f(a..., c...; kw...))
+    Bhv(f, a...; kw...) =new(f, a, kw, (c)->f(a..., c...; kw...))
 end
-(p::Func)(c...) = p.ϕ(c)
+(p::Bhv)(c...) = p.ϕ(c)
 
 #
-# Since Func contains an anonymous function, the following 
+# Since Bhv contains an anonymous function, the following 
 # is needed to make it executable in another thread or worker.
-# It returns a Func for the current world age.
+# It returns a Bhv for the current world age.
 # 
-_current(p::Func) = Func(p.f, p.a...; p.kw...)
+_current(p::Bhv) = Bhv(p.f, p.a...; p.kw...)
 
 """
     Link{C}(chn::C, pid::Int, type::Symbol)
@@ -72,7 +72,7 @@ Internal actor status variable.
 8. `sta::Any`: a variable for representing state,
 9. `usr::Any`: user variable for plugging in something.
 
-see also: [`Func`](@ref), [`Link`](@ref)
+see also: [`Bhv`](@ref), [`Link`](@ref)
 """
 mutable struct _ACT{T}
     mode::Symbol
@@ -89,9 +89,9 @@ end
 """
     _ACT(mode=:default)
 
-Return a actor variable `_ACT{Func}`.
+Return a actor variable `_ACT{Bhv}`.
 """
-_ACT(mode=:default) = _ACT(mode, Func(+), fill(nothing, 7)...)
+_ACT(mode=:default) = _ACT(mode, Bhv(+), fill(nothing, 7)...)
 
 # -----------------------------------------------
 # Public message types

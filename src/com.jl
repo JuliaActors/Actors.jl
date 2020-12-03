@@ -20,9 +20,11 @@ function _send!(chn::Channel, msg)
     return msg
 end
 function _send!(rch::RemoteChannel, msg)
-    if rch.where != myid() && msg isa Msg
-        # change any local links in m to remote links
-        msg = typeof(msg)((_rlink(getfield(msg,i)) for i in fieldnames(typeof(msg)))...)
+    if rch.where != myid() 
+        # change any local links in msg to remote links
+        msg = msg isa Msg ?
+            typeof(msg)((_rlink(getfield(msg,i)) for i in fieldnames(typeof(msg)))...) :
+            _rlink(msg)
     end
     put!(rch, msg)
 end

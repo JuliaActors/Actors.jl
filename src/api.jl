@@ -4,18 +4,6 @@
 #
 
 """
-    Args(args...; kwargs...)
-
-A structure for updating arguments to an actor's behavior.
-"""
-struct Args{A,B}
-    args::A
-    kwargs::B
-
-    Args(args...; kwargs...) = new{typeof(args),typeof(kwargs)}(args, kwargs)
-end
-
-"""
 ```
 become!(lk::Link, bhv::Bhv)
 become!(lk::Link, func, args1...; kwargs...)
@@ -115,7 +103,7 @@ has a [`term`](@ref _ACT) function, it calls it with
 
 """
 exit!(lk::Link, reason=:ok) = send(lk, Exit(reason))
-exit!(name::Symbol, code=0) = exit!(whereis(name), code)
+exit!(name::Symbol, reason=:ok) = exit!(whereis(name), reason)
 
 """
 ```

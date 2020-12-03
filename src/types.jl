@@ -7,6 +7,18 @@
 # Basic Types
 # -----------------------------------------------
 """
+    Args(args...; kwargs...)
+
+A structure for updating arguments to an actor's behavior.
+"""
+struct Args{A,B}
+    args::A
+    kwargs::B
+
+    Args(args...; kwargs...) = new{typeof(args),typeof(kwargs)}(args, kwargs)
+end
+
+"""
     Bhv(func, a...; kw...)(c...)
 
 A callable struct to represent actor behavior. It is executed

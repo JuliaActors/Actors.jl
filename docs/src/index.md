@@ -10,8 +10,7 @@ Concurrent programming in Julia with the [Actor model](https://en.wikipedia.org/
 - `Actors` API: [detailed documentation](api.md),
 - Internals
     - The actor [protocol](protocol.md),
-    - [Interface](interface.md) for Julia actor libraries,
-    - actor [diagnosis](diagnosis.md).
+    - [Interface](interface.md) for Julia actor libraries.
 
 ## JuliaActors
 

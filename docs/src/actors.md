@@ -53,7 +53,7 @@ If you send an actor any message, it tries to execute its behavior function with
 julia> f(a, b, c) = a + b + c
 f (generic function with 1 method)
 
-julia> act3 = spawn(Bhv(f, 1))   # create an actor with f(1)
+julia> act3 = spawn(Bhv(f, 1))    # create an actor with f(1)
 Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
 
 julia> send(act3, 2, 3)           # now it executes f(1, 2, 3)
@@ -62,7 +62,7 @@ julia> send(act3, 2, 3)           # now it executes f(1, 2, 3)
 julia> query(act3, :res)          # query the result
 6
 
-julia> call(act3, 2, 2)          # call does a synchronous communication
+julia> call(act3, 2, 2)           # call does a synchronous communication
 5
 
 julia> send(act3, 2, 3, 4, 5)     # this makes the actor fail
@@ -74,7 +74,7 @@ Actors.Timeout()
 julia> istaskfailed(act3)
 true
 
-ulia> Actors.info(act3)           # get the stacktrace
+julia> Actors.info(act3)          # get the stacktrace
 Task (failed) @0x0000000106e37190
 MethodError: no method matching f(::Int64, ::Int64, ::Int64, ::Int64, ::Int64)
 Closest candidates are:

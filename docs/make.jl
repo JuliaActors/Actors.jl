@@ -14,8 +14,7 @@ makedocs(
         "Examples" => "examples.md",
         "Internals" => [
             "interface.md",
-            "protocol.md",
-            "diagnosis.md"
+            "protocol.md"
         ]
     ]
 )

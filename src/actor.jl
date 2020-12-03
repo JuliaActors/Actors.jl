@@ -90,6 +90,7 @@ function spawn(bhv::Bhv; pid=myid(), thrd=false, sticky=false, taskref=nothing, 
     else
         lk = Link(RemoteChannel(()->Channel(_act, 32), pid),
                   pid, mode)
+        bhv = _rlink(bhv)
     end
     put!(lk.chn, Update(:self, lk))
     mode == :default || put!(lk.chn, Update(:mode, mode))

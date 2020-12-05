@@ -81,6 +81,7 @@ function receive(lk::L1, M::MT, from::L2;
     timeout::Real=5.0) where {L1<:Link,MT<:Union{Nothing,Type{<:Msg}},L2<:Union{Nothing,Link}}
 
     done = [false]
+    fetched = [false]
     msg = Timeout()
     stash = Msg[]
     ev = Base.Event()
@@ -88,8 +89,12 @@ function receive(lk::L1, M::MT, from::L2;
 
     @async begin
         while !done[1]
+            fetched[1] = false
             timeout == 0 && !isready(lk.chn) && break
-            _match(fetch(lk.chn), M, from) && break
+            if _match(fetch(lk.chn), M, from)
+                fetched[1] = true
+                break
+            end
             done[1] || push!(stash, take!(lk.chn))
         end
         notify(ev)
@@ -97,7 +102,7 @@ function receive(lk::L1, M::MT, from::L2;
 
     wait(ev)
     done[1] = true
-    isready(lk.chn) && (msg = take!(lk.chn))
+    fetched[1] && (msg = take!(lk.chn))
     while !isempty(stash) && isready(lk.chn)
         push!(stash, take!(lk.chn))
     end
@@ -129,7 +134,7 @@ function request(lk::Link, msg::Msg; full=false, timeout::Real=5.0)
     return resp isa Timeout || full ? resp : resp.y
 end
 function request(lk::Link, M::Type{<:Msg}, args...; kwargs...)
-    me = lk isa Link{Channel} ?
+    me = lk isa Link{Channel{Any}} ?
             newLink(1) :
             newLink(1, remote=true)
     request(lk, isempty(args) ? M(me) : M(args, me); kwargs...)

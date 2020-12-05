@@ -1,7 +1,7 @@
 name = "Actors"
 uuid = "18269d71-cc38-4e02-b8c8-1db30113a6dd"
 authors = ["Oliver Schulz", "Paul Bayer"]
-version = "0.1.6"
+version = "0.1.7"
 
 [deps]
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"

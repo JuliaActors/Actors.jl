@@ -24,12 +24,19 @@ f_i(a_i, c_i) & \rightarrow &\{a_{i+1},\{\tau_u,\tau_v, ...\},\{\alpha_x,\alpha_
 
 The behavior function may change its acquaintances or make new ones and thus change its acquaintance list from ``a_i`` to ``a_{i+1}`` and may also specify a replacement behavior ``f_{i+1}`` for the subsequent communication.
 
-## Behavior representation
+Actor behavior can be represented in two styles:
 
-`Actors` represents a behavior as a [`Bhv`](@ref) containing
+- functional style and
+- object-oriented style.
 
-- a callable object `f` (function, functor, ...) together with 
-- acquaintance arguments `a...` and `kw...` (keyword arguments) to it. 
+Both approaches are interchangeable.
+
+## Functional Approach
+
+Here we represent a behavior as a [`Bhv`](@ref) containing
+
+- a function `f` together with 
+- acquaintance arguments `a...` and `kw...` (keyword arguments) to it.
 
 From those a `Bhv` creates a partial function (a closure) `ϕ(a...; kw...)` which then can be executed with the communication arguments `c...`:
 
@@ -44,13 +51,11 @@ func(c...)                    # execute func with them
 f(a..., c...; kw...)          # this is how f gets dispatched
 ```
 
-The acquaintance (or partial) arguments can constrain the behavior function `f` to work with e.g. given values, a certain database, a state variable, a user request ... 
+## Object-oriented Approach
 
-## [Behavior Dispatch](@id dispatch)
+...
 
-On a message, an actor composes its partial arguments with the newly received ones and dispatches the behavior function. The arguments are composed from left to right, first the partial arguments, then the received ones.
-
-## Setting and changing behavior
+## Setting and Changing Behavior
 
 An actor's behavior is set with [`spawn`](@ref) and gets changed with [`become!`](@ref). Inside a behavior function an actor can change its own behavior with [`become`](@ref). In both cases a callable object together with acquaintance arguments can be specified as new behavior. This is  effective when the next message gets processed.
 

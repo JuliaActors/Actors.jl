@@ -1,34 +1,72 @@
-# Message Protocol
+# Actor Protocols
 
 ```@meta
 CurrentModule = Actors
 ```
 
-Actors can be called, updated, queried … To do it they follow an internal message protocol.
+`Actors` introduces predefined [messages](messages.md) with [`onmessage`](@ref) methods for them. This is a protocol with predefined behaviors for your actors. It allows you to control and to do all sorts of things with them.
 
-## Internal Messages
+## Actor Control
 
-The [API](api.md)-functions are mostly using those messages:
+Actors can be controlled with the following functions:
 
-```@docs
-Become
-Call
-Cast
-Diag
-Exit
-Exec
-Init
-Query
-Term
-Timeout
-Update
+- [`become!`](@ref): cause an actor to switch its behavior,
+- [`cast`](@ref): cause an actor to execute its behavior function,
+- [`exit!`](@ref): cause an actor to terminate,
+- [`init!`](@ref): tell an actor to execute a function at startup,
+- [`term!`](@ref): tell an actor to execute a function when it terminates,
+- [`update!`](@ref): update an actor's internal state.
+
+Those functions are wrappers to the message [protocol](protocol.md) and to [`send`](@ref).
+
+Actors can also operate on themselves, or rather they send messages to themselves:
+
+- [`become`](@ref): an actor switches its own behavior,
+- [`self`](@ref): an actor gets a link to itself,
+- [`stop`](@ref): an actor stops.
+
+## Bidirectional Messages
+
+What if you want to receive a reply from an actor? Then there are two possibilities:
+
+1. [`send`](@ref) a message to an actor and then [`receive`](@ref) the [`Response`](@ref) asynchronously,
+2. [`request`](@ref): send a message to an actor, **block** and receive the result synchronously.
+
+The following functions do this for specific duties:
+
+- [`call`](@ref) an actor to execute its behavior function and to send the result,
+- [`exec`](@ref): tell an actor to execute a function and to send the result,
+- [`query`](@ref) tell an actor's to send one of its internal state variables.
+
+If you provide those functions with a return link, they will use [`send`](@ref) and you can then [`receive`](@ref) the [`Response`](@ref) from the return link later. If you 
+don't provide a return link, they will use [`request`](@ref) to block and return the result. Note that you should not use blocking when you need to be strictly responsive.
+
+## Using the API
+
+The [API](api.md) functions allow to work with actors without using messages explicitly:
+
+```@repl actors
+using Actors, .Threads
+import Actors: spawn
+act4 = spawn(Bhv(+, 4))       # start an actor adding to 4
+exec(act4, Bhv(threadid))    # ask it its threadid
+cast(act4, 4)                 # cast it 4
+query(act4, :res)              # query the result
+become!(act4, *, 4);           # switch the behavior to *
+call(act4, 4)                 # call it with 4
+exec(act4, Bhv(broadcast, cos, pi .* (-2:2))) # tell it to exec any function
+Actors.diag(act4)              # check it
+exit!(act4)                    # stop it
+act4.chn.state
+Actors.diag(act4)              # try to check it again
 ```
 
-## User extensions
+## Enhancing the Protocol
 
-There are four ways to extend the messaging protocol and the functionality of `Actors`:
+Actor protocols can be enhanced or altered by
 
-1. If a user defines its own messages of type [`Msg`](@ref) and sends them to an actor, it passes them on as remaining argument to the behavior function.
-2. Alternatively a user can extend [`Actors.onmessage`](@ref onmessage) with his own methods to dispatch on those messages and doing user defined things.
-3. A user can set the actor mode with [`spawn`](@ref) or change it with [`update!`](@ref) to something other than `:default`, e.g. `:mymode`. If he then implements a method `Actors.onmessage(A::_ACT, ::Val{:mymode}, msg::Call)` and so on, the actor will dispatch that one when it receives a `Call` message.
-4. Finally a user can implement other message types and messaging protocols and extend `Actors.onmessage` for dispatching on those.
+- introducing new messages and onmessage methods,
+- switching the actor mode and writing new onmessage methods for existing messages
+- or both.
+
+

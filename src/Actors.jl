@@ -6,6 +6,25 @@
     Actors
 
 A Julia library implementing the classical Actor Model.
+`Actors` is based on the interface defined in
+`ActorInterfaces.Classic`. It implements
+
+- basic primitives for creating actors,
+    sending messages to them and changing behavior:
+    [`spawn`](@ref), [`send`](@ref), [`become`](@ref) 
+    with `Addr` and [`self`](@ref),
+- [`onmessage`](@ref), executed by 
+    an actor on a received message,
+- a `Msg` message protocol with `onmessage` and 
+    predefined messages,
+- an actor API based on the protocol with primitives
+    [`receive`](@ref) and [`request`](@ref) and further 
+    API functions [`become!`](@ref), [`call`](@ref), 
+    [`cast`](@ref), [`exec`](@ref), [`exit!`](@ref), 
+    [`init!`](@ref), [`query`](@ref), [`term!`](@ref), 
+    [`update!`](@ref),
+- actor tasks with [`async`](@ref) and [`await`](@ref),
+- an actor registry and more.
 
 The current stable, registered version is installed with
 ```julia
@@ -40,7 +59,7 @@ include("diag.jl")
 
 export  
     # common types
-    Msg, Request, Response, Link, Bhv, AbstractBehavior,
+    Msg, Request, Response, Link, Bhv,
     # -------------------------------
     # exported interface primitives
     send,  

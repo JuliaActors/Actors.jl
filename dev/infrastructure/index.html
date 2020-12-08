@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Infrastructure · Actors.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">Actors.jl</span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../intro/">Introduction</a></li><li><a class="tocitem" href="../basics/">Basics</a></li><li><a class="tocitem" href="../actors/">Actors</a></li><li><a class="tocitem" href="../behaviors/">Behaviors</a></li><li><a class="tocitem" href="../protocol/">Protocol</a></li><li class="is-active"><a class="tocitem" href>Infrastructure</a><ul class="internal"><li><a class="tocitem" href="#Actor-Tasks"><span>Actor Tasks</span></a></li><li><a class="tocitem" href="#Actor-Registry"><span>Actor Registry</span></a></li><li><a class="tocitem" href="#Actor-Supervision"><span>Actor Supervision</span></a></li></ul></li><li><a class="tocitem" href="../api/">Actor API</a></li><li><a class="tocitem" href="../examples/">Examples</a></li><li><span class="tocitem">Internals</span><ul><li><a class="tocitem" href="../messages/">Messages</a></li><li><a class="tocitem" href="../interface/">Interface</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Infrastructure</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Infrastructure</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaActors/Actors.jl/blob/master/docs/src/infrastructure.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Infrastructure"><a class="docs-heading-anchor" href="#Infrastructure">Infrastructure</a><a id="Infrastructure-1"></a><a class="docs-heading-anchor-permalink" href="#Infrastructure" title="Permalink"></a></h1><h2 id="Actor-Tasks"><a class="docs-heading-anchor" href="#Actor-Tasks">Actor Tasks</a><a id="Actor-Tasks-1"></a><a class="docs-heading-anchor-permalink" href="#Actor-Tasks" title="Permalink"></a></h2><p>Actor tasks execute one computation, mostly without communicating with other actors. They can be used to compute values asynchronously.</p><p>You can start actor tasks with <a href="../api/#Actors.async"><code>async</code></a> and get their result with <a href="../api/#Actors.await"><code>await</code></a>.</p><pre><code class="language-julia-repl">julia&gt; t = async(Bhv(^, 123, 456));
+ERROR: UndefVarError: Bhv not defined
+
+julia&gt; await(t)
+ERROR: UndefVarError: await not defined</code></pre><h2 id="Actor-Registry"><a class="docs-heading-anchor" href="#Actor-Registry">Actor Registry</a><a id="Actor-Registry-1"></a><a class="docs-heading-anchor-permalink" href="#Actor-Registry" title="Permalink"></a></h2><p>If a parent actor or worker process creates a new actor, the link to it is only locally known. It has to be sent to all other actors that want to communicate with it.</p><p>Alternatively an actor link can be registered under a name (a <code>Symbol</code>). Then any actor in the system can communicate with it using that name.</p><pre><code class="language-julia">julia&gt; using Actors, Distributed
+
+julia&gt; import Actors: spawn
+
+julia&gt; addprocs(1);
+
+julia&gt; @everywhere using Actors
+
+julia&gt; @everywhere function ident(id, from)
+           id == from ?
+               (&quot;local actor&quot;,  id, from) :
+               (&quot;remote actor&quot;, id, from)
+       end
+
+julia&gt; register(:act1, spawn(Bhv(ident, 1))) # a registered local actor
+true
+
+julia&gt; call(:act1, myid())                   # call it
+(&quot;local actor&quot;, 1, 1)
+
+julia&gt; register(:act2, spawn(Bhv(ident, 2), pid=2)) # a registered remote actor on pid 2
+true
+
+julia&gt; call(:act2, myid())                   # call it
+(&quot;remote actor&quot;, 2, 1)
+
+julia&gt; fetch(@spawnat 2 call(:act1, myid())) # call :act1 on pid 2
+(&quot;remote actor&quot;, 1, 2)
+
+julia&gt; fetch(@spawnat 2 call(:act2, myid())) # call :act2 on pid 2
+(&quot;local actor&quot;, 2, 2)
+
+julia&gt; whereis(:act1)                         # get a link to :act1
+Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
+
+julia&gt; whereis(:act2)                         # get a link to :act2
+Link{RemoteChannel{Channel{Any}}}(RemoteChannel{Channel{Any}}(2, 1, 16), 2, :default)
+
+julia&gt; fetch(@spawnat 2 whereis(:act1))       # get a link to :act1 on pid 2
+Link{RemoteChannel{Channel{Any}}}(RemoteChannel{Channel{Any}}(1, 1, 40), 1, :default)
+
+julia&gt; registered()                           # get a list of registered actors
+2-element Array{Pair{Symbol,Link},1}:
+ :act2 =&gt; Link{RemoteChannel{Channel{Any}}}(RemoteChannel{Channel{Any}}(2, 1, 16), 2, :default)
+ :act1 =&gt; Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
+
+julia&gt; fetch(@spawnat 2 registered())         # get it on pid 2
+2-element Array{Pair{Symbol,Link{RemoteChannel{Channel{Any}}}},1}:
+ :act2 =&gt; Link{RemoteChannel{Channel{Any}}}(RemoteChannel{Channel{Any}}(2, 1, 16), 2, :default)
+ :act1 =&gt; Link{RemoteChannel{Channel{Any}}}(RemoteChannel{Channel{Any}}(1, 1, 46), 1, :default)</code></pre><p>The registry works transparently across workers. All workers have access to registered actors on other workers via remote links.</p><h2 id="Actor-Supervision"><a class="docs-heading-anchor" href="#Actor-Supervision">Actor Supervision</a><a id="Actor-Supervision-1"></a><a class="docs-heading-anchor-permalink" href="#Actor-Supervision" title="Permalink"></a></h2><p>...</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../protocol/">« Protocol</a><a class="docs-footer-nextpage" href="../api/">Actor API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Tuesday 8 December 2020 21:05">Tuesday 8 December 2020</span>. Using Julia version 1.5.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

@@ -49,7 +49,10 @@ end
 _current(p::Bhv) = Bhv(p.f, p.a...; p.kw...)
 
 """
-    Link{C}(chn::C, pid::Int, type::Symbol)
+```
+Link{C} <: ActorInterfaces.Classic.Addr
+Link(chn::C, pid::Int, type::Symbol) where C
+```
 
 A mailbox for communicating with actors. A concrete type of
 this must be returned by an actor on creation with [`spawn`](@ref).
@@ -57,7 +60,7 @@ this must be returned by an actor on creation with [`spawn`](@ref).
 # Fields/Parameters
 - `chn::C`: C can be any type and characterizes the interface
     to an actor,
-- `pid::Int`: the pid of the actor, 
+- `pid::Int`: the pid (worker process identifier) of the actor, 
 - `mode::Symbol`: a symbol characterizing the actor mode.
 """
 mutable struct Link{C} <: Addr
@@ -68,29 +71,29 @@ end
 
 """
 ```
-_ACT{T}
+_ACT
 ```
 Internal actor status variable.
 
 # Fields
 
 1. `mode::Symbol`: the actor mode,
-2. `bhv::T` : the behavior function and its internal arguments,
-3. `init::T`: the init function and its arguments,
-4. `term::T`: the terminate function and its arguments,
-5. `self::Addr`: the actor's (local or remote) self,
-6. `name::Symbol`: the actor's registered name.
+2. `bhv::AbstractBehavior`: a partial function or a function object,
+3. `init::Union{Nothing,Function}`: the init function and its arguments,
+4. `term::Union{Nothing,Function}`: the terminate function and its arguments,
+5. `self::Link`: the actor's address,
+6. `name::Union{Nothing,Symbol}`: the actor's registered name.
 7. `res::Any`: the result of the last behavior execution,
 8. `sta::Any`: a variable for representing state,
 9. `usr::Any`: user variable for plugging in something.
 
 see also: [`Bhv`](@ref), [`Link`](@ref)
 """
-mutable struct _ACT{T}
+mutable struct _ACT
     mode::Symbol
-    bhv::T
-    init::Union{Nothing,T}
-    term::Union{Nothing,T}
+    bhv::Any
+    init::Union{Nothing,Function}
+    term::Union{Nothing,Function}
     self::Union{Nothing,Link}
     name::Union{Nothing,Symbol}
     res::Any
@@ -101,7 +104,7 @@ end
 """
     _ACT(mode=:default)
 
-Return a actor variable `_ACT{Bhv}`.
+Return a actor variable `_ACT`.
 """
 _ACT(mode=:default) = _ACT(mode, Bhv(+), fill(nothing, 7)...)
 

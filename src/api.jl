@@ -13,13 +13,13 @@ Cause an actor to change behavior.
 
 # Arguments
 - actor `lk::Link` (or `name::Symbol` if registered),
-- `bhv`: [`Bhv`](@ref) implementing the new behavior,
+- `bhv`: a [`Bhv`](@ref) or a functor implementing the new behavior,
 - `func`: callable object,
 - `args1...`: (partial) arguments to `func`,
 - `kwargs...`: keyword arguments to `func`.
 """
-become!(lk::Link, bhv::Bhv) = send(lk, Become(bhv))
-become!(lk::Link, func, args...; kwargs...) = become!(lk, Bhv(func, args...; kwargs...))
+become!(lk::Link, bhv) = send(lk, Become(bhv))
+become!(lk::Link, func::F, args...; kwargs...) where F<:Function = become!(lk, Bhv(func, args...; kwargs...))
 become!(name::Symbol, args...; kwargs...) = become!(whereis(name), args...; kwargs...)
 
 """

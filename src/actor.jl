@@ -8,15 +8,35 @@ _terminate!(A::_ACT, reason) = !isnothing(A.term) && A.term.f((A.term.args..., r
 #
 # default dispatch on Any, this is the 1st actor layer 
 # analog to the classical Actor Model
-# 
-"""
-    onmessage(A::_ACT, msg)
+#
 
-An actor executes this function when a message arrives.
-An application can extend this by further methods and must
-use it to plugin the `Actors.jl` API.
 """
-onmessage(A::_ACT, msg) = (A.res = A.bhv(msg...))
+    onmessage(bhv, msg...)
+
+Default behavior function to execute the current actor 
+behavior `bhv` with the message `msg`. The actor calls
+`bhv(msg)` when a message arrives. 
+
+# Parameters
+- `bhv`: excutable object (closure or functor) taking
+    parameters `msg`,
+- `msg`: message parameters to `bhv`.
+"""
+Classic.onmessage(bhv, msg...) = bhv(msg...)
+
+"""
+```
+onmessage(A::_ACT, msg)
+onmessage(A::_ACT, mode, msg)
+```
+An actor executes this function when a message arrives.
+
+Actor libraries or applications can use this to
+
+- plugin the `Actors.jl` API (first form) or
+- extend it to other protocols by using the 2nd form.
+"""
+Classic.onmessage(A::_ACT, msg) = (A.res = A.bhv(msg...))
 
 # 
 # the 2nd actor layer is realized by the Msg protocol 
@@ -30,7 +50,7 @@ onmessage(A::_ACT, msg) = (A.res = A.bhv(msg...))
 # If no such methods are implemented it defaults to the
 # 1st and 2nd layer.
 #
-onmessage(A::_ACT, mode, msg) = onmessage(A, msg) 
+Classic.onmessage(A::_ACT, mode, msg) = onmessage(A, msg) 
 
 #
 # this is the actor loop
@@ -56,19 +76,20 @@ spawn(m::Val(:Actors), args...; kwargs...)
 spawn(m::Module, args...; kwargs...)
 ```
 
-Start a function `bhv` as an actor and return a [`Link`](@ref)
+Create an actor with a behavior `bhv` and return a [`Link`](@ref)
 to it.
 
 # Parameters
 
-- `bhv::Bhv`: behavior function,
+- `bhv`: behavior, callable object (closure or functor)
+    to execute when a message arrives,
 - `pid=myid()`: pid of worker process the actor should be started on,
 - `thrd=false`: thread number the actor should be started on or `false`,
 - `sticky=false`: if `true` the actor is started on the current thread,
 - `taskref=nothing`: if a `Ref{Task}()` is given here, it gets the started `Task`,
 - `mode=:default`: mode, the actor should operate in.
 """
-function spawn(bhv::Bhv; pid=myid(), thrd=false, sticky=false, taskref=nothing, mode=:default)
+function Classic.spawn(bhv; pid=myid(), thrd=false, sticky=false, taskref=nothing, mode=:default)
     if pid == myid()
         lk = newLink(32)
         if thrd > 0 && thrd in 1:nthreads()
@@ -103,7 +124,7 @@ end
 
 Get the [`Link`](@ref) of your actor.
 """
-self() = task_local_storage("_ACT").self
+Classic.self() = task_local_storage("_ACT").self
 # 
 # Note: a reference to the actor's status variable must be
 #       available as task_local_storage("_ACT") for this to 
@@ -112,7 +133,7 @@ self() = task_local_storage("_ACT").self
 
 """
 ```
-become(bhv::Bhv)
+become(bhv)
 become(func, args...; kwargs...)
 ```
 
@@ -120,16 +141,16 @@ Cause your actor to take on a new behavior. This can only be
 called from inside an actor/behavior.
 
 # Arguments
-- `bhv::Bhv`: [`Bhv`](@ref) implementing the new behavior,
+- `bhv`: [`Bhv`](@ref) implementing the new behavior,
 - `func`: callable object,
 - `args1...`: (partial) arguments to `func`,
 - `kwargs...`: keyword arguments to `func`.
 """
-function become(bhv::Bhv)
+function Classic.become(bhv)
     act = task_local_storage("_ACT")
     act.bhv = bhv
 end
-become(func, args...; kwargs...) = become(Bhv(func, args...; kwargs...))
+Classic.become(func, args...; kwargs...) = become(Bhv(func, args...; kwargs...))
 # 
 # Note: a reference to the actor's status variable must be
 #       available as task_local_storage("_ACT") for this to 

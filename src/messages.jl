@@ -6,13 +6,13 @@
 # those are the internal messages
 
 """
-    Become(x::Bhv)
+    Become(bhv)
 
 An asynchronous [`Msg`](@ref) to an actor to change its 
-behavior.
+behavior to `bhv`.
 """
 struct Become <: Msg
-    x::Bhv
+    x
 end
 
 """

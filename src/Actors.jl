@@ -20,11 +20,12 @@ pkg> add "https://github.com/JuliaActors/Actors.jl"
 module Actors
 
 "Gives the package version."
-const version = v"0.1.7"
+const version = v"0.1.8"
 
+using ActorInterfaces.Classic
 using Distributed, .Threads
+import ActorInterfaces.Classic: onmessage
 
-include("interface.jl")
 include("types.jl")
 include("messages.jl")
 include("links.jl")
@@ -39,7 +40,7 @@ include("diag.jl")
 
 export  
     # common types
-    Msg, Request, Response, Link, Bhv,
+    Msg, Request, Response, Link, Bhv, AbstractBehavior,
     # -------------------------------
     # exported interface primitives
     send,  

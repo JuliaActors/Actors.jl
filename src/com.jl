@@ -33,9 +33,9 @@ end
     send(lk::Link, msg)
 Send a message to an actor.
 """
-send(lk::Link, msg::Msg) = _send!(lk.chn, msg)
-send(lk::Link, msg...) = _send!(lk.chn, msg)
-send(name::Symbol, msg...) = _send!(whereis(name).chn, msg...)
+Classic.send(lk::Link, msg::Msg) = _send!(lk.chn, msg)
+Classic.send(lk::Link, msg...) = _send!(lk.chn, msg)
+Classic.send(name::Symbol, msg...) = _send!(whereis(name).chn, msg...)
 
 _match(msg::Msg, ::Nothing, ::Nothing) = true
 _match(msg::Msg, M::Type{<:Msg}, ::Nothing) = msg isa M

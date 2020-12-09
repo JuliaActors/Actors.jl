@@ -14,7 +14,7 @@ Cause an actor to change behavior.
 # Arguments
 - actor `lk::Link` (or `name::Symbol` if registered),
 - `bhv`: a [`Bhv`](@ref) or a functor implementing the new behavior,
-- `func`: callable object,
+- `func::Function`: a function,
 - `args1...`: (partial) arguments to `func`,
 - `kwargs...`: keyword arguments to `func`.
 """

@@ -3,18 +3,16 @@
 # MIT license, part of https://github.com/JuliaActors
 #
 """
-    Actors
-
-A Julia library implementing the classical Actor Model.
-`Actors` is based on the interface defined in
-`ActorInterfaces.Classic`. It implements
+`Actors` implements the classical Actor Model and is 
+based on the interface defined in `ActorInterfaces.Classic`. 
+It provides
 
 - basic primitives for creating actors,
     sending messages to them and changing behavior:
     [`spawn`](@ref), [`send`](@ref), [`become`](@ref) 
     with `Addr` and [`self`](@ref),
-- [`onmessage`](@ref), executed by 
-    an actor on a received message,
+- [`onmessage`](@ref), executed by an actor on a 
+    received message,
 - a `Msg` message protocol with `onmessage` and 
     predefined messages,
 - an actor API based on the protocol with primitives

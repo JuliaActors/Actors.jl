@@ -4,8 +4,6 @@
 CurrentModule = Actors
 ```
 
-## Installation
-
 ```@docs
 Actors
 Actors.version
@@ -16,7 +14,7 @@ using Actors
 Actors.version
 ```
 
-## Types
+## Basic Types
 
 The following types are needed for using and extending `Actors`:
 

@@ -17,6 +17,7 @@ makedocs(
             "Behaviors" => "behaviors.md",
             "Protocol" => "protocol.md",
             "Infrastructure" => "infrastructure.md",
+            "Glossary" => "glossary.md"
             ],
         "API" => "api.md",
         "Examples" => "examples.md",

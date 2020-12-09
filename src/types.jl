@@ -47,6 +47,7 @@ end
 # It returns a Bhv for the current world age.
 # 
 _current(p::Bhv) = Bhv(p.f, p.a...; p.kw...)
+_current(x) = x
 
 """
 ```

@@ -4,7 +4,7 @@
 CurrentModule = Actors
 ```
 
-The Actor Model was originally proposed by Carl Hewitt et. al. in the 70es and since then has evolved into different families [^1]. We focus here on the *classical Actor Model* described by Gul Agha [^2]:
+The Actor Model was originally proposed by Carl Hewitt et. al. in the 70es and since then has evolved into different families [^1]. We focus here on the *classical Actor Model* described by Gul Agha in Actors [^2].
 
 ## Actor Model
 

@@ -10,8 +10,8 @@
 
 `Actors` uses Julia's concurrency primitives and enhances its capabilities for concurrent computing.
 
-It can interface with other actor libraries and can be extended by other libraries by actor protocols.
+It can interface with other actor libraries and can be extended by them using actor protocols.
 
-Actors is in active development. If you want to contribute, please join  [`JuliaActors`](https://github.com/JuliaActors).
+`Actors` is in active development. If you want to contribute, please join [`JuliaActors`](https://github.com/JuliaActors).
 
 [^1]: See the Wikipedia entry on the [Actor Model](https://en.wikipedia.org/wiki/Actor_model).

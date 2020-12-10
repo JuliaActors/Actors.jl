@@ -2,7 +2,7 @@
 
 Concurrent computing in Julia based on the Actor Model
 
-[![stable docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliahub.com/docs/Actors)
+[![stable docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliaactors.github.io/Actors.jl/stable/)
 [![dev docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaActors.github.io/Actors.jl/dev)
 ![CI](https://github.com/JuliaActors/Actors.jl/workflows/CI/badge.svg)
 [![Coverage](https://codecov.io/gh/JuliaActors/Actors.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaActors/Actors.jl)

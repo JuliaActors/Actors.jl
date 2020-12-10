@@ -36,7 +36,7 @@ Actor libraries or applications can use this to
 - plugin the `Actors.jl` API (first form) or
 - extend it to other protocols by using the 2nd form.
 """
-Classic.onmessage(A::_ACT, msg) = (A.res = A.bhv(msg...))
+Classic.onmessage(A::_ACT, msg) = (A.res = Base.invokelatest(A.bhv, msg...))
 
 # 
 # the 2nd actor layer is realized by the Msg protocol 
@@ -134,15 +134,15 @@ Classic.self() = task_local_storage("_ACT").self
 """
 ```
 become(bhv)
-become(func, args...; kwargs...)
+become(func::F, args...; kwargs...) where F<:Function
 ```
 
 Cause your actor to take on a new behavior. This can only be
 called from inside an actor/behavior.
 
 # Arguments
-- `bhv`: [`Bhv`](@ref) implementing the new behavior,
-- `func`: callable object,
+- `bhv`: a callable object implementing the new behavior,
+- `func::F`: callable object,
 - `args1...`: (partial) arguments to `func`,
 - `kwargs...`: keyword arguments to `func`.
 """
@@ -150,7 +150,11 @@ function Classic.become(bhv)
     act = task_local_storage("_ACT")
     act.bhv = bhv
 end
-Classic.become(func, args...; kwargs...) = become(Bhv(func, args...; kwargs...))
+function Classic.become(func::F, args...; kwargs...) where F<:Function
+    isempty(args) && isempty(kwargs) ?
+        task_local_storage("_ACT").bhv = func :
+        become(Bhv(func, args...; kwargs...))
+end
 # 
 # Note: a reference to the actor's status variable must be
 #       available as task_local_storage("_ACT") for this to 

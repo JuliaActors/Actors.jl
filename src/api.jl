@@ -19,7 +19,11 @@ Cause an actor to change behavior.
 - `kwargs...`: keyword arguments to `func`.
 """
 become!(lk::Link, bhv) = send(lk, Become(bhv))
-become!(lk::Link, func::F, args...; kwargs...) where F<:Function = become!(lk, Bhv(func, args...; kwargs...))
+function become!(lk::Link, func::F, args...; kwargs...) where F<:Function 
+    isempty(args) && isempty(kwargs) ?
+        send(lk, Become(func)) : 
+        become!(lk, Bhv(func, args...; kwargs...))
+end
 become!(name::Symbol, args...; kwargs...) = become!(whereis(name), args...; kwargs...)
 
 """

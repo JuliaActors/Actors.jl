@@ -45,7 +45,7 @@ bhv(1, 1)                      # execute it with communication parameters
 
 ## Object-oriented Style
 
-Alternatively we put the acquaintance parameters in an object which we can make executable (a [functor](https://en.wikipedia.org/wiki/Function_object)) with communication parameters:
+Alternatively we put the acquaintance parameters in an object which we make executable (e.g. a [functor](https://en.wikipedia.org/wiki/Function_object)) with communication parameters:
 
 ```@repl
 struct Acqu                    # define an object with acquaintances
@@ -55,6 +55,23 @@ end
 bhv = Acqu(1,1,2,2)            # create an instance
 bhv(1,1)                       # execute it with communication parameters
 ```
+
+## Freestyle
+
+With being callable the only hard requirement for a behavior, you can pass anything callable as behavior to an actor regardless whether it contains acquaintances or not:
+
+```@repl
+using Actors, .Threads
+import Actors: spawn, newLink
+myactor = spawn(threadid)                     # a parameterless function
+call(myactor)
+become!(myactor, (lk, x, y) -> send(lk, x^y)) # an anonymous function with communication arguments
+me = newLink()
+send(myactor, me, 123, 456)
+receive(me)
+```
+
+Of course you can give objects containing acquaintances as parameters to a function and create a partial application with `Bhv` on them and much more. Be my guest!
 
 ## Agha's Stack example
 
@@ -118,6 +135,10 @@ julia> for i ∈ 1:5
 ## Setting and Changing Behavior
 
 An actor's behavior is set with [`spawn`](@ref) and gets changed with [`become!`](@ref). Inside a behavior function an actor can change its own behavior with [`become`](@ref). In both cases a callable object together with acquaintance arguments can be specified as new behavior. This is effective when the next message gets processed.
+
+## Be Careful with Mutable Variables
+
+As you have seen, you are very free in how you define behaviors, but you must be very careful in passing mutable variables as acquaintances to actors as they could be accessed by other actors on other threads concurrently causing race conditions. If that's the case, you can wrap mutable variables into a [`:guard`](https://github.com/JuliaActors/Guards.jl) actor, which will manage access to them. 
 
 [^1]: see the [Actor Model](https://en.wikipedia.org/wiki/Actor_model#Behaviors) on Wikipedia.
 [^2]: Gul Agha 1986. *Actors. a model of concurrent computation in distributed systems*, MIT.- p. 30

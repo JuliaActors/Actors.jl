@@ -37,7 +37,7 @@ Classic.send(lk::Link, msg::Msg) = _send!(lk.chn, msg)
 Classic.send(lk::Link, msg...) = _send!(lk.chn, msg)
 Classic.send(name::Symbol, msg...) = _send!(whereis(name).chn, msg...)
 
-_match(msg::Msg, ::Nothing, ::Nothing) = true
+_match(msg, ::Nothing, ::Nothing) = true
 _match(msg::Msg, M::Type{<:Msg}, ::Nothing) = msg isa M
 _match(msg::Msg, ::Nothing, from::Link) =
     :from in fieldnames(typeof(msg)) ? msg.from == from : false
@@ -107,7 +107,8 @@ function receive(lk::L1, M::MT, from::L2;
         push!(stash, take!(lk.chn))
     end
     foreach(x->put!(lk.chn, x), stash)
-    return msg
+    return applicable(length, msg) ?
+        length(msg) == 1 ? first(msg) : msg : msg
 end
 
 """

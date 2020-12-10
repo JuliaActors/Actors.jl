@@ -10,7 +10,8 @@ Actor tasks execute one computation, mostly without communicating with other act
 
 You can start actor tasks with [`async`](@ref) and get their result with [`await`](@ref).
 
-```@repl actors
+```@repl
+using Actors
 t = async(Bhv(^, 123, 456));
 await(t)
 ```

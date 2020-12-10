@@ -71,9 +71,8 @@ end
 
 """
 ```
-spawn(bhv::Bhv; pid=myid(), thrd=false, sticky=false, taskref=nothing, mode=:default)
-spawn(m::Val(:Actors), args...; kwargs...)
-spawn(m::Module, args...; kwargs...)
+spawn(bhv; pid=myid(), thrd=false, sticky=false, taskref=nothing, mode=:default)
+spawn(f, args...; kwargs...)
 ```
 
 Create an actor with a behavior `bhv` and return a [`Link`](@ref)
@@ -83,6 +82,8 @@ to it.
 
 - `bhv`: behavior, callable object (closure or functor)
     to execute when a message arrives,
+- `f`: a function,
+- `args...`: (partial) arguments to it,
 - `pid=myid()`: pid of worker process the actor should be started on,
 - `thrd=false`: thread number the actor should be started on or `false`,
 - `sticky=false`: if `true` the actor is started on the current thread,
@@ -118,6 +119,7 @@ function Classic.spawn(bhv; pid=myid(), thrd=false, sticky=false, taskref=nothin
     become!(lk, bhv)
     return lk
 end
+Classic.spawn(f::F, args...; kwargs...) where F<:Function = spawn(Bhv(f, args...); kwargs...)
 
 """
     self()

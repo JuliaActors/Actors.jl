@@ -11,13 +11,14 @@ makedocs(
     pages = [
         "Actors Documentation" => "index.md",
         "Manual" => [
-            "Getting started" => "intro.md",
-            "Basics" => "basics.md",
-            "Actors" => "actors.md",
-            "Behaviors" => "behaviors.md",
-            "Protocol" => "protocol.md",
-            "Infrastructure" => "infrastructure.md",
-            "Glossary" => "glossary.md"
+            "intro.md",
+            "basics.md",
+            "behaviors.md",
+            "actors.md",
+            "protocol.md",
+            "errors.md",
+            "infrastructure.md",
+            "glossary.md"
             ],
         "API" => "api.md",
         "Examples" => "examples.md",

@@ -1,14 +1,12 @@
-# Actor Basics
+# Actor Model
 
 ```@meta
 CurrentModule = Actors
 ```
 
-The Actor Model was originally proposed by Carl Hewitt et. al. in the 70es and since then has evolved into different families [^1]. We focus here on the *classical Actor Model* described by Gul Agha in Actors [^2].
+The Actor Model was originally proposed by Carl Hewitt et. al. in the 70es and since then has evolved into different families [^1]. 
 
-## Actor Model
-
-The Actor Model of computer science sees an *actor* as the universal primitive of concurrent computation:
+We focus here on the *classical Actor Model* described by Gul Agha in Actors [^2]. This sees an *actor* as the universal primitive of concurrent computation:
 
 > An actor is a computational entity that, in response to a message it receives, can concurrently:
 >
@@ -49,6 +47,9 @@ The actor machinery is based on only a few basic primitives defined in [`ActorIn
 A user can write actor programs using only those basic primitives. If `onmessage` method definitions are marked with `@ctx`, this injects a `ctx` (context) argument into calls to `self`, `spawn` ... This allows a program to work with different implementations of `ActorInterfaces.Classic`.
 
 `Actors` provides methods for those primitives and extends them with further functionality. On a basic level `Actors` is compatible with other libraries by building on the same basic interface.
+
+## A Classic Example
+
 
 [^1]: De Koster, Van Cutsem, De Meuter 2016. *[43 Years of Actors](http://soft.vub.ac.be/Publications/2016/vub-soft-tr-16-11.pdf): A Taxonomy of Actor Models and Their Key Properties*.
 [^2]: Gul Agha 1986. *Actors. a model of concurrent computation in distributed systems*, MIT

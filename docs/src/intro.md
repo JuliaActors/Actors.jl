@@ -3,30 +3,34 @@ CurrentModule = Actors
 ```
 # Getting Started with Actors
 
-You may have heard about the Actor Model, but here we present actors as a very practical thing, which you can `spawn`, `send` messages to, `receive` or `request` messages from, `call` them, `cast` to them, `query` and `update!` them. Please follow along in your Julia REPL and don't hesitate to try things out.
+You may have heard about the Actor Model, but here we present actors as practical things, which you can `spawn`, `send` messages to, `receive` or `request` messages from, `call`, `cast` to them, `query` and `update!` them. Please follow along in your Julia REPL and don't hesitate to try things out.
 
-## `spawn`
+## Creation: `spawn`
 
-The basic mechanism to create new actors is the [`spawn`](@ref) function. You have to import it explicitly:
+The basic mechanism to *create* a new actor is the [`spawn`](@ref) function. You have to import it explicitly:
 
 ```@repl intro
 using Actors
 import Actors: spawn, newLink
 ```
 
-You then can `spawn` actors with any callable Julia object. This is called a [behavior](behaviors.md) function.
+You `spawn` an actor with a *behavior*. A behavior is a callable Julia object.
 
 ```@repl intro
 myactor = spawn(Threads.threadid)
 ```
 
-`spawn` returned an actor [`Link`](@ref). This is the actor's mail address and its only representation. You can use it to send messages to it or to call it. If you call it, it executes its behavior and responds with the result:
+`spawn` returned an actor *link*.
+
+## Actor `Link`s
+
+A [`Link`](@ref) is the actor's mail address and its only representation. Over the returned link it is possible to *send* messages to the actor or to use other messaging functions. For example if you `call` or `request` it, you `send` a `Call` or `Request` message to the actor to execute its behavior and to respond with the result:
 
 ```@repl intro
 call(myactor)
 ```
 
-Now currently our actor does only that: it responds its thread id until you send it a message which it cannot understand or you stop it.
+Now what happens if you `send` your actor a message which it cannot understand?
 
 ```@repl intro
 send(myactor, "Boom")
@@ -35,9 +39,9 @@ Actors.info(myactor)
 
 We caused our actor to fail. Ouch!
 
-## `become`
+## Behaviors: `become` and `become!`
 
-Now we want our actor to do something more meaningful. Let's write our own behavior function. We want a calculator actor sending the result of an arithmetic operation back to a given address:
+We want our actor to do something more meaningful! Let's write our own behavior. We want our actor to calculate something and to `send` the result back to a given address:
 
 ```@repl intro
 function calc(addr::Link, f::Function, args...)
@@ -45,14 +49,14 @@ function calc(addr::Link, f::Function, args...)
 end
 ```
 
-Now we create a link for ourselves and start a new actor with a `calc` behavior and that link as *acquaintance* parameter.
+With `newLink` we create a link for ourselves, `spawn` a new actor with a `calc` behavior and give it that newly created link as *acquaintance* parameter:
 
 ```@repl intro
 me = newLink()
 myactor = spawn(calc, me)
 ```
 
-We applied our `calc` function partially to `me`. Now our actor holds the `me` link as acquaintance and we need to `send` it only the rest of the parameters to cause it to do execute `f` on some parameters and to send the result back to `me`:
+We applied our `calc` function partially to `me`. Now our actor holds the `me` link as acquaintance and we need to `send` it only the rest of the parameters to cause it to execute the given function `f` on some parameters and to send the result back:
 
 ```@repl intro
 send(myactor, +, 1, 2, 3, 4)
@@ -65,7 +69,7 @@ If we want our actor to do only multiplication, we can change its behavior with 
 become!(myactor, calc, me, *);
 ```
 
-Now it does multiplication only and we can `send` it the communication parameters and `receive` the result:
+The actor's new behavior is `calc` with two acquaintances `me` and `*`, and thus it does multiplication only. As before we `send` it the communication parameters to multiply and `receive` the result:
 
 ```@repl intro
 send(myactor, 1,2,3,4)
@@ -74,11 +78,11 @@ receive(me)
 
 An actor can change also its own behavior with [`become`](@ref). Since an actor does what its behavior tells it to do, you use `become` inside a behavior function to cause the actor to switch to a new behavior. Instead `become!` is a call from the outside of an actor. A behavior change is effective for the next message an actor receives.
 
-## `send` and `receive`
+## Communication: `send` and `receive`
 
-When we used [`send`](@ref) and [`receive`](@ref) in our experiments so far, we did *asynchronous communication* with our actor. After sending something to it we could have done other work and receive the result later.
+When we used [`send`](@ref) and [`receive`](@ref) in our experiments so far, we did *asynchronous communication* with our actor. After sending something  we could have done other work and then receive the result later.
 
-But what happens if we try to `receive` something from a failed actor?
+What happens if we try to `receive` something from a failed actor?
 
 ```@repl intro
 send(myactor, 5, "x")
@@ -87,27 +91,31 @@ receive(me)
 
 After some seconds we got a `Timeout()`.
 
-## `request`
+## Synchronous Communication: `request`
 
-We don't give up with it and start it again, but now we want our actor to be an adding machine with an offset of 1000:
+We don't give up with it and start it again, but now we want an adding machine with an offset of 1000:
 
 ```@repl intro
 myactor = spawn(+, 1000)
 ```
 
-Now our actor has no acquaintance of `me` neither has its behavior any send instruction. If we `send` it something, it will only add to 1000 but not respond anything.
+Our actor now has no acquaintance of `me`, neither has its behavior any `send` instruction. If we send it something, it will only add that to 1000 but not respond anything.
 
-Now we can use [`request`](@ref). This will create a link internally and `send` it and the communication parameters with a [`Request`](@ref) to the actor. Then it knows that it must send a [`Response`](@ref) to the received link. `request` can then deliver the response:
+Here the *actor protocol* comes to our rescue. It allows us to communicate with actors even if their behaviors don't send anything. Actors understand messaging patterns.  For example if we send an actor a [`Request`](@ref), it knows that it must send a [`Response`](@ref) message.
+
+The [`request`](@ref) function is a wrapper for that. It will create a link internally and `send` it and the communication parameters as a `Request` to the actor. The actor sends a `Response` back to the received link and the `request` function then delivers the response:
 
 ```@repl intro
 request(myactor, 1,2,3)
 ```
 
-This is *synchronous communication*. `request` blocks until it `receive`s the result (or a `Timeout()`).
+This is *synchronous communication*. `request` **blocks** until it `receive`s the result (or a `Timeout()`).
 
-## `call`, `cast`, `query`, `update!` ...
+## More Control: `call`, `cast`, `exec`, `query`, `update!` ...
 
-Can we still do asynchronous communication with this actor? Yes we can, if we use [`call`](@ref) with the `me` link. This sends the given link to the actor and it responds to it. Then we can `receive` the result asynchronously:
+There are more such actor protocols and API functions. 
+
+We can do asynchronous communication with our actor if we use [`call`](@ref) with the `me` link. This sends the given link to the actor and it responds to it. Then we can `receive` the result asynchronously:
 
 ```@repl intro
 call(myactor, me, 1000)
@@ -120,17 +128,35 @@ If we don't provide a return link to `call`, it will use `request` and deliver t
 call(myactor, 2000)
 ```
 
-```@repl intro
-```
+Another possibility to communicate asynchronously with an actor is to [`cast`](@ref) it parameters and then to [`query`](@ref) the result afterwards.
 
 ```@repl intro
+cast(myactor, 3000)
+query(myactor, :res)
 ```
 
-```@repl intro
-```
+But this will work fine only if between those two calls to `myactor` there is not another actor communicating with it. If for example our actor has mutual variables as acquaintances, we can use `cast` to set parameters or to do anything else where we don't need a response.
+
+With [`exec`](@ref) we can tell an actor to execute any function and to deliver the result:
 
 ```@repl intro
+exec(myactor, broadcast, cos, pi .* (-2:2))
 ```
 
+Actors have internal state variables which we normally don't need to work with. We can [`update!`](@ref) those variables. One example for such a use is to `update!` the actor's current acquaintance parameter (1000) to 500. Then it adds to 500:
+
 ```@repl intro
+update!(myactor, Args(500))
+call(myactor, 500)
 ```
+
+But we could have achieved the same with `become!(myactor, +, 500)`.
+
+Finally we [`exit!`](@ref) the actor since we are finished with this introduction:
+
+```@repl intro
+exit!(myactor)
+send(myactor, 500)
+```
+
+Trying to `send` it something now throws an exception.

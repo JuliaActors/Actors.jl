@@ -4,6 +4,7 @@
 #
 
 function _send!(chn::Channel, msg)
+    Base.check_channel_state(chn)
     # reimplements Base.put_buffered with a modification
     lock(chn)
     try

@@ -62,9 +62,10 @@ cast(name::Symbol, args...) = cast(whereis(name), args...)
 
 """
 ```
-exec(lk::Link, from::Link, func, args...; kwargs...)
-exec(lk::Link, from::Link, f::Bhv)
-exec(lk::Link, f::Bhv; timeout::Real=5.0)
+exec(lk::Link, from::Link, f::Function, args...; kwargs...)
+exec(lk::Link, from::Link, func)
+exec(lk::Link, func; timeout::Real=5.0)
+exec(lk::Link, f::Function, args...; timeout::Real=5.0)
 exec(name::Symbol, ....)
 ```
 
@@ -76,6 +77,7 @@ arbitrary function and to send the returned value as
 - actor `lk::Link` or `name::Symbol` if registered,
 - `from::Link`: the link a `Response` should be sent to.
 - `func`: a callable object,
+- `f::Function`: a function,
 - `args...; kwargs...`: arguments and keyword arguments to it,
 - `fu::Bhv`: a [`Bhv`](@ref) with a callable object and
     its arguments,
@@ -85,11 +87,13 @@ arbitrary function and to send the returned value as
 **Note:** If `from` is ommitted, `exec` blocks, waits and 
 returns the result (with a `timeout`).
 """
-exec(lk::Link, from::Link, func, args...; kwargs...) =
+exec(lk::Link, from::Link, f::F, args...; kwargs...) where F<:Function =
     send(lk, Exec(Bhv(func, args...; kwargs...), from))
-exec(lk::Link, from::Link, fu::Bhv) = send(lk, Exec(fu, from))
-exec(lk::Link, f::Bhv; timeout::Real=5.0) =
-    request(lk, Exec, f; timeout=timeout)
+exec(lk::Link, from::Link, func) = send(lk, Exec(func, from))
+exec(lk::Link, func; timeout::Real=5.0) =
+    request(lk, Exec, func; timeout=timeout)
+exec(lk::Link, f::F, args...; timeout::Real=5.0) where F<:Function =
+    request(lk, Exec, Bhv(f, args...); timeout=timeout)
 exec(name::Symbol, args...; kwargs...) = exec(whereis(name), args...; kwargs...)
 
 """

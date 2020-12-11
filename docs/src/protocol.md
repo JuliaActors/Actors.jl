@@ -1,4 +1,4 @@
-# Actor Protocols
+# The `Actors` Protocol
 
 ```@meta
 CurrentModule = Actors

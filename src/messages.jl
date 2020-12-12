@@ -82,7 +82,7 @@ Exec(t::Tuple, from::Link) = Exec(first(t), from)
     Init(f::Bhv)
 
 A [`Msg`](@ref) to an actor to execute the given
-[`Bhv`](@ref) and to register it in the [`_ACT`](@ref)
+[`Bhv`](@ref) and to store it in the [`_ACT`](@ref)
 variable.
 """
 struct Init <: Msg

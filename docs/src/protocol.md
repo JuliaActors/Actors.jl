@@ -6,6 +6,24 @@ CurrentModule = Actors
 
 `Actors` has predefined [message types](messages.md) with respective [`onmessage`](@ref) methods. This gives your actors predefined behaviors going beyond the classical [behavior](behaviors.md). API functions provide an interface to that messaging protocol and facilitate actor control and message exchange.
 
+## Messaging Patterns
+
+The actor protocol can be described as a series of messaging patterns. For every predefined message the actor executes a predefined behavior. Here is an overview:
+
+| Message pattern | brief description |
+|:----------------|:------------------|
+| [`Become`](@ref) | Tell an actor to change its behavior. |
+| [`Call`](@ref) - [`Response`](@ref) | Call an actor to execute its behavior and to respond with the result. | [`Cast`](@ref) | Cast an actor a message to execute its behavior. |
+| [`Diag`](@ref) - [`Response`](@ref) | Call an actor to respond with diagnostic information. |
+| [`Exit`](@ref) | Tell an actor to exit. |
+| [`Exec`](@ref) - [`Response`](@ref) | Call an actor to execute a function and to respond with the result. |
+| [`Init`](@ref) | Tell an actor to execute an initialization function and to store it in its internal state. |
+| [`Query`](@ref) - [`Response`](@ref) | Call an actor to send a status variable/value. |
+| [`Request`](@ref) | This triggers the actor's default response to execute its behavior. |
+| [`Term`](@ref) | Tell an actor to save a given behavior upon termination. |
+
+`Actors` API functions are wrappers to those message patterns. As you have seen there are unidirectional messages (without response) for actor control and bidirectional messages.
+
 ## Actor Control
 
 Actors can be controlled with the following functions:
@@ -44,29 +62,11 @@ The following functions do that for specific duties:
 | [`exec`](@ref) | tell an actor to execute a function and to send the result |
 | [`query`](@ref) | tell an actor's to send one of its internal state variables |
 
-Those functions support both asynchronous and synchronous communication..
-
-The following example shows the use of the API functions to control an actor in a REPL session:
-
-```@repl actors
-using Actors, .Threads
-import Actors: spawn
-act4 = spawn(Bhv(+, 4))       # start an actor adding to 4
-exec(act4, Bhv(threadid))     # ask it its threadid
-cast(act4, 4)                 # cast it 4
-query(act4, :res)             # query the result
-become!(act4, *, 4);          # switch the behavior to *
-call(act4, 4)                 # call it with 4
-exec(act4, Bhv(broadcast, cos, pi .* (-2:2))) # tell it to exec any function
-Actors.diag(act4)             # check it
-exit!(act4)                   # stop it
-act4.chn.state
-Actors.diag(act4)             # try to check it again
-```
+Those functions support both asynchronous and synchronous communication.
 
 ## Enhancing the Protocol
 
-Actor protocols can be enhanced or altered by
+The `Actors` protocol can be enhanced or altered by
 
 - introducing new messages and `onmessage` methods,
 - switching the actor mode and writing new `onmessage` methods for existing messages

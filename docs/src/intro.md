@@ -20,11 +20,11 @@ You `spawn` an actor with a *behavior*. A behavior is a callable Julia object.
 myactor = spawn(Threads.threadid)
 ```
 
-`spawn` returned an actor *link*.
+`spawn` returned an actor *link*. Now - as we will discover right away - our actor is *responsive* and waits for our *messages*.
 
 ## Actor `Link`s
 
-A [`Link`](@ref) is the actor's mail address and its only representation. Over the returned link it is possible to *send* messages to the actor or to use other messaging functions. For example if you `call` or `request` it, you `send` a `Call` or `Request` message to the actor to execute its behavior and to respond with the result:
+A [`Link`](@ref) is the actor's mail address and its only representation. Over the returned link it is possible to *send* messages to the actor or to use other messaging functions. For example if you `call` or `request` it, you `send` a `Call` message to the actor to execute its behavior and to respond with the result:
 
 ```@repl intro
 call(myactor)
@@ -91,7 +91,7 @@ receive(me)
 
 After some seconds we got a `Timeout()`.
 
-## Synchronous Communication: `request`
+## Actor Protocol: `request`
 
 We don't give up with it and start it again, but now we want an adding machine with an offset of 1000:
 
@@ -101,19 +101,27 @@ myactor = spawn(+, 1000)
 
 Our actor now has no acquaintance of `me`, neither has its behavior any `send` instruction. If we send it something, it will only add that to 1000 but not respond anything.
 
-Here the *actor protocol* comes to our rescue. It allows us to communicate with actors even if their behaviors don't send anything. Actors understand messaging patterns.  For example if we send an actor a [`Request`](@ref), it knows that it must send a [`Response`](@ref) message.
+Here the *actor protocol* comes to our rescue. It allows us to communicate with actors even if their behaviors don't send anything. Actors understand messaging patterns.  For example if we send an actor a [`Call`](@ref), it knows that it must send a [`Response`](@ref) with the result. Let's try that out:
 
-The [`request`](@ref) function is a wrapper for that. It will create a link internally and `send` it and the communication parameters as a `Request` to the actor. The actor sends a `Response` back to the received link and the `request` function then delivers the response:
+```@repl intro
+send(myactor, Actors.Call((1,2,3), me))
+receive(me)
+ans.y
+```
+
+The actor added (1,2,3) to 1000 and sent the result back to the provided link. Then we received it asynchronously.
+
+The [`request`](@ref) function is a wrapper for synchronous bidirectional communication. It will create a link internally and `send` it with the communication parameters as a `Call` (or another given message type) to the actor. That one sends a `Response` back to the received link, and `request` then delivers the response:
 
 ```@repl intro
 request(myactor, 1,2,3)
 ```
 
-This is *synchronous communication*. `request` **blocks** until it `receive`s the result (or a `Timeout()`).
+This is called *synchronous communication* since `request` **blocks** until it `receive`s the result (or a `Timeout()`).
 
 ## More Control: `call`, `cast`, `exec`, `query`, `update!` ...
 
-There are more such actor protocols and API functions. 
+There are more such actor protocols and API functions.
 
 We can do asynchronous communication with our actor if we use [`call`](@ref) with the `me` link. This sends the given link to the actor and it responds to it. Then we can `receive` the result asynchronously:
 

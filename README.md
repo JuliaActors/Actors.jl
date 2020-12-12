@@ -15,7 +15,25 @@ The [Actor Model](https://en.wikipedia.org/wiki/Actor_model) of computer science
 > - create a finite number of new actors;
 > - designate the behavior to be used for the next message it receives.
 
-`Actors` implements that with Julia's concurrency primitives and provides a standard and common API for building a modern actor infrastructure. It is part of the Julia GitHub group [`JuliaActors`](https://github.com/JuliaActors).
+`Actors` implements the classical Actor model based on Julia's concurrency primitives.
+
+It integrates well with other Julia functionality for multi-threading and distributed computing.
+
+Beyond that it provides a standard and common API for working with actors and for building a modern actor infrastructure. It is part of the Julia GitHub group [`JuliaActors`](https://github.com/JuliaActors).
+
+As of now `Actors` meets two of the four tenets of the [Reactive Manifesto](https://www.reactivemanifesto.org). Actors are:
+
+- *Responsive*: they react to users.
+- *Message-Driven*: they rely on asynchronous message-passing.
+
+The other two tenets are prepared for and likely to come soon:
+
+- *Resilience*: error handling and supervisors,
+- *Elasticity*: actor infrastructure libraries.
+
+## Greeting Actors
+
+The following example defines two behaviors: `greet` and `hello` and spawns two actors with them. If it receives a message `sayhello` will forward it to `greeter` and get a greeting string back:
 
 ```julia
 julia> using Actors
@@ -28,10 +46,10 @@ greet (generic function with 1 method)
 julia> hello(greeter, to) = request(greeter, to)    # a greetings client
 hello (generic function with 1 method)
 
-julia> greeter = spawn(Bhv(greet, "Hello"))  # spawn the server
+julia> greeter = spawn(greet, "Hello")  # spawn the server
 Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
 
-julia> sayhello = spawn(Bhv(hello, greeter)) # spawn the client
+julia> sayhello = spawn(hello, greeter) # spawn the client
 Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
 
 julia> request(sayhello, "World")
@@ -40,6 +58,10 @@ julia> request(sayhello, "World")
 julia> request(sayhello, "Kermit")
 "Hello, Kermit!"
 ```
+
+## Development
+
+`Actors` is in active development. Please join!
 
 ## Authors
 

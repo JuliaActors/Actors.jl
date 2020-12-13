@@ -46,10 +46,67 @@ The actor machinery is based on only a few basic primitives defined in [`ActorIn
 
 A user can write actor programs using only those basic primitives. If `onmessage` method definitions are marked with `@ctx`, this injects a `ctx` (context) argument into calls to `self`, `spawn` ... This allows a program to work with different implementations of `ActorInterfaces.Classic`.
 
-`Actors` provides methods for those primitives and extends them with further functionality. On a basic level `Actors` is compatible with other libraries by building on the same basic interface.
+`Actors` provides methods for those primitives and adds further functionality. On a basic level `Actors` is compatible with other libraries by building on the same basic interface.
 
 ## A Classic Example
 
+Now a small toy example for concurrency with actors using only the classic primitives. We simulate table-tennis where a player has a name and a capability. If he gets a ball with a difficulty exceeding his capability, he looses it. Players log to a print server actor.
+
+```julia
+using Actors, Printf, Random
+import Actors: spawn
+
+struct Player{S,T}
+    name::S
+    capa::T
+end
+
+struct Ball{T,S,L}
+    diff::T
+    name::S
+    from::L
+end
+
+function (p::Player)(prn, b::Ball)
+    if p.capa ≥ b.diff
+        send(b.from, Ball(rand(), p.name, self()))
+        send(prn, p.name*" serves "*b.name)
+    else
+        send(prn, p.name*" looses ball from "*b.name)
+    end
+end
+function (p::Player)(prn, ::Val{:serve}, to)
+    send(to, Ball(rand(), p.name, self()))
+    send(prn, p.name*" serves ")
+end
+```
+
+Next we initialize our random generator and start a print server. We create two players `ping` and `pong` with the print server's link as acquaintance:
+
+```julia
+julia> Random.seed!(2020);
+
+julia> prn = spawn(s->print(@sprintf("%s\n", s)))
+Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
+
+julia> ping = spawn(Player("Ping", 0.8), prn)
+Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
+
+julia> pong = spawn(Player("Pong", 0.75), prn)
+Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
+```
+
+We start the game by sending `ping` the `:serve` command and the address of `pong`:
+
+```julia
+julia> send(ping, Val(:serve), pong);
+Ping serves 
+Pong serves Ping
+Ping serves Pong
+Pong looses ball from Ping
+```
+
+Actors are great for simulation.
 
 [^1]: De Koster, Van Cutsem, De Meuter 2016. *[43 Years of Actors](http://soft.vub.ac.be/Publications/2016/vub-soft-tr-16-11.pdf): A Taxonomy of Actor Models and Their Key Properties*.
 [^2]: Gul Agha 1986. *Actors. a model of concurrent computation in distributed systems*, MIT

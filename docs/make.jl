@@ -21,7 +21,10 @@ makedocs(
             "glossary.md"
             ],
         "API" => "api.md",
-        "Examples" => "examples.md",
+        "Examples" => [
+            "examples/dining_phil.md",
+            "examples/examples.md"
+            ],
         "Internals" => [
             "messages.md",
             "interface.md",

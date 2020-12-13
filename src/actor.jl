@@ -82,7 +82,7 @@ to it.
 
 - `bhv`: behavior, callable object (closure or functor)
     to execute when a message arrives,
-- `f`: a function,
+- `f`: a callable object,
 - `args...`: (partial) arguments to it,
 - `pid=myid()`: pid of worker process the actor should be started on,
 - `thrd=false`: thread number the actor should be started on or `false`,
@@ -119,7 +119,7 @@ function Classic.spawn(bhv; pid=myid(), thrd=false, sticky=false, taskref=nothin
     become!(lk, bhv)
     return lk
 end
-Classic.spawn(f::F, args...; kwargs...) where F<:Function = spawn(Bhv(f, args...); kwargs...)
+Classic.spawn(f, args...; kwargs...) = spawn(Bhv(f, args...); kwargs...)
 
 """
     self()

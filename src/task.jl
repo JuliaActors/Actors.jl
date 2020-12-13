@@ -10,7 +10,7 @@ struct ATask{X,Y}
 end
 
 """
-    async(func::Bhv; pid=myid(), thrd=false, sticky=false, taskref=nothing)
+    async(func; pid=myid(), thrd=false, sticky=false, taskref=nothing)
 
 Start a task to execute `func` and return an [`ATask`](@ref) 
 variable.
@@ -19,13 +19,13 @@ An actor task sends its result to the `back` link
 of the `ATask` variable and exits immediately.
 
 # Parameters
-- `func::Bhv`: 
-- `pid=myid()`: 
-- `thrd=false`: 
-- `sticky=false`: 
-- `taskref=nothing`: 
+- `func`: a callable object,
+- `pid=myid()`: pid of worker process the task should run on,
+- `thrd=false`: thread number the should be started on,
+- `sticky=false`: if `true` the task is started on the current thread,
+- `taskref=nothing`: if a `Ref{Task}()` is given here, it gets the started `Task`.
 """
-function async(func::Bhv; pid=myid(), thrd=false, sticky=false, taskref=nothing)
+function async(func; pid=myid(), thrd=false, sticky=false, taskref=nothing)
     lk = pid == myid() ? newLink(1) : newLink(1, remote=true)
     task = spawn(func, pid=pid, thrd=thrd, sticky=sticky, taskref=taskref)
     call(task, lk)

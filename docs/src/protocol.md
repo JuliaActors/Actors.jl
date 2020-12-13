@@ -20,7 +20,7 @@ The actor protocol can be described as a series of messaging patterns. For every
 | [`Init`](@ref) | Tell an actor to execute an initialization function and to store it in its internal state. |
 | [`Query`](@ref) - [`Response`](@ref) | Call an actor to send a status variable/value. |
 | [`Request`](@ref) | This triggers the actor's default response to execute its behavior. |
-| [`Term`](@ref) | Tell an actor to save a given behavior upon termination. |
+| [`Term`](@ref) | Tell an actor to execute a given behavior upon termination. |
 
 `Actors` API functions are wrappers to those message patterns. As you have seen there are unidirectional messages (without response) for actor control and bidirectional messages.
 

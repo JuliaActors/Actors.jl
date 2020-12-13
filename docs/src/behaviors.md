@@ -12,7 +12,7 @@ A behavior is a ...
 
 ```math
 \begin{array}{lrl}
-f_i(a_i, c_i) & \rightarrow &\{f_{i+1}(a_{i+1}),\;\{\tau_u,\tau_v, ...\},\;\{\alpha_x,\alpha_y,...\}\} \quad\\
+f_i(a_i)[c_i] & \rightarrow &\{\{\tau_u,\tau_v, ...\},\;\{\alpha_x,\alpha_y,...\},\;f_{i+1}(a_{i+1})\} \quad\\
 \textrm{with} & f: & \textrm{behavior function} \\
  & a: & \textrm{acquaintances,} \\
  & c: & \textrm{communication,} \\
@@ -71,7 +71,7 @@ send(myactor, me, 123, 456)
 receive(me)
 ```
 
-Of course you can give objects containing acquaintances as parameters to a function and create a partial application with `Bhv` on them and much more. Be my guest!
+You can give functors further acquaintance parameters (as for the players in the table-tennis example). Of course you can give objects containing acquaintances as parameters to a function and create a partial application with `Bhv` on them and much more. Be my guest!
 
 ## Agha's Stack example
 

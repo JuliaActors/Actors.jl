@@ -41,7 +41,7 @@ We caused our actor to fail. Ouch!
 
 ## Behaviors: `become` and `become!`
 
-We want our actor to do something more meaningful! Let's write our own behavior. We want our actor to calculate something and to `send` the result back to a given address:
+We want our actor to do something more meaningful! Let's write our own behavior. We want it to calculate something and to `send` the result back to a given address:
 
 ```@repl intro
 function calc(addr::Link, f::Function, args...)

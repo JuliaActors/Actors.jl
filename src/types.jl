@@ -26,13 +26,13 @@ with parameters from the incoming communication.
 
 # Parameters
 
-- `f::Function`: a function,
+- `f`: a callable object,
 - `a...`: stored acquaintance parameters to `f`,
 - `kw...`: stored keyword arguments,
 - `c...`: parameters from the incoming communication.
 """
 struct Bhv
-    f::Function
+    f
     a::Tuple
     kw::Base.Iterators.Pairs
     ϕ::Function

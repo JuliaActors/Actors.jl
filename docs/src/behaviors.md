@@ -71,9 +71,9 @@ send(myactor, me, 123, 456)
 receive(me)
 ```
 
-You can give functors further acquaintance parameters (as for the players in the table-tennis example). Of course you can give objects containing acquaintances as parameters to a function and create a partial application with `Bhv` on them and much more. Be my guest!
+You can give functors further acquaintance parameters (as for the players in the [table-tennis example](@ref table-tennis)). Of course you can give objects containing acquaintances as parameters to a function and create a partial application with `Bhv` on them and much more. Be my guest!
 
-## Agha's Stack example
+## [Agha's Stack example](@id stack)
 
 Now more realistically for actor behavior we reproduce Agha's example 3.2.1 [^3]:
 

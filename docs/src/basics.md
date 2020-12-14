@@ -48,7 +48,7 @@ A user can write actor programs using only those basic primitives. If `onmessage
 
 `Actors` provides methods for those primitives and adds further functionality. On a basic level `Actors` is compatible with other libraries by building on the same basic interface.
 
-## A Classic Example
+## [A Classic Example](@id table-tennis)
 
 Now a small toy example for concurrency with actors using only the classic primitives. We simulate table-tennis where a player has a name and a capability. If he gets a ball with a difficulty exceeding his capability, he looses it. Players log to a print server actor.
 

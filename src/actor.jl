@@ -88,9 +88,12 @@ to it.
 - `thrd=false`: thread number the actor should be started on or `false`,
 - `sticky=false`: if `true` the actor is started on the current thread,
 - `taskref=nothing`: if a `Ref{Task}()` is given here, it gets the started `Task`,
+- `remote=false`: if true, a remote channel is created,
 - `mode=:default`: mode, the actor should operate in.
 """
-function Classic.spawn(bhv; pid=myid(), thrd=false, sticky=false, taskref=nothing, mode=:default)
+function Classic.spawn( bhv; pid=myid(), thrd=false, 
+                        sticky=false, taskref=nothing, 
+                        remote=false, mode=:default)
     if pid == myid()
         lk = newLink(32)
         if thrd > 0 && thrd in 1:nthreads()
@@ -109,6 +112,7 @@ function Classic.spawn(bhv; pid=myid(), thrd=false, sticky=false, taskref=nothin
             schedule(t)
         end
         lk.mode = mode
+        remote && (lk = _rlink(lk))
     else
         lk = Link(RemoteChannel(()->Channel(_act, 32), pid),
                   pid, mode)

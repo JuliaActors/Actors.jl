@@ -23,6 +23,7 @@ makedocs(
         "API" => "api.md",
         "Examples" => [
             "examples/dining_phil.md",
+            "examples/prod_cons.md",
             "examples/examples.md"
             ],
         "Internals" => [

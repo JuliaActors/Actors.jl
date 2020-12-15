@@ -1,3 +1,8 @@
+#
+# This file is part of the Actors.jl Julia package, 
+# MIT license, part of https://github.com/JuliaActors
+#
+
 module MyDict
 
 using Actors

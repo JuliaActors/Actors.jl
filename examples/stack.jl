@@ -1,3 +1,12 @@
+#
+# This file is part of the Actors.jl Julia package, 
+# MIT license, part of https://github.com/JuliaActors
+#
+
+#
+# This implements Agha's example 3.2.1
+#
+
 using Actors
 import Actors: spawn, newLink
 

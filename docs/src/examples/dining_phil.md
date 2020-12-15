@@ -1,6 +1,6 @@
 # Dining Philosophers
 
-The [dining philosophers problem](https://en.wikipedia.org/wiki/Dining_philosophers_problem) is a classic problem to illustrate challenges with concurrency. We will give here a solution based on Dale Schumacher's blogpost [^1]. First some initial definitions:
+This is a [classic problem](https://en.wikipedia.org/wiki/Dining_philosophers_problem) to illustrate challenges with concurrency. We will give here a solution based on Dale Schumacher's blogpost [^1]. First some initial definitions:
 
 ```julia
 using Actors
@@ -98,7 +98,7 @@ function eating(p::Phil, ::Val{:think})
 end
 ```
 
-The crucial step here in preventing a deadlock is that a philosopher puts down his chopstick if he is  `right_waiting` or `left_waiting` and gets a `:busy` message. Then he switches again to `thinking` and sends a message to himself to `:eat`. So he can try again.
+The crucial step here in preventing a deadlock is that a philosopher puts down his chopstick if he is  `right_waiting` or `left_waiting` and gets a `:busy` or if he is `denied` and gets a `:taken` message. Then he switches again to `thinking` and sends a message to himself to `:eat`. So he can try again.
 
 We need a stats function for eating time and we setup everything:
 
@@ -139,9 +139,7 @@ julia > for i in 1:5
 So they are happy thinking and eating asynchronously. Since we have a speedup of 100, we can conclude that in 500 time units our philosophers eat around 155 (much more than programmers). We stop the whole thing in order to prevent overconsumption:
 
 ```julia
-for a in (descartes, nietzsche, kant, hume, plato, c1, c2, c3, c4, c5)
-    exit!(a)
-end
+julia > foreach(a->exit!(a), (descartes, nietzsche, kant, hume, plato, c1, c2, c3, c4, c5))
 ```
 
 Actually Gul Agha proposed something else. He reasoned about to let philosophers talk to each other:

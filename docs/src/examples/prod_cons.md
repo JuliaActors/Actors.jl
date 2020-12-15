@@ -1,10 +1,12 @@
 # Producer-Consumer Problem
 
-The problem describes producers and consumers who share a store with a given capacity. The producers produce an item at a time, put it into the store and start again. At the same time the consumers are consuming the items (i.e. removing them from the store). The problem ist to make sure that the producer won't add items to the store if it is full and that the consumer won't try to remove them from an empty store. The solution for a producer is to go to sleep if the store is full. The next time a consumer removes an item from the store, the store notifies the stalled producer, who starts to replenish the store again. In the same way, the consumer can go to waiting if it finds the store empty. The next time a producer delivers an item, the store notifies the waiting consumer.
+This [classic problem](https://en.wikipedia.org/wiki/Producer–consumer_problem) describes producers and consumers sharing a buffer with a given capacity. A producer produces an item at a time, puts it into the buffer and starts again. At the same time consumers are consuming the items (i.e. removing them from the buffer). The problem ist to make sure that a producer won't add items to the buffer if it is full and that a consumer won't try to remove them from an empty buffer. 
 
-We implement this problem with three kinds of actors for the store, the producers and a consumer.
+The solution for a producer is to go to sleep if the buffer is full. The next time, a consumer removes an item from the buffer, the buffer notifies the stalled producer, who then starts to replenish the buffer again. In the same way, the consumer can go to waiting if it finds the buffer empty. The next time a producer delivers an item, the buffer notifies the waiting consumer.
 
-The store has a fixed capacity, holds the items and lists for stalled producers and waiting customers and a counting variable.
+We implement this problem with three kinds of actors for store, producer and consumer.
+
+The store has a fixed capacity, holds items and queues of stalled producers and waiting customers and a counting variable.
 
 ```julia
 using Actors, Printf
@@ -26,7 +28,7 @@ isfull(s::Store) = length(s.items) ≥ s.capacity
 Base.isempty(s::Store) = isempty(s.items)
 ```
 
-We implement the stores behavior as a functor receiving two messages `:put` and `:take`.
+We implement the store's behavior as a functor receiving two messages `:put` and `:take`.
 
 ```julia
 function (s::Store)(::Val{:put}, prod, item)
@@ -69,7 +71,7 @@ struct Cons
 end
 ```
 
-Those become acquaintances of their behavior functions. We have also a print server actor `prn` as a global variable.
+Those are acquaintances of their behavior functions. We have also a print server actor `prn` as a global variable.
 
 ```julia
 function prod_start(p::Prod, start)
@@ -176,4 +178,4 @@ consumer U found store empty
 consumer V found store empty
 ```
 
-We had limited the items to 10. This is a queueing process.
+We had limited the sold items to 10. This is a queueing process.

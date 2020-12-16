@@ -86,7 +86,8 @@ Internal actor status variable.
 6. `name::Union{Nothing,Symbol}`: the actor's registered name.
 7. `res::Any`: the result of the last behavior execution,
 8. `sta::Any`: a variable for representing state,
-9. `usr::Any`: user variable for plugging in something.
+9. `usr::Any`: user variable for plugging in something,
+10. `ctx::Any`: context variable for execution context.
 
 see also: [`Bhv`](@ref), [`Link`](@ref)
 """
@@ -100,14 +101,15 @@ mutable struct _ACT
     res::Any
     sta::Any
     usr::Any
+    ctx::Any
 end
 
 """
     _ACT(mode=:default)
 
-Return a actor variable `_ACT`.
+Return an actor variable `_ACT`.
 """
-_ACT(mode=:default) = _ACT(mode, Bhv(+), fill(nothing, 7)...)
+_ACT(mode=:default) = _ACT(mode, Bhv(+), fill(nothing, 8)...)
 
 # -----------------------------------------------
 # Public message types

@@ -35,13 +35,14 @@ To use `Actors`'s actors and links you import them explicitly:
 
 ```julia
 using Actors
-import Actors: spawn, newLink
+import Actors: spawn, spawnf, newLink
 ```
 
 Then you can create them with the following functions:
 
 ```@docs
 spawn
+spawnf
 newLink
 ```
 

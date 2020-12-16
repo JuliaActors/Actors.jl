@@ -4,7 +4,7 @@
 #
 
 using Actors, Printf, Random
-import Actors: spawn
+import Actors: spawn, spawnf
 
 struct Player{S,T}
     name::S
@@ -32,7 +32,7 @@ end
 
 Random.seed!(2020);
 prn = spawn(s->print(@sprintf("%s\n", s))) # a print server
-ping = spawn(Player("Ping", 0.8), prn)
-pong = spawn(Player("Pong", 0.75), prn)
+ping = spawnf(Player("Ping", 0.8), prn)
+pong = spawnf(Player("Pong", 0.75), prn)
 
-send(ping, Val(:serve), pong);
+send(ping, (Val(:serve), pong));

@@ -26,7 +26,7 @@ function Classic.onmessage(A::_ACT, msg::Query)
         send(msg.from, Response("$(msg.x) not available", A.self))
 end
 function Classic.onmessage(A::_ACT, msg::Update)
-    if msg.s in (:name,:self,:sta,:usr)
+    if msg.s in (:name,:self,:sta,:usr,:ctx)
         setfield!(A, msg.s, msg.x)
     elseif msg.s == :mode
         A.mode = msg.x

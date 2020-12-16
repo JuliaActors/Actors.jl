@@ -2,7 +2,7 @@
 
 This [classic problem](https://en.wikipedia.org/wiki/Producer–consumer_problem) describes producers and consumers sharing a buffer with a given capacity. A producer produces an item at a time, puts it into the buffer and starts again. At the same time consumers are consuming the items (i.e. removing them from the buffer). The problem ist to make sure that a producer won't add items to the buffer if it is full and that a consumer won't try to remove them from an empty buffer. 
 
-The solution for a producer is to go to sleep if the buffer is full. The next time, a consumer removes an item from the buffer, the buffer notifies the stalled producer, who then starts to replenish the buffer again. In the same way, the consumer can go to waiting if it finds the buffer empty. The next time a producer delivers an item, the buffer notifies the waiting consumer.
+The solution for a producer is to go to sleep if the buffer is full. The next time a consumer removes an item from the buffer, the buffer notifies the stalled producer, who then starts to replenish the buffer again. In the same way the consumer can go to waiting if he finds the buffer empty. The next time a producer delivers an item, the buffer notifies the waiting consumer.
 
 We implement this problem with three kinds of actors for store, producer and consumer.
 

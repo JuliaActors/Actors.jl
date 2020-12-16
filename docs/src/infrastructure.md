@@ -4,6 +4,11 @@
 CurrentModule = Actors
 ```
 
+`Actors` provides some functionality going beyond the classical model:
+
+- actor tasks and
+- actor registry.
+
 ## Actor Tasks
 
 Actor tasks execute one computation, mostly without communicating with other actors. They can be used to compute values asynchronously.
@@ -77,6 +82,3 @@ julia> fetch(@spawnat 2 registered())         # get it on pid 2
 
 The registry works transparently across workers. All workers have access to registered actors on other workers via remote links.
 
-## Actor Supervision
-
-...

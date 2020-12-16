@@ -30,13 +30,16 @@ function _send!(rch::RemoteChannel, msg)
     put!(rch, msg)
 end
 
+_tuple(x::Tuple) = x
+_tuple(x...) = x
+
 """
     send(lk::Link, msg)
 Send a message to an actor.
 """
-Classic.send(lk::Link, msg::Msg) = _send!(lk.chn, msg)
-Classic.send(lk::Link, msg...) = _send!(lk.chn, msg)
-Classic.send(name::Symbol, msg...) = _send!(whereis(name).chn, msg...)
+Classic.send(lk::Link, msg::Msg, ctx=nothing) = _send!(lk.chn, msg)
+Classic.send(lk::Link, msg, ctx=nothing) = _send!(lk.chn, _tuple(msg))
+Classic.send(name::Symbol, msg, ctx=nothing) = _send!(whereis(name).chn, _tuple(msg))
 
 _match(msg, ::Nothing, ::Nothing) = true
 _match(msg::Msg, M::Type{<:Msg}, ::Nothing) = msg isa M

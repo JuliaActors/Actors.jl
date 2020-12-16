@@ -4,7 +4,7 @@
 #
 
 using Actors
-import Actors: spawn
+import Actors: spawn, spawnf
 
 const eating_time = 5
 const thinking_time = 10
@@ -28,17 +28,17 @@ end
 
 function (c::Chopstick)(cust, ::Val{:take})
     if c.idle
-        send(cust, self(), Val(:taken))
+        send(cust, (self(), Val(:taken)))
         c.idle = false
     else
-        send(cust, self(), Val(:busy))
+        send(cust, (self(), Val(:busy)))
     end
 end
 (c::Chopstick)(::Val{:put}) = c.idle = true
 
 function thinking(p::Phil, ::Val{:eat})
-    send(p.left, self(), Val(:take))
-    send(p.right, self(), Val(:take))
+    send(p.left, (self(), Val(:take)))
+    send(p.right, (self(), Val(:take)))
     become(hungry, p)
 end
 function hungry(p::Phil, chop, ::Val{:taken})
@@ -95,11 +95,11 @@ c3 = spawn(Chopstick())
 c4 = spawn(Chopstick())
 c5 = spawn(Chopstick())
 
-descartes = spawn(thinking, Phil(c1,c2,0.0))
-nietzsche = spawn(thinking, Phil(c2,c3,0.0))
-kant      = spawn(thinking, Phil(c3,c4,0.0))
-hume      = spawn(thinking, Phil(c4,c5,0.0))
-plato     = spawn(thinking, Phil(c5,c1,0.0))
+descartes = spawnf(thinking, Phil(c1,c2,0.0))
+nietzsche = spawnf(thinking, Phil(c2,c3,0.0))
+kant      = spawnf(thinking, Phil(c3,c4,0.0))
+hume      = spawnf(thinking, Phil(c4,c5,0.0))
+plato     = spawnf(thinking, Phil(c5,c1,0.0))
 
 for p in (descartes, nietzsche, kant, hume, plato)
     delay(thinking_time, Val(:eat), p)

@@ -20,23 +20,27 @@ behavior `bhv` with the message `msg`. The actor calls
 # Parameters
 - `bhv`: excutable object (closure or functor) taking
     parameters `msg`,
-- `msg`: message parameters to `bhv`.
+- `msg`: message parameters to `bhv`,
+- `ctx`: context argument for compatibility with `Classic`.
 """
-Classic.onmessage(bhv, msg...) = bhv(msg...)
+Classic.onmessage(bhv, msg, ctx) = Base.invokelatest(bhv, msg...)
+Classic.onmessage(bhv::Bhv, msg, ctx) = bhv(msg...)
 
 """
 ```
 onmessage(A::_ACT, msg)
 onmessage(A::_ACT, mode, msg)
 ```
-An actor executes this function when a message arrives.
+An actor executes this function when an arbitrary 
+message arrives.
 
 Actor libraries or applications can use this to
 
 - plugin the `Actors.jl` API (first form) or
-- extend it to other protocols by using the 2nd form.
+- extend it to other protocols by using the 2nd form
+    with dispatch on ::Val{:mode}.
 """
-Classic.onmessage(A::_ACT, msg) = (A.res = Base.invokelatest(A.bhv, msg...))
+Classic.onmessage(A::_ACT, msg) = (A.res = onmessage(A.bhv, msg, A.ctx))
 
 # 
 # the 2nd actor layer is realized by the Msg protocol 
@@ -71,8 +75,10 @@ end
 
 """
 ```
-spawn(bhv; pid=myid(), thrd=false, sticky=false, taskref=nothing, mode=:default)
-spawn(f, args...; kwargs...)
+spawn(bhv, ctx=nothing; 
+      pid=myid(), thrd=false, sticky=false, 
+      taskref=nothing, mode=:default)
+spawn(f, args...; ctx=nothing, kwargs...)
 ```
 
 Create an actor with a behavior `bhv` and return a [`Link`](@ref)
@@ -82,6 +88,7 @@ to it.
 
 - `bhv`: behavior, callable object (closure or functor)
     to execute when a message arrives,
+- `ctx`: context argument for compatibility with `Classic`,
 - `f`: a callable object,
 - `args...`: (partial) arguments to it,
 - `pid=myid()`: pid of worker process the actor should be started on,
@@ -91,7 +98,8 @@ to it.
 - `remote=false`: if true, a remote channel is created,
 - `mode=:default`: mode, the actor should operate in.
 """
-function Classic.spawn( bhv; pid=myid(), thrd=false, 
+function Classic.spawn( bhv, ctx=nothing; 
+                        pid=myid(), thrd=false, 
                         sticky=false, taskref=nothing, 
                         remote=false, mode=:default)
     if pid == myid()
@@ -119,18 +127,21 @@ function Classic.spawn( bhv; pid=myid(), thrd=false,
         bhv = _rlink(bhv)
     end
     put!(lk.chn, Update(:self, lk))
+    put!(lk.chn, Update(:ctx, ctx))
     mode == :default || put!(lk.chn, Update(:mode, mode))
     become!(lk, bhv)
     return lk
 end
-Classic.spawn(f, args...; kwargs...) = spawn(Bhv(f, args...); kwargs...)
+spawnf(f, args...; ctx=nothing, kwargs...) = spawn(Bhv(f, args...), ctx; kwargs...)
 
 """
-    self()
+    self(ctx=nothing)
 
 Get the [`Link`](@ref) of your actor.
+
+`ctx` is the context for compatibility with `Classic`.
 """
-Classic.self() = task_local_storage("_ACT").self
+Classic.self(ctx=nothing) = task_local_storage("_ACT").self
 # 
 # Note: a reference to the actor's status variable must be
 #       available as task_local_storage("_ACT") for this to 
@@ -139,8 +150,8 @@ Classic.self() = task_local_storage("_ACT").self
 
 """
 ```
-become(bhv)
-become(func::F, args...; kwargs...) where F<:Function
+become(bhv, ctx=nothing)
+become(func, args...; ctx=nothing, kwargs...)
 ```
 
 Cause your actor to take on a new behavior. This can only be
@@ -148,18 +159,19 @@ called from inside an actor/behavior.
 
 # Arguments
 - `bhv`: a callable object implementing the new behavior,
-- `func::F`: callable object,
-- `args1...`: (partial) arguments to `func`,
-- `kwargs...`: keyword arguments to `func`.
+- `func`: callable object,
+- `args...`: (partial) arguments to `func`,
+- `kwargs...`: keyword arguments to `func`,
+- `ctx`: context for compatibility with `Classic`.
 """
-function Classic.become(bhv)
+function Classic.become(bhv, ctx=nothing)
     act = task_local_storage("_ACT")
     act.bhv = bhv
 end
-function Classic.become(func::F, args...; kwargs...) where F<:Function
+function Classic.become(func, args...; ctx=nothing, kwargs...)
     isempty(args) && isempty(kwargs) ?
         task_local_storage("_ACT").bhv = func :
-        become(Bhv(func, args...; kwargs...))
+        become(Bhv(func, args...; kwargs...), ctx)
 end
 # 
 # Note: a reference to the actor's status variable must be

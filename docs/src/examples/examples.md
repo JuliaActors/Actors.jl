@@ -1,4 +1,4 @@
-# Further Examples
+# More Examples
 
 In the manual there are the following examples:
 

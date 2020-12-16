@@ -6,7 +6,7 @@ CurrentModule = Actors
 
 !!! warning "The interface is yet experimental!"
 
-    Most of the following needs yet work and will be demonstrable with the upcoming v0.2 release.
+    Most of the following needs yet work .
 
 `Actors` provides a versatile interface to work with other actor libraries in the [`JuliaActors`](https://github.com/JuliaActors) ecosystem or to allow programmers and users alike to extend its functionality:
 

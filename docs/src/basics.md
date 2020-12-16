@@ -44,9 +44,11 @@ The actor machinery is based on only a few basic primitives defined in [`ActorIn
 | `become(bhv)` | an actor designates a new behavior, |
 | `onmessage(bhv, msg)` | is executed by the actor when a message arrives. |
 
-A user can write actor programs using only those basic primitives. If `onmessage` method definitions are marked with `@ctx`, this injects a `ctx` (context) argument into calls to `self`, `spawn` ... This allows a program to work with different implementations of `ActorInterfaces.Classic`.
+A user can write actor programs using only those basic primitives. Those programs should run with minor modifications on other libraries supporting the same basic interface.
 
-`Actors` provides methods for those primitives and adds further functionality. On a basic level `Actors` is compatible with other libraries by building on the same basic interface.
+!!! note "The interface needs yet work!"
+
+    At the moment the Actors implementation of the interface in ActorInterfaces.Classic is not complete as it doesn't support context injection with `@ctx`.
 
 ## [A Classic Example](@id table-tennis)
 

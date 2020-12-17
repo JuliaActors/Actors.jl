@@ -18,6 +18,7 @@ e = f = 2
 incx(x, by; y=0, z=0) = x+y+z + by
 subx(x, y, sub; z=0) = x+y+z - sub
 
+me = Actors.newLink()
 A = Actors.spawn(Bhv(incx, a, y=b, z=c), taskref=t)
 sleep(sleeptime)
 @test t[].state == :runnable
@@ -47,6 +48,8 @@ sleep(sleeptime)
 @test act.bhv.kw == pairs((x=1,y=2,z=1))
 
 # test query
+query(A, me)
+@test receive(me).y == (1,2,3)
 @test query(A) == (1,2,3)
 @test query(A, :res) == nothing
 @test query(A, :bhv).f == subx
@@ -64,16 +67,34 @@ update!(A, Args(5, y=1,z=1), s=:arg)
 cast(A, 3)
 @test query(A, :res) == 10
 
-update!(A, Args(a, y=3,z=3), s=:arg)
+update!(A, Args(a, y=3,z=3))
 cast(A, 3)
 @test query(A, :res) == 10
 @test query(A) == (1,2,3)
 
 # test exec
+exec(A, me, Bhv(cos, 2pi))
+@test receive(me).y == 1
+exec(A, me, sin, 2pi)
+@test receive(me).y == sin(2pi)
 @test exec(A, Bhv(cos, 2pi)) == 1
+@test exec(A, sin, 2pi) == sin(2pi)
+
+# test init!
+init!(A, cos, 2pi)
+@test act.init.f == cos
+@test act.sta == 1
+
+# test term!
+tvar = [:ndef]
+term(x) = tvar[1] = x
+term!(A, term)
+sleep(sleeptime)
+@test act.term.f == term
 
 # test exit!
 exit!(A)
 sleep(sleeptime)
 @test t[].state == :done
 @test A.chn.state == :closed
+@test tvar[1] == :ok

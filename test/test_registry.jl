@@ -79,4 +79,14 @@ sleep(0.1)
 @test a1.res == 2
 @test exec(:act1, Bhv(f, 5, 5)) == 10
 @test query(:act1, :res) == 2
+init!(:act1, cos, 2pi)
+sleep(0.1)
+@test a1.sta == 1
+term!(:act1, cos, 2pi)
+sleep(0.1)
+@test a1.term.f == cos
+sleep(0.1)
+update!(:act1, 10)
+sleep(0.1)
+@test a1.sta == 10 
 unregister(:act1)

@@ -67,6 +67,7 @@ unregister(:act2)
 # 
 f(a, b) = a + b
 @test register(:act1, spawn(Bhv(f, 1)))
+@test !register(:act1, spawn(f, 2))
 a1 = Actors.diag(:act1, 1)
 send(:act1, Actors.Cast((1,)))
 sleep(0.1)

@@ -46,6 +46,10 @@ update!(A, Args(2,3, x=1, y=2), s=:arg)
 sleep(sleeptime)
 @test act.bhv.a == (2,3)
 @test act.bhv.kw == pairs((x=1,y=2,z=1))
+update!(A, :dummy, s=:mode)
+sleep(sleeptime)
+@test act.mode == :dummy
+@test A.mode == :dummy
 
 # test query
 query(A, me)

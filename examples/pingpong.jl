@@ -3,7 +3,7 @@
 # MIT license, part of https://github.com/JuliaActors
 #
 
-using Actors, Printf, Random
+using Actors, Printf, Random, .Threads
 import Actors: spawn
 
 struct Player{S,T}
@@ -30,9 +30,12 @@ function (p::Player)(prn, ::Val{:serve}, to)
     send(prn, p.name*" serves ")
 end
 
-Random.seed!(2020);
+@threads for i in 1:nthreads()
+    Random.seed!(2021+threadid())
+end
+
 prn = spawn(s->print(@sprintf("%s\n", s))) # a print server
-ping = spawn(Player("Ping", 0.8), prn)
-pong = spawn(Player("Pong", 0.75), prn)
+ping = spawn(Player("Ping", 0.8), prn, thrd=3)
+pong = spawn(Player("Pong", 0.75), prn, thrd=4)
 
 send(ping, Val(:serve), pong);

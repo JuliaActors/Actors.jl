@@ -60,7 +60,7 @@ onmessage
 
 ## API Primitives
 
-To receive messages from actors the following two functions for synchronous and asynchronous communication are useful:
+To receive messages from actors the following two functions for synchronous and asynchronous communication can be used:
 
 ```@docs
 receive
@@ -69,7 +69,7 @@ request
 
 ## User API
 
-`Actors` has a user interface allowing you to control actors:
+The user API allows you to communicate with actors using the `Actors` [protocol](protocol.md):
 
 ```@docs
 call

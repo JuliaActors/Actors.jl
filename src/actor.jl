@@ -15,14 +15,15 @@ _terminate!(A::_ACT, reason) = !isnothing(A.term) && A.term.f((A.term.args..., r
 
 Default behavior function to execute the current actor 
 behavior `bhv` with the message `msg`. The actor calls
-`bhv(msg)` when a message arrives. 
+`bhv(msg...)` when a message arrives. 
 
 # Parameters
 - `bhv`: excutable object (closure or functor) taking
-    parameters `msg`,
-- `msg`: message parameters to `bhv`.
+    parameters `msg...`,
+- `msg...`: message parameters to `bhv`.
 """
-Classic.onmessage(bhv, msg...) = bhv(msg...)
+Classic.onmessage(bhv, msg) = Base.invokelatest(bhv, msg...)
+Classic.onmessage(bhv::Bhv, msg) = bhv(msg...)
 
 """
 ```
@@ -36,7 +37,7 @@ Actor libraries or applications can use this to
 - plugin the `Actors.jl` API (first form) or
 - extend it to other protocols by using the 2nd form.
 """
-Classic.onmessage(A::_ACT, msg) = (A.res = Base.invokelatest(A.bhv, msg...))
+Classic.onmessage(A::_ACT, msg) = (A.res = onmessage(A.bhv, msg))
 
 # 
 # the 2nd actor layer is realized by the Msg protocol 
@@ -71,7 +72,7 @@ end
 
 """
 ```
-spawn(bhv; pid=myid(), thrd=false, sticky=false, taskref=nothing, mode=:default)
+spawn(bhv; pid=myid(), thrd=false, sticky=false, taskref=nothing, remote=false, mode=:default)
 spawn(f, args...; kwargs...)
 ```
 
@@ -139,24 +140,18 @@ Classic.self() = task_local_storage("_ACT").self
 
 """
 ```
-become(bhv)
-become(func::F, args...; kwargs...) where F<:Function
+become(func, args...; kwargs...)
 ```
 
 Cause your actor to take on a new behavior. This can only be
 called from inside an actor/behavior.
 
 # Arguments
-- `bhv`: a callable object implementing the new behavior,
-- `func::F`: callable object,
-- `args1...`: (partial) arguments to `func`,
+- `func`: a callable object,
+- `args...`: (partial) arguments to `func`,
 - `kwargs...`: keyword arguments to `func`.
 """
-function Classic.become(bhv)
-    act = task_local_storage("_ACT")
-    act.bhv = bhv
-end
-function Classic.become(func::F, args...; kwargs...) where F<:Function
+function Classic.become(func, args...; kwargs...)
     isempty(args) && isempty(kwargs) ?
         task_local_storage("_ACT").bhv = func :
         become(Bhv(func, args...; kwargs...))

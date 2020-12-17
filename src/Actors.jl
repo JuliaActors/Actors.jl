@@ -4,8 +4,8 @@
 #
 """
 `Actors` implements the classical Actor Model and is 
-based on the interface defined in `ActorInterfaces.Classic`. 
-It provides
+based on the primitives defined in `ActorInterfaces.Classic`. 
+It provides:
 
 - basic primitives for creating actors,
     sending messages to them and changing behavior:

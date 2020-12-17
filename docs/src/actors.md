@@ -9,13 +9,13 @@ CurrentModule = Actors
 - Actors are implemented as `Task`s.
 - They communicate over `Channel`s.
 
-## Julia is not an Actor Language
+## Julia is Not an Actor Language
 
 > The actor model adopts the philosophy that everything is an actor. [^1]
 
-That implies that everything from access to variables or calling a function with multiple arguments in a programming language down to the routines of the operating system can and should be modeled as actors.But Erlang/Elixir/OTP and Scala/Akka show that actors can be successfully implemented even if they are not "Actors all the way down" [^2].
+That implies that everything from access to variables or calling a function with multiple arguments in a programming language down to the routines of the operating system can and should be modeled as actors. But Erlang/Elixir/OTP and Scala/Akka show that actors can be successfully implemented even if they are not "Actors all the way down" [^2].
 
-Likewise `Actors` follows a pragmatic approach to integrate actors in a non-actor language. Sutter and Larus justified that as follows:
+`Actors` therefore follows a pragmatic approach to integrate actors in a non-actor language. Sutter and Larus justified that as follows:
 
 > We need higher-level language abstractions, including evolutionary extensions to current imperative languages, so that existing applications can incrementally become concurrent. The programming model must make concurrency easy to understand and reason about, not only during initial development but also during maintenance. [^3]
 
@@ -25,7 +25,7 @@ Like the Go language Julia goes beyond Communicating Sequential Processes (CSP) 
 
 - share by communicating [^4] and
 - use functions with local variables and
-- wrap shared mutable variables into an actor.
+- wrap shared mutable variables into actors.
 
 Actors both use functions as behaviors and communicate function parameters via messages. This makes it easier to write clear, correct concurrent programs.
 

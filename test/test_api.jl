@@ -82,6 +82,7 @@ exec(A, me, sin, 2pi)
 
 # test init!
 init!(A, cos, 2pi)
+sleep(sleeptime)
 @test act.init.f == cos
 @test act.sta == 1
 

@@ -20,6 +20,7 @@ function Classic.onmessage(A::_ACT, msg::Init)
     A.init = _current(msg.x)
     A.sta  = A.init()
 end
+Classic.onmessage(A::_ACT, msg::Term) = A.term = _current(msg.x)
 function Classic.onmessage(A::_ACT, msg::Query)
     msg.x in (:mode,:bhv,:res,:sta,:usr) ?
         send(msg.from, Response(getfield(A, msg.x), A.self)) :

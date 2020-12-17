@@ -3,7 +3,7 @@
 # MIT license, part of https://github.com/JuliaActors
 #
 
-_terminate!(A::_ACT, reason) = !isnothing(A.term) && A.term.f((A.term.args..., reason)...; kwargs...)
+_terminate!(A::_ACT, reason) = isnothing(A.term) || Base.invokelatest(A.term.f, reason)
 
 #
 # default dispatch on Any, this is the 1st actor layer 
@@ -72,18 +72,18 @@ end
 
 """
 ```
-spawn(bhv; pid=myid(), thrd=false, sticky=false, taskref=nothing, remote=false, mode=:default)
-spawn(f, args...; kwargs...)
+spawn(f, args...; 
+      pid=myid(), thrd=false, sticky=false, 
+      taskref=nothing, remote=false, mode=:default)
 ```
 
-Create an actor with a behavior `bhv` and return a [`Link`](@ref)
-to it.
+Create an actor with a behavior `f(args...)` and return 
+a [`Link`](@ref) to it.
 
 # Parameters
 
-- `bhv`: behavior, callable object (closure or functor)
+- `f`: callable object (function, closure or functor)
     to execute when a message arrives,
-- `f`: a callable object,
 - `args...`: (partial) arguments to it,
 - `pid=myid()`: pid of worker process the actor should be started on,
 - `thrd=false`: thread number the actor should be started on or `false`,
@@ -92,9 +92,10 @@ to it.
 - `remote=false`: if true, a remote channel is created,
 - `mode=:default`: mode, the actor should operate in.
 """
-function Classic.spawn( bhv; pid=myid(), thrd=false, 
+function Classic.spawn( f, args...; pid=myid(), thrd=false, 
                         sticky=false, taskref=nothing, 
                         remote=false, mode=:default)
+    isempty(args) || (f = Bhv(f, args))
     if pid == myid()
         lk = newLink(32)
         if thrd > 0 && thrd in 1:nthreads()
@@ -117,14 +118,13 @@ function Classic.spawn( bhv; pid=myid(), thrd=false,
     else
         lk = Link(RemoteChannel(()->Channel(_act, 32), pid),
                   pid, mode)
-        bhv = _rlink(bhv)
+        f = _rlink(f)
     end
     put!(lk.chn, Update(:self, lk))
     mode == :default || put!(lk.chn, Update(:mode, mode))
-    become!(lk, bhv)
+    become!(lk, f)
     return lk
 end
-Classic.spawn(f, args...; kwargs...) = spawn(Bhv(f, args...); kwargs...)
 
 """
     self()

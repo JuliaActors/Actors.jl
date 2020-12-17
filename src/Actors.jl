@@ -37,7 +37,7 @@ pkg> add "https://github.com/JuliaActors/Actors.jl"
 module Actors
 
 "Gives the package version."
-const version = v"0.1.8"
+const version = v"0.2.0"
 
 using ActorInterfaces.Classic
 using Distributed, .Threads
@@ -72,7 +72,7 @@ export
     # API
     Args, become, self, stop,
     become!, call, cast, exec, exit!, init!, 
-    query, update!,
+    query, term!, update!,
     # Tasks
     ATask, async, await,
     # Registry

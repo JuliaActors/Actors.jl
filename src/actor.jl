@@ -95,7 +95,7 @@ a [`Link`](@ref) to it.
 function Classic.spawn( f, args...; pid=myid(), thrd=false, 
                         sticky=false, taskref=nothing, 
                         remote=false, mode=:default)
-    isempty(args) || (f = Bhv(f, args))
+    isempty(args) || (f = Bhv(f, args...))
     if pid == myid()
         lk = newLink(32)
         if thrd > 0 && thrd in 1:nthreads()

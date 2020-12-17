@@ -13,9 +13,7 @@ CurrentModule = Actors
 
 > The actor model adopts the philosophy that everything is an actor. [^1]
 
-That implies that everything from access to variables or calling a function with multiple arguments in a programming language down to the routines of the operating system can and should be modeled as actors.
-
-But Erlang/Elixir/OTP and Scala/Akka show that the actors can be successfully implemented even if there are not "Actors all the way down" [^2].
+That implies that everything from access to variables or calling a function with multiple arguments in a programming language down to the routines of the operating system can and should be modeled as actors.But Erlang/Elixir/OTP and Scala/Akka show that actors can be successfully implemented even if they are not "Actors all the way down" [^2].
 
 Likewise `Actors` follows a pragmatic approach to integrate actors in a non-actor language. Sutter and Larus justified that as follows:
 
@@ -23,14 +21,15 @@ Likewise `Actors` follows a pragmatic approach to integrate actors in a non-acto
 
 ## Julia is Well Suited for Actors
 
-Like Go Julia goes beyond Communicating Sequential Processes (CSP) by introducing channels. Furthermore Julia is particularly strong with functions. Thus it offers two better alternatives to sharing (global) memory between threads:
+Like the Go language Julia goes beyond Communicating Sequential Processes (CSP) by introducing channels. Furthermore Julia is particularly strong with functions. Thus it offers better alternatives to sharing (global) memory between threads:
 
 - share by communicating [^4] and
-- use functions with local variables.
+- use functions with local variables and
+- wrap shared mutable variables into an actor.
 
-Actors both use functions as behaviors and communicate function parameters as messages (over channels). This makes it easier to write clear, correct concurrent programs.
+Actors both use functions as behaviors and communicate function parameters via messages. This makes it easier to write clear, correct concurrent programs.
 
-Below I will show how to integrate the use of actors in standard multi-threading or distributed Julia code.
+Below I will argue and show that it makes sense to use  actors in standard multi-threading or distributed Julia code.
 
 ## Multi-threading
 
@@ -38,7 +37,7 @@ The Julia manual encourages the use of locks [^5] in order to ensure data-race f
 
 > they are not composable. You can’t take two correct lock-based pieces of code, combine them, and know that the result is still correct. Modern software development relies on the ability to compose libraries into larger programs, and so it is a serious difficulty that we cannot build on lock-based components without examining their implementations. [^6]
 
-An actor controlling the access to a variable or to another resource is lock-free and there are no limits to composability. Therefore if you write multi-threaded programs which should be composable or maybe used within a lock, you might consider using `Actors`.
+An actor controlling the access to a variable or to another resource is lock-free and there are no limits to composability. Therefore if you write multi-threaded programs which should be composable or maybe used by other programs within a lock, you might consider using `Actors`.
 
 ## Distributed Computing
 
@@ -108,7 +107,7 @@ julia> d[892]
 8
 ```
 
-All available threads did concurrently fill our served dictionary with their thread ids. The actor access to the dictionary happens almost completely behind the scenes.
+All available threads did concurrently fill our served dictionary with their thread ids. Actor access to the dictionary happens almost completely behind the scenes.
 
 Now we try it out with distributed computing:
 

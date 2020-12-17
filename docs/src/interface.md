@@ -14,15 +14,15 @@ CurrentModule = Actors
 2. Actors from other libraries written with that interface have actor level compatibility. Thus they can exchange messages, use the Actors registry (and upcoming supervision).
 3. Other libraries written against that interface can plugin the `Actors`' `onmessage` protocol and thus inherit the user API functions: [`call`](@ref), [`cast`](@ref) ...
 4. Other party libraries can start actors in another mode and implement a different `onmessage` protocol to make their actors do different things.
-5. Users can enhance the [`Msg`] types implemented and extend the `onmessage` methods for working with those messages.
+5. Users can enhance the implemented [`Msg`](@ref) types and extend the `onmessage` methods for working with those messages.
 
-## Different actor primitives
+## Reimplementing Actor Primitives
 
-On [`JuliaActors`](https://github.com/JuliaActors) there is a companion library [`SlowActors`](https://github.com/JuliaActors/SlowActors.jl) to illustrate the use of the interface. This is a *completely different implementation* of the Actor Model. It doesn't use Julia `Channel`s for message passing and operates without an actor loop. Rather each time a message to a "slow" actor is sent, an actor `Task` is started.
+On [`JuliaActors`](https://github.com/JuliaActors) there is a companion library [`SlowActors`](https://github.com/JuliaActors/SlowActors.jl) to illustrate one use of the interface. This is a *completely different implementation* of the Actor Model. It doesn't use Julia `Channel`s for message passing and operates without an actor loop. Rather each time a message to a "slow" actor is sent, an actor `Task` is started.
 
 But in using the common [`Link`](@ref) type, actors from both libraries can communicate. With actually few lines of code `SlowActors` plugs in the `Actors` interface and is able to run the identical [examples](https://github.com/JuliaActors/SlowActors.jl/tree/master/examples). It actually only reimplements three primitives: `spawn`, `newLink` and `send!`.
 
-## Different actor mode and behavior
+## Change Actor Mode and Behavior
 
 `Actors` provides a mode field in both `Link` and `_ACT`, with `mode=:default` for normal operation.
 
@@ -34,6 +34,11 @@ Actors.onmessage(A::_ACT, ::Val{:GenServer}, msg::Cast) = ...
 ....
 ```
 
-... they get for those messages a different actor behavior where they can do callbacks or set state or whatever they want to.
+... they get for those messages a different actor behavior where they can do callbacks or set state or whatever they want to. Actors spawned with a different mode return a link with the mode field set accordingly.
 
-Actors spawned with a different mode return a link with the mode field set accordingly.
+Currently there are two libraries capitalizing on this functionality:
+
+| library | brief description |
+|:--------|:------------------|
+| [Guards](https://github.com/JuliaActors/Guards.jl) | Actors guarding access to mutable variables. |
+| [GenServers](https://github.com/JuliaActors/GenServers.jl) | Actors representing generic servers and allowing users to write sequential code to use them. |

@@ -83,26 +83,30 @@ function (p::Player)(prn, ::Val{:serve}, to)
 end
 ```
 
-Next we initialize our random generator and start a print server. We create two players `ping` and `pong` with the print server's link as acquaintance:
+In order to get reproducible results we initialize our random generator on each thread and assign threads to  players.
+
+The print server `prn` gets an anonymous function as behavior. The two players `ping` and `pong` get the print server's link as acquaintance. We start the game by sending `ping` the `:serve` command and the address of `pong`:
 
 ```julia
-julia> Random.seed!(2020);
+@threads for i in 1:nthreads()
+    Random.seed!(2021+threadid())
+end
 
-julia> prn = spawn(s->print(@sprintf("%s\n", s)))
-Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
+prn = spawn(s->print(@sprintf("%s\n", s))) 
+ping = spawn(Player("Ping", 0.8), prn, thrd=3)
+pong = spawn(Player("Pong", 0.75), prn, thrd=4)
 
-julia> ping = spawn(Player("Ping", 0.8), prn)
-Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
-
-julia> pong = spawn(Player("Pong", 0.75), prn)
-Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
+send(ping, Val(:serve), pong);
 ```
 
-We start the game by sending `ping` the `:serve` command and the address of `pong`:
+To execute the program we include the file:
 
 ```julia
-julia> send(ping, Val(:serve), pong);
+julia> include("examples/pingpong.jl");
+
 Ping serves 
+Pong serves Ping
+Ping serves Pong
 Pong serves Ping
 Ping serves Pong
 Pong looses ball from Ping

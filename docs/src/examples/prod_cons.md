@@ -9,6 +9,8 @@ We implement this problem with three kinds of actors for store, producer and con
 The store has a fixed capacity, holds items and queues of stalled producers and waiting customers and a counting variable.
 
 ```julia
+# examples/prod_cons.jl
+
 using Actors, Printf
 import Actors: spawn
 
@@ -142,7 +144,7 @@ foreach(x->send(x), (pr1,pr2,pr3,cs1,cs2))
 Let's see, what happens:
 
 ```julia
-julia> include("examples/prodcons.jl")
+julia> include("examples/prod_cons.jl")
 
 julia> producer A started
 consumer U started

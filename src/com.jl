@@ -31,8 +31,10 @@ function _send!(rch::RemoteChannel, msg)
 end
 
 """
-    send(lk::Link, msg)
-Send a message to an actor.
+    send(lk::Link, msg...)
+
+Send a message to an actor. `msg...` are communication
+parameters to the actor's behavior function.
 """
 Classic.send(lk::Link, msg::Msg) = _send!(lk.chn, msg)
 Classic.send(lk::Link, msg...) = _send!(lk.chn, msg)

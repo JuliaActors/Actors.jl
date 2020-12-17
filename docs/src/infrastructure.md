@@ -4,6 +4,11 @@
 CurrentModule = Actors
 ```
 
+`Actors` provides some functionality going beyond the classical model:
+
+- actor tasks and
+- actor registry.
+
 ## Actor Tasks
 
 Actor tasks execute one computation, mostly without communicating with other actors. They can be used to compute values asynchronously.
@@ -20,7 +25,7 @@ await(t)
 
 If a parent actor or worker process creates a new actor, the link to it is only locally known. It has to be sent to all other actors that want to communicate with it.
 
-Alternatively an actor link can be registered under a name (a `Symbol`). Then any actor in the system can communicate with it using that name.
+Now let's setup a remote worker and an `ident` function:
 
 ```julia
 julia> using Actors, Distributed
@@ -36,17 +41,21 @@ julia> @everywhere function ident(id, from)
                ("local actor",  id, from) :
                ("remote actor", id, from)
        end
+```
 
-julia> register(:act1, spawn(Bhv(ident, 1))) # a registered local actor
+An actor (link) can be [`register`](@ref)ed under a name (a `Symbol`). This name then is known system-wide and any other actor can communicate with it using that name:
+
+```julia
+julia> register(:act1, spawn(ident, 1))      # a registered local actor
 true
 
-julia> call(:act1, myid())                   # call it
+julia> call(:act1, myid())                   # call it locally
 ("local actor", 1, 1)
 
-julia> register(:act2, spawn(Bhv(ident, 2), pid=2)) # a registered remote actor on pid 2
+julia> register(:act2, spawn(ident, 2, pid=2)) #  register a remote actor on pid 2
 true
 
-julia> call(:act2, myid())                   # call it
+julia> call(:act2, myid())                   # call it locally
 ("remote actor", 2, 1)
 
 julia> fetch(@spawnat 2 call(:act1, myid())) # call :act1 on pid 2
@@ -54,7 +63,17 @@ julia> fetch(@spawnat 2 call(:act1, myid())) # call :act1 on pid 2
 
 julia> fetch(@spawnat 2 call(:act2, myid())) # call :act2 on pid 2
 ("local actor", 2, 2)
+```
 
+The registry provides three further functions:
+
+| API function | brief description |
+|:-------------|:------------------|
+| [`whereis`](@ref) | return the link of a registered actor |
+| [`registered`](@ref) | return an array of all registered actors |
+| [`unregister`](@ref) | remove a registration |
+
+```julia
 julia> whereis(:act1)                         # get a link to :act1
 Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
 
@@ -79,4 +98,6 @@ The registry works transparently across workers. All workers have access to regi
 
 ## Actor Supervision
 
-...
+!!! note "This is not yet implemented!"
+
+    It is due to come with `Actors` v0.3.

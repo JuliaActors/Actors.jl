@@ -3,7 +3,7 @@ CurrentModule = Actors
 ```
 # Getting Started with Actors
 
-You may have heard about the Actor Model, but here we present actors as practical things, which you can `spawn`, `send` messages to, `receive` or `request` messages from, `call`, `cast` to them, `query` and `update!` them. Please follow along in your Julia REPL and don't hesitate to try things out.
+You may have heard about the Actor Model, but at first we present actors as practical things, which you can `spawn`, `send` messages to, `receive` or `request` messages from, `call`, `cast` to them, `query` and `update!` them. Please follow along in your Julia REPL and don't hesitate to try things out.
 
 ## Creation: `spawn`
 
@@ -76,7 +76,7 @@ send(myactor, 1,2,3,4)
 receive(me)
 ```
 
-An actor can change also its own behavior with [`become`](@ref). Since an actor does what its behavior tells it to do, you use `become` inside a behavior function to cause the actor to switch to a new behavior. Instead `become!` is a call from the outside of an actor. A behavior change is effective for the next message an actor receives.
+An actor can change also its own behavior with [`become`](@ref). Since what an actor does is defined by its behavior, `become` inside the behavior function  causes the actor to switch to a new behavior. Instead `become!` is a call from the outside of an actor. A behavior change is effective for the next message an actor receives.
 
 ## Communication: `send` and `receive`
 

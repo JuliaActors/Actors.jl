@@ -5,7 +5,6 @@
 
 """
 ```
-become!(lk::Link, bhv::Bhv)
 become!(lk::Link, func, args1...; kwargs...)
 become!(name::Symbol, ....)
 ```
@@ -13,16 +12,14 @@ Cause an actor to change behavior.
 
 # Arguments
 - actor `lk::Link` (or `name::Symbol` if registered),
-- `bhv`: a [`Bhv`](@ref) or a functor implementing the new behavior,
-- `func::Function`: a function,
+- `func`: a callable object,
 - `args1...`: (partial) arguments to `func`,
 - `kwargs...`: keyword arguments to `func`.
 """
-become!(lk::Link, bhv) = send(lk, Become(bhv))
-function become!(lk::Link, func::F, args...; kwargs...) where F<:Function 
+function become!(lk::Link, func, args...; kwargs...)
     isempty(args) && isempty(kwargs) ?
         send(lk, Become(func)) : 
-        become!(lk, Bhv(func, args...; kwargs...))
+        send(lk, Become(Bhv(func, args...; kwargs...)))
 end
 become!(name::Symbol, args...; kwargs...) = become!(whereis(name), args...; kwargs...)
 

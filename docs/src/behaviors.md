@@ -136,9 +136,20 @@ julia> for i ∈ 1:5
 
 An actor's behavior is set with [`spawn`](@ref) and gets changed with [`become!`](@ref). Inside a behavior function an actor can change its own behavior with [`become`](@ref). In both cases a callable object together with acquaintance arguments can be specified as new behavior. This is effective when the next message gets processed.
 
-## Be Careful with Mutable Variables
+## Don't Share Mutable Variables
 
-As you have seen, you are very free in how you define behaviors, but you must be very careful in passing mutable variables as acquaintances to actors as they could be accessed by other actors on other threads concurrently causing race conditions. If that's the case, you can wrap mutable variables into a [`:guard`](https://github.com/JuliaActors/Guards.jl) actor, which will manage access to them. 
+As you have seen, you are very free in how you define behaviors, but you must be very careful in passing mutable variables as acquaintances to actors as they could be accessed by other actors on other threads concurrently causing race conditions. 
+
+## Instead Share Actors
+
+It is thread-safe to share actors between threads or other actors. Each call to the shared actor is a communication.
+
+- In the [table-tennis](@ref table-tennis) example we shared a print server actor between player actors working on different threads.
+- In the [Dict-server](@ref dict-server) example a dictionary gets served by an actor to parallel threads.
+- You can wrap mutable variables into a [`:guard`](https://github.com/JuliaActors/Guards.jl) actor, which will manage access to them.
+- In more complicated cases of resource sharing you can use a [`:genserver`](https://github.com/JuliaActors/GenServers.jl) actor.
+
+As those examples show, it is surprisingly easy to avoid race conditions by using actors.
 
 [^1]: see the [Actor Model](https://en.wikipedia.org/wiki/Actor_model#Behaviors) on Wikipedia.
 [^2]: Gul Agha 1986. *Actors. a model of concurrent computation in distributed systems*, MIT.- p. 30

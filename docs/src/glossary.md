@@ -25,5 +25,4 @@ Since Gul Agha's actor glossary [^1] is very useful, we include here some of his
 | **synchronous communication** | Communication between two actors requiring the sender to wait until the recipient acknowledges or otherwise responds to the communication before continuing with further processing. Synchronous communication in actors is implemented using customers. |
 
 [^1]: Gul Agha 1986. *Actors. a model of concurrent computation in distributed systems*, MIT; Appendix B
-[^2]: Joe Armstrong 2014. Programming Erlang, 2nd Ed.,
-Software for a Concurrent World, Pragmatic Programmers; p. 361
+[^2]: Joe Armstrong 2014. Programming Erlang, 2nd Ed., Software for a Concurrent World, Pragmatic Programmers; p. 361

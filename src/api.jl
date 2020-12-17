@@ -59,10 +59,8 @@ cast(name::Symbol, args...) = cast(whereis(name), args...)
 
 """
 ```
-exec(lk::Link, from::Link, f::Function, args...; kwargs...)
-exec(lk::Link, from::Link, func)
-exec(lk::Link, func; timeout::Real=5.0)
-exec(lk::Link, f::Function, args...; timeout::Real=5.0)
+exec(lk::Link, from::Link, f, args...; kwargs...)
+exec(lk::Link, f, args...; timeout::Real=5.0, kwargs...)
 exec(name::Symbol, ....)
 ```
 
@@ -73,24 +71,24 @@ arbitrary function and to send the returned value as
 # Arguments
 - actor `lk::Link` or `name::Symbol` if registered,
 - `from::Link`: the link a `Response` should be sent to.
-- `func`: a callable object,
-- `f::Function`: a function,
+- `f`: a callable object,
 - `args...; kwargs...`: arguments and keyword arguments to it,
-- `fu::Bhv`: a [`Bhv`](@ref) with a callable object and
-    its arguments,
 - `timeout::Real=5.0`: timeout in seconds. Set `timeout=Inf` 
     if you don't want to timeout.
 
 **Note:** If `from` is ommitted, `exec` blocks, waits and 
 returns the result (with a `timeout`).
 """
-exec(lk::Link, from::Link, f::F, args...; kwargs...) where F<:Function =
-    send(lk, Exec(Bhv(func, args...; kwargs...), from))
-exec(lk::Link, from::Link, func) = send(lk, Exec(func, from))
-exec(lk::Link, func; timeout::Real=5.0) =
-    request(lk, Exec, func; timeout=timeout)
-exec(lk::Link, f::F, args...; timeout::Real=5.0) where F<:Function =
-    request(lk, Exec, Bhv(f, args...); timeout=timeout)
+function exec(lk::Link, from::Link, f, args...; kwargs...) 
+    isempty(args) && isempty(kwargs) ?
+        send(lk, Exec(f, from)) :
+        send(lk, Exec(Bhv(f, args...; kwargs...), from))
+end
+function exec(lk::Link, f, args...; timeout::Real=5.0, kwargs...)
+    isempty(args) && isempty(kwargs) ?
+        request(lk, Exec, f; timeout=timeout) :
+        request(lk, Exec, Bhv(f, args...; kwargs...); timeout=timeout)
+end
 exec(name::Symbol, args...; kwargs...) = exec(whereis(name), args...; kwargs...)
 
 """
@@ -112,12 +110,12 @@ exit!(name::Symbol, reason=:ok) = exit!(whereis(name), reason)
 
 """
 ```
-init!(lk::Link, func, args...; kwargs...)
+init!(lk::Link, f, args...; kwargs...)
 init!(name::Symbol, ....)
 ```
-Tell an actor `lk` to save the `func` with the given 
-arguments as an [`init`](@ref _ACT) function and to execute 
-it.
+Tell an actor `lk` to save the callable object `f` with 
+the given arguments as an [`init`](@ref _ACT) function 
+and to execute it.
 
 The `init` function will be called at actor restart.
 
@@ -125,7 +123,7 @@ The `init` function will be called at actor restart.
 
     It is needed for supervision.
 """
-init!(lk::Link, f::F, args...; kwargs...) where F<:Function = 
+init!(lk::Link, f, args...; kwargs...) =
     send(lk, Init(Bhv(f, args...; kwargs...)))
 init!(name::Symbol, args...; kwargs...) = init!(whereis(name), args...; kwargs...)
 

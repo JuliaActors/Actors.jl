@@ -93,8 +93,8 @@ see also: [`Bhv`](@ref), [`Link`](@ref)
 mutable struct _ACT
     mode::Symbol
     bhv::Any
-    init::Union{Nothing,Function}
-    term::Union{Nothing,Function}
+    init::Any
+    term::Any
     self::Union{Nothing,Link}
     name::Union{Nothing,Symbol}
     res::Any

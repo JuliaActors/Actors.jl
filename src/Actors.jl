@@ -72,7 +72,7 @@ export
     # API
     Args, become, self, stop,
     become!, call, cast, exec, exit!, init!, 
-    query, update!,
+    query, term!, update!,
     # Tasks
     ATask, async, await,
     # Registry

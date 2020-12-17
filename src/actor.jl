@@ -91,6 +91,9 @@ a [`Link`](@ref) to it.
 - `taskref=nothing`: if a `Ref{Task}()` is given here, it gets the started `Task`,
 - `remote=false`: if true, a remote channel is created,
 - `mode=:default`: mode, the actor should operate in.
+
+**Note:** If you need keyword arguments `kwargs...` to 
+`f`, you can do `spawn(Bhv(f, args...; kwargs...))`.
 """
 function Classic.spawn( f, args...; pid=myid(), thrd=false, 
                         sticky=false, taskref=nothing, 

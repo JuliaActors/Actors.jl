@@ -14,7 +14,7 @@ inca(a, b) = a[] = a[] + b
 
 me = newLink() 
 
-act = spawn(Bhv(inca, a), taskref=t)
+act = spawn(inca, a, taskref=t)
 
 @test t[].state == :runnable
 A = request(act, Actors.Diag, 1)

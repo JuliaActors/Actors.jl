@@ -3,11 +3,11 @@
 
 julia&gt; import Actors: spawn, newLink</code></pre><p>You <code>spawn</code> an actor with a <em>behavior</em>. A behavior is a callable Julia object.</p><pre><code class="language-julia-repl">julia&gt; myactor = spawn(Threads.threadid)
 Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)</code></pre><p><code>spawn</code> returned an actor <em>link</em>. Now - as we will discover right away - our actor is <em>responsive</em> and waits for our <em>messages</em>.</p><h2 id="Actor-Links"><a class="docs-heading-anchor" href="#Actor-Links">Actor <code>Link</code>s</a><a id="Actor-Links-1"></a><a class="docs-heading-anchor-permalink" href="#Actor-Links" title="Permalink"></a></h2><p>A <a href="../api/#Actors.Link"><code>Link</code></a> is the actor&#39;s mail address and its only representation. Over the returned link it is possible to <em>send</em> messages to the actor or to use other messaging functions. For example if you <code>call</code> or <code>request</code> it, you <code>send</code> a <code>Call</code> message to the actor to execute its behavior and to respond with the result:</p><pre><code class="language-julia-repl">julia&gt; call(myactor)
-2</code></pre><p>Now what happens if you <code>send</code> your actor a message which it cannot understand?</p><pre><code class="language-julia-repl">julia&gt; send(myactor, &quot;Boom&quot;)
+1</code></pre><p>Now what happens if you <code>send</code> your actor a message which it cannot understand?</p><pre><code class="language-julia-repl">julia&gt; send(myactor, &quot;Boom&quot;)
 (&quot;Boom&quot;,)
 
 julia&gt; Actors.info(myactor)
-Task (failed) @0x00007f77c9a52bf0
+Task (failed) @0x00007f382a74dae0
 MethodError: no method matching threadid(::String)
 Closest candidates are:
   threadid(!Matched::Task) at task.jl:187
@@ -18,7 +18,7 @@ onmessage(::Function, ::Tuple{String}) at /home/runner/work/Actors.jl/Actors.jl/
 onmessage(::Actors._ACT, ::Tuple{String}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:40
 onmessage(::Actors._ACT, ::Val{:default}, ::Tuple{String}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:54
 _act(::Channel{Any}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:67
-(::Actors.var&quot;#32#36&quot;)() at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:109</code></pre><p>We caused our actor to fail. Ouch!</p><h2 id="Behaviors:-become-and-become!"><a class="docs-heading-anchor" href="#Behaviors:-become-and-become!">Behaviors: <code>become</code> and <code>become!</code></a><a id="Behaviors:-become-and-become!-1"></a><a class="docs-heading-anchor-permalink" href="#Behaviors:-become-and-become!" title="Permalink"></a></h2><p>We want our actor to do something more meaningful! Let&#39;s write our own behavior. We want it to calculate something and to <code>send</code> the result back to a given address:</p><pre><code class="language-julia-repl">julia&gt; function calc(addr::Link, f::Function, args...)
+(::Actors.var&quot;#32#36&quot;)() at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:110</code></pre><p>We caused our actor to fail. Ouch!</p><h2 id="Behaviors:-become-and-become!"><a class="docs-heading-anchor" href="#Behaviors:-become-and-become!">Behaviors: <code>become</code> and <code>become!</code></a><a id="Behaviors:-become-and-become!-1"></a><a class="docs-heading-anchor-permalink" href="#Behaviors:-become-and-become!" title="Permalink"></a></h2><p>We want our actor to do something more meaningful! Let&#39;s write our own behavior. We want it to calculate something and to <code>send</code> the result back to a given address:</p><pre><code class="language-julia-repl">julia&gt; function calc(addr::Link, f::Function, args...)
            send(addr, f(args...))
        end
 calc (generic function with 1 method)</code></pre><p>With <code>newLink</code> we create a link for ourselves, <code>spawn</code> a new actor with a <code>calc</code> behavior and give it that newly created link as <em>acquaintance</em> parameter:</p><pre><code class="language-julia-repl">julia&gt; me = newLink()
@@ -29,44 +29,213 @@ Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)</code></pre><
 (+, 1, 2, 3, 4)
 
 julia&gt; receive(me)
-10</code></pre><p>If we want our actor to do only multiplication, we can change its behavior with <a href="../api/#Actors.become!"><code>become!</code></a> to <code>calc</code> with new acquaintances:</p><pre><code class="language-julia-repl">julia&gt; become!(myactor, calc, me, *);</code></pre><p>The actor&#39;s new behavior is <code>calc</code> with two acquaintances <code>me</code> and <code>*</code>, and thus it does multiplication only. As before we <code>send</code> it the communication parameters to multiply and <code>receive</code> the result:</p><pre><code class="language-julia-repl">julia&gt; send(myactor, 1,2,3,4)
-(1, 2, 3, 4)
+Actors.Timeout()</code></pre><p>If we want our actor to do only multiplication, we can change its behavior with <a href="../api/#Actors.become!"><code>become!</code></a> to <code>calc</code> with new acquaintances:</p><pre><code class="language-julia-repl">julia&gt; become!(myactor, calc, me, *);
+ERROR: TaskFailedException:
+MethodError: no method matching calc(::Tuple{Link{Channel{Any}}}, ::typeof(+), ::Int64, ::Int64, ::Int64, ::Int64)
+Closest candidates are:
+  calc(!Matched::Link, ::Function, ::Any...) at none:1
+Stacktrace:
+ [1] (::Actors.var&quot;#4#6&quot;{Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}},typeof(Main.ex-intro.calc),Tuple{Tuple{Link{Channel{Any}}}}})(::Tuple{typeof(+),Int64,Int64,Int64,Int64}) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:40
+ [2] (::Bhv)(::Function, ::Vararg{Any,N} where N) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:42
+ [3] onmessage at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:26 [inlined]
+ [4] onmessage(::Actors._ACT, ::Tuple{typeof(+),Int64,Int64,Int64,Int64}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:40
+ [5] onmessage(::Actors._ACT, ::Val{:default}, ::Tuple{typeof(+),Int64,Int64,Int64,Int64}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:54
+ [6] _act(::Channel{Any}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:67
+ [7] (::Actors.var&quot;#32#36&quot;)() at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:110</code></pre><p>The actor&#39;s new behavior is <code>calc</code> with two acquaintances <code>me</code> and <code>*</code>, and thus it does multiplication only. As before we <code>send</code> it the communication parameters to multiply and <code>receive</code> the result:</p><pre><code class="language-julia-repl">julia&gt; send(myactor, 1,2,3,4)
+ERROR: TaskFailedException:
+MethodError: no method matching calc(::Tuple{Link{Channel{Any}}}, ::typeof(+), ::Int64, ::Int64, ::Int64, ::Int64)
+Closest candidates are:
+  calc(!Matched::Link, ::Function, ::Any...) at none:1
+Stacktrace:
+ [1] (::Actors.var&quot;#4#6&quot;{Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}},typeof(Main.ex-intro.calc),Tuple{Tuple{Link{Channel{Any}}}}})(::Tuple{typeof(+),Int64,Int64,Int64,Int64}) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:40
+ [2] (::Bhv)(::Function, ::Vararg{Any,N} where N) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:42
+ [3] onmessage at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:26 [inlined]
+ [4] onmessage(::Actors._ACT, ::Tuple{typeof(+),Int64,Int64,Int64,Int64}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:40
+ [5] onmessage(::Actors._ACT, ::Val{:default}, ::Tuple{typeof(+),Int64,Int64,Int64,Int64}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:54
+ [6] _act(::Channel{Any}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:67
+ [7] (::Actors.var&quot;#32#36&quot;)() at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:110
 
 julia&gt; receive(me)
-24</code></pre><p>An actor can change also its own behavior with <a href="../api/#ActorInterfaces.Classic.become"><code>become</code></a>. Since what an actor does is defined by its behavior, <code>become</code> inside the behavior function  causes the actor to switch to a new behavior. Instead <code>become!</code> is a call from the outside of an actor. A behavior change is effective for the next message an actor receives.</p><h2 id="Communication:-send-and-receive"><a class="docs-heading-anchor" href="#Communication:-send-and-receive">Communication: <code>send</code> and <code>receive</code></a><a id="Communication:-send-and-receive-1"></a><a class="docs-heading-anchor-permalink" href="#Communication:-send-and-receive" title="Permalink"></a></h2><p>When we used <a href="../api/#ActorInterfaces.Classic.send"><code>send</code></a> and <a href="../api/#Actors.receive"><code>receive</code></a> in our experiments so far, we did <em>asynchronous communication</em> with our actor. After sending something  we could have done other work and then receive the result later.</p><p>What happens if we try to <code>receive</code> something from a failed actor?</p><pre><code class="language-julia-repl">julia&gt; send(myactor, 5, &quot;x&quot;)
-(5, &quot;x&quot;)
+Actors.Timeout()</code></pre><p>An actor can change also its own behavior with <a href="../api/#ActorInterfaces.Classic.become"><code>become</code></a>. Since what an actor does is defined by its behavior, <code>become</code> inside the behavior function  causes the actor to switch to a new behavior. Instead <code>become!</code> is a call from the outside of an actor. A behavior change is effective for the next message an actor receives.</p><h2 id="Communication:-send-and-receive"><a class="docs-heading-anchor" href="#Communication:-send-and-receive">Communication: <code>send</code> and <code>receive</code></a><a id="Communication:-send-and-receive-1"></a><a class="docs-heading-anchor-permalink" href="#Communication:-send-and-receive" title="Permalink"></a></h2><p>When we used <a href="../api/#ActorInterfaces.Classic.send"><code>send</code></a> and <a href="../api/#Actors.receive"><code>receive</code></a> in our experiments so far, we did <em>asynchronous communication</em> with our actor. After sending something  we could have done other work and then receive the result later.</p><p>What happens if we try to <code>receive</code> something from a failed actor?</p><pre><code class="language-julia-repl">julia&gt; send(myactor, 5, &quot;x&quot;)
+ERROR: TaskFailedException:
+MethodError: no method matching calc(::Tuple{Link{Channel{Any}}}, ::typeof(+), ::Int64, ::Int64, ::Int64, ::Int64)
+Closest candidates are:
+  calc(!Matched::Link, ::Function, ::Any...) at none:1
+Stacktrace:
+ [1] (::Actors.var&quot;#4#6&quot;{Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}},typeof(Main.ex-intro.calc),Tuple{Tuple{Link{Channel{Any}}}}})(::Tuple{typeof(+),Int64,Int64,Int64,Int64}) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:40
+ [2] (::Bhv)(::Function, ::Vararg{Any,N} where N) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:42
+ [3] onmessage at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:26 [inlined]
+ [4] onmessage(::Actors._ACT, ::Tuple{typeof(+),Int64,Int64,Int64,Int64}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:40
+ [5] onmessage(::Actors._ACT, ::Val{:default}, ::Tuple{typeof(+),Int64,Int64,Int64,Int64}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:54
+ [6] _act(::Channel{Any}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:67
+ [7] (::Actors.var&quot;#32#36&quot;)() at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:110
 
 julia&gt; receive(me)
 Actors.Timeout()</code></pre><p>After some seconds we got a <code>Timeout()</code>.</p><h2 id="Actor-Protocol:-request"><a class="docs-heading-anchor" href="#Actor-Protocol:-request">Actor Protocol: <code>request</code></a><a id="Actor-Protocol:-request-1"></a><a class="docs-heading-anchor-permalink" href="#Actor-Protocol:-request" title="Permalink"></a></h2><p>We don&#39;t give up with it and start it again, but now we want an adding machine with an offset of 1000:</p><pre><code class="language-julia-repl">julia&gt; myactor = spawn(+, 1000)
 Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)</code></pre><p>Our actor now has no acquaintance of <code>me</code>, neither has its behavior any <code>send</code> instruction. If we send it something, it will only add that to 1000 but not respond anything.</p><p>Here the <em>actor protocol</em> comes to our rescue. It allows us to communicate with actors even if their behaviors don&#39;t send anything. Actors understand messaging patterns.  For example if we send an actor a <a href="../messages/#Actors.Call"><code>Call</code></a>, it knows that it must send a <a href="../api/#Actors.Response"><code>Response</code></a> with the result. Let&#39;s try that out:</p><pre><code class="language-julia-repl">julia&gt; send(myactor, Actors.Call((1,2,3), me))
-Actors.Call((1, 2, 3), Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:1), 1, :local))
+Actors.Call((1, 2, 3), Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :local))
 
 julia&gt; receive(me)
-Response(1006, Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default))
+Actors.Timeout()
 
 julia&gt; ans.y
-1006</code></pre><p>The actor added (1,2,3) to 1000 and sent the result back to the provided link. Then we received it asynchronously.</p><p>The <a href="../api/#Actors.request"><code>request</code></a> function is a wrapper for synchronous bidirectional communication. It will create a link internally and <code>send</code> it with the communication parameters as a <code>Call</code> (or another given message type) to the actor. That one sends a <code>Response</code> back to the received link, and <code>request</code> then delivers the response:</p><pre><code class="language-julia-repl">julia&gt; request(myactor, 1,2,3)
-1006</code></pre><p>This is called <em>synchronous communication</em> since <code>request</code> <strong>blocks</strong> until it <code>receive</code>s the result (or a <code>Timeout()</code>).</p><h2 id="More-Control:-call,-cast,-exec,-query,-update!-..."><a class="docs-heading-anchor" href="#More-Control:-call,-cast,-exec,-query,-update!-...">More Control: <code>call</code>, <code>cast</code>, <code>exec</code>, <code>query</code>, <code>update!</code> ...</a><a id="More-Control:-call,-cast,-exec,-query,-update!-...-1"></a><a class="docs-heading-anchor-permalink" href="#More-Control:-call,-cast,-exec,-query,-update!-..." title="Permalink"></a></h2><p>There are more such actor protocols and API functions.</p><p>We can do asynchronous communication with our actor if we use <a href="../api/#Actors.call"><code>call</code></a> with the <code>me</code> link. This sends the given link to the actor and it responds to it. Then we can <code>receive</code> the result asynchronously:</p><pre><code class="language-julia-repl">julia&gt; call(myactor, me, 1000)
-Actors.Call((1000,), Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:1), 1, :local))
+ERROR: type Timeout has no field y</code></pre><p>The actor added (1,2,3) to 1000 and sent the result back to the provided link. Then we received it asynchronously.</p><p>The <a href="../api/#Actors.request"><code>request</code></a> function is a wrapper for synchronous bidirectional communication. It will create a link internally and <code>send</code> it with the communication parameters as a <code>Call</code> (or another given message type) to the actor. That one sends a <code>Response</code> back to the received link, and <code>request</code> then delivers the response:</p><pre><code class="language-julia-repl">julia&gt; request(myactor, 1,2,3)
+ERROR: TaskFailedException:
+MethodError: no method matching +(::Tuple{Int64}, ::Int64)
+Closest candidates are:
+  +(::Any, ::Any, !Matched::Any, !Matched::Any...) at operators.jl:538
+  +(!Matched::Complex{Bool}, ::Real) at complex.jl:301
+  +(!Matched::BigInt, ::Union{Int16, Int32, Int64, Int8}) at gmp.jl:530
+  ...
+Stacktrace:
+ [1] +(::Tuple{Int64}, ::Int64, ::Int64, ::Int64) at ./operators.jl:538
+ [2] (::Actors.var&quot;#4#6&quot;{Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}},typeof(+),Tuple{Tuple{Int64}}})(::Tuple{Int64,Int64,Int64}) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:40
+ [3] (::Bhv)(::Int64, ::Vararg{Int64,N} where N) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:42
+ [4] onmessage(::Actors._ACT, ::Actors.Call) at /home/runner/work/Actors.jl/Actors.jl/src/protocol.jl:12
+ [5] onmessage(::Actors._ACT, ::Val{:default}, ::Actors.Call) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:54
+ [6] _act(::Channel{Any}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:67
+ [7] (::Actors.var&quot;#32#36&quot;)() at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:110</code></pre><p>This is called <em>synchronous communication</em> since <code>request</code> <strong>blocks</strong> until it <code>receive</code>s the result (or a <code>Timeout()</code>).</p><h2 id="More-Control:-call,-cast,-exec,-query,-update!-..."><a class="docs-heading-anchor" href="#More-Control:-call,-cast,-exec,-query,-update!-...">More Control: <code>call</code>, <code>cast</code>, <code>exec</code>, <code>query</code>, <code>update!</code> ...</a><a id="More-Control:-call,-cast,-exec,-query,-update!-...-1"></a><a class="docs-heading-anchor-permalink" href="#More-Control:-call,-cast,-exec,-query,-update!-..." title="Permalink"></a></h2><p>There are more such actor protocols and API functions.</p><p>We can do asynchronous communication with our actor if we use <a href="../api/#Actors.call"><code>call</code></a> with the <code>me</code> link. This sends the given link to the actor and it responds to it. Then we can <code>receive</code> the result asynchronously:</p><pre><code class="language-julia-repl">julia&gt; call(myactor, me, 1000)
+ERROR: TaskFailedException:
+MethodError: no method matching +(::Tuple{Int64}, ::Int64)
+Closest candidates are:
+  +(::Any, ::Any, !Matched::Any, !Matched::Any...) at operators.jl:538
+  +(!Matched::Complex{Bool}, ::Real) at complex.jl:301
+  +(!Matched::BigInt, ::Union{Int16, Int32, Int64, Int8}) at gmp.jl:530
+  ...
+Stacktrace:
+ [1] +(::Tuple{Int64}, ::Int64, ::Int64, ::Int64) at ./operators.jl:538
+ [2] (::Actors.var&quot;#4#6&quot;{Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}},typeof(+),Tuple{Tuple{Int64}}})(::Tuple{Int64,Int64,Int64}) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:40
+ [3] (::Bhv)(::Int64, ::Vararg{Int64,N} where N) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:42
+ [4] onmessage(::Actors._ACT, ::Actors.Call) at /home/runner/work/Actors.jl/Actors.jl/src/protocol.jl:12
+ [5] onmessage(::Actors._ACT, ::Val{:default}, ::Actors.Call) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:54
+ [6] _act(::Channel{Any}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:67
+ [7] (::Actors.var&quot;#32#36&quot;)() at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:110
 
 julia&gt; receive(me).y
-2000</code></pre><p>If we don&#39;t provide a return link to <code>call</code>, it will use <code>request</code> and deliver the result synchronously:</p><pre><code class="language-julia-repl">julia&gt; call(myactor, 2000)
-3000</code></pre><p>Another possibility to communicate asynchronously with an actor is to <a href="../api/#Actors.cast"><code>cast</code></a> it parameters and then to <a href="../api/#Actors.query"><code>query</code></a> the result afterwards.</p><pre><code class="language-julia-repl">julia&gt; cast(myactor, 3000)
-Actors.Cast((3000,))
+ERROR: type Timeout has no field y</code></pre><p>If we don&#39;t provide a return link to <code>call</code>, it will use <code>request</code> and deliver the result synchronously:</p><pre><code class="language-julia-repl">julia&gt; call(myactor, 2000)
+ERROR: TaskFailedException:
+MethodError: no method matching +(::Tuple{Int64}, ::Int64)
+Closest candidates are:
+  +(::Any, ::Any, !Matched::Any, !Matched::Any...) at operators.jl:538
+  +(!Matched::Complex{Bool}, ::Real) at complex.jl:301
+  +(!Matched::BigInt, ::Union{Int16, Int32, Int64, Int8}) at gmp.jl:530
+  ...
+Stacktrace:
+ [1] +(::Tuple{Int64}, ::Int64, ::Int64, ::Int64) at ./operators.jl:538
+ [2] (::Actors.var&quot;#4#6&quot;{Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}},typeof(+),Tuple{Tuple{Int64}}})(::Tuple{Int64,Int64,Int64}) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:40
+ [3] (::Bhv)(::Int64, ::Vararg{Int64,N} where N) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:42
+ [4] onmessage(::Actors._ACT, ::Actors.Call) at /home/runner/work/Actors.jl/Actors.jl/src/protocol.jl:12
+ [5] onmessage(::Actors._ACT, ::Val{:default}, ::Actors.Call) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:54
+ [6] _act(::Channel{Any}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:67
+ [7] (::Actors.var&quot;#32#36&quot;)() at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:110</code></pre><p>Another possibility to communicate asynchronously with an actor is to <a href="../api/#Actors.cast"><code>cast</code></a> it parameters and then to <a href="../api/#Actors.query"><code>query</code></a> the result afterwards.</p><pre><code class="language-julia-repl">julia&gt; cast(myactor, 3000)
+ERROR: TaskFailedException:
+MethodError: no method matching +(::Tuple{Int64}, ::Int64)
+Closest candidates are:
+  +(::Any, ::Any, !Matched::Any, !Matched::Any...) at operators.jl:538
+  +(!Matched::Complex{Bool}, ::Real) at complex.jl:301
+  +(!Matched::BigInt, ::Union{Int16, Int32, Int64, Int8}) at gmp.jl:530
+  ...
+Stacktrace:
+ [1] +(::Tuple{Int64}, ::Int64, ::Int64, ::Int64) at ./operators.jl:538
+ [2] (::Actors.var&quot;#4#6&quot;{Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}},typeof(+),Tuple{Tuple{Int64}}})(::Tuple{Int64,Int64,Int64}) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:40
+ [3] (::Bhv)(::Int64, ::Vararg{Int64,N} where N) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:42
+ [4] onmessage(::Actors._ACT, ::Actors.Call) at /home/runner/work/Actors.jl/Actors.jl/src/protocol.jl:12
+ [5] onmessage(::Actors._ACT, ::Val{:default}, ::Actors.Call) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:54
+ [6] _act(::Channel{Any}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:67
+ [7] (::Actors.var&quot;#32#36&quot;)() at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:110
 
 julia&gt; query(myactor, :res)
-4000</code></pre><p>But this will work fine only if between those two calls to <code>myactor</code> there is not another actor communicating with it. If for example our actor has mutual variables as acquaintances, we can use <code>cast</code> to set parameters or to do anything else where we don&#39;t need a response.</p><p>With <a href="../api/#Actors.exec"><code>exec</code></a> we can tell an actor to execute any function and to deliver the result:</p><pre><code class="language-julia-repl">julia&gt; exec(myactor, broadcast, cos, pi .* (-2:2))
-5-element Array{Float64,1}:
-  1.0
- -1.0
-  1.0
- -1.0
-  1.0</code></pre><p>Actors have internal state variables which we normally don&#39;t need to work with. We can <a href="../api/#Actors.update!"><code>update!</code></a> those variables. One example for such a use is to <code>update!</code> the actor&#39;s current acquaintance parameter (1000) to 500. Then it adds to 500:</p><pre><code class="language-julia-repl">julia&gt; update!(myactor, Args(500))
-Actors.Update(:arg, Args{Tuple{Int64},Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}}((500,), Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}()))
+ERROR: TaskFailedException:
+MethodError: no method matching +(::Tuple{Int64}, ::Int64)
+Closest candidates are:
+  +(::Any, ::Any, !Matched::Any, !Matched::Any...) at operators.jl:538
+  +(!Matched::Complex{Bool}, ::Real) at complex.jl:301
+  +(!Matched::BigInt, ::Union{Int16, Int32, Int64, Int8}) at gmp.jl:530
+  ...
+Stacktrace:
+ [1] +(::Tuple{Int64}, ::Int64, ::Int64, ::Int64) at ./operators.jl:538
+ [2] (::Actors.var&quot;#4#6&quot;{Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}},typeof(+),Tuple{Tuple{Int64}}})(::Tuple{Int64,Int64,Int64}) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:40
+ [3] (::Bhv)(::Int64, ::Vararg{Int64,N} where N) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:42
+ [4] onmessage(::Actors._ACT, ::Actors.Call) at /home/runner/work/Actors.jl/Actors.jl/src/protocol.jl:12
+ [5] onmessage(::Actors._ACT, ::Val{:default}, ::Actors.Call) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:54
+ [6] _act(::Channel{Any}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:67
+ [7] (::Actors.var&quot;#32#36&quot;)() at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:110</code></pre><p>But this will work fine only if between those two calls to <code>myactor</code> there is not another actor communicating with it. If for example our actor has mutual variables as acquaintances, we can use <code>cast</code> to set parameters or to do anything else where we don&#39;t need a response.</p><p>With <a href="../api/#Actors.exec"><code>exec</code></a> we can tell an actor to execute any function and to deliver the result:</p><pre><code class="language-julia-repl">julia&gt; exec(myactor, broadcast, cos, pi .* (-2:2))
+ERROR: TaskFailedException:
+MethodError: no method matching +(::Tuple{Int64}, ::Int64)
+Closest candidates are:
+  +(::Any, ::Any, !Matched::Any, !Matched::Any...) at operators.jl:538
+  +(!Matched::Complex{Bool}, ::Real) at complex.jl:301
+  +(!Matched::BigInt, ::Union{Int16, Int32, Int64, Int8}) at gmp.jl:530
+  ...
+Stacktrace:
+ [1] +(::Tuple{Int64}, ::Int64, ::Int64, ::Int64) at ./operators.jl:538
+ [2] (::Actors.var&quot;#4#6&quot;{Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}},typeof(+),Tuple{Tuple{Int64}}})(::Tuple{Int64,Int64,Int64}) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:40
+ [3] (::Bhv)(::Int64, ::Vararg{Int64,N} where N) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:42
+ [4] onmessage(::Actors._ACT, ::Actors.Call) at /home/runner/work/Actors.jl/Actors.jl/src/protocol.jl:12
+ [5] onmessage(::Actors._ACT, ::Val{:default}, ::Actors.Call) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:54
+ [6] _act(::Channel{Any}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:67
+ [7] (::Actors.var&quot;#32#36&quot;)() at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:110</code></pre><p>Actors have internal state variables which we normally don&#39;t need to work with. We can <a href="../api/#Actors.update!"><code>update!</code></a> those variables. One example for such a use is to <code>update!</code> the actor&#39;s current acquaintance parameter (1000) to 500. Then it adds to 500:</p><pre><code class="language-julia-repl">julia&gt; update!(myactor, Args(500))
+ERROR: TaskFailedException:
+MethodError: no method matching +(::Tuple{Int64}, ::Int64)
+Closest candidates are:
+  +(::Any, ::Any, !Matched::Any, !Matched::Any...) at operators.jl:538
+  +(!Matched::Complex{Bool}, ::Real) at complex.jl:301
+  +(!Matched::BigInt, ::Union{Int16, Int32, Int64, Int8}) at gmp.jl:530
+  ...
+Stacktrace:
+ [1] +(::Tuple{Int64}, ::Int64, ::Int64, ::Int64) at ./operators.jl:538
+ [2] (::Actors.var&quot;#4#6&quot;{Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}},typeof(+),Tuple{Tuple{Int64}}})(::Tuple{Int64,Int64,Int64}) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:40
+ [3] (::Bhv)(::Int64, ::Vararg{Int64,N} where N) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:42
+ [4] onmessage(::Actors._ACT, ::Actors.Call) at /home/runner/work/Actors.jl/Actors.jl/src/protocol.jl:12
+ [5] onmessage(::Actors._ACT, ::Val{:default}, ::Actors.Call) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:54
+ [6] _act(::Channel{Any}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:67
+ [7] (::Actors.var&quot;#32#36&quot;)() at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:110
 
 julia&gt; call(myactor, 500)
-1000</code></pre><p>But we could have achieved the same with <code>become!(myactor, +, 500)</code>.</p><p>Finally we <a href="../api/#Actors.exit!"><code>exit!</code></a> the actor since we are finished with this introduction:</p><pre><code class="language-julia-repl">julia&gt; exit!(myactor)
-Actors.Exit{Symbol,Nothing}(:ok, nothing)
+ERROR: TaskFailedException:
+MethodError: no method matching +(::Tuple{Int64}, ::Int64)
+Closest candidates are:
+  +(::Any, ::Any, !Matched::Any, !Matched::Any...) at operators.jl:538
+  +(!Matched::Complex{Bool}, ::Real) at complex.jl:301
+  +(!Matched::BigInt, ::Union{Int16, Int32, Int64, Int8}) at gmp.jl:530
+  ...
+Stacktrace:
+ [1] +(::Tuple{Int64}, ::Int64, ::Int64, ::Int64) at ./operators.jl:538
+ [2] (::Actors.var&quot;#4#6&quot;{Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}},typeof(+),Tuple{Tuple{Int64}}})(::Tuple{Int64,Int64,Int64}) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:40
+ [3] (::Bhv)(::Int64, ::Vararg{Int64,N} where N) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:42
+ [4] onmessage(::Actors._ACT, ::Actors.Call) at /home/runner/work/Actors.jl/Actors.jl/src/protocol.jl:12
+ [5] onmessage(::Actors._ACT, ::Val{:default}, ::Actors.Call) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:54
+ [6] _act(::Channel{Any}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:67
+ [7] (::Actors.var&quot;#32#36&quot;)() at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:110</code></pre><p>But we could have achieved the same with <code>become!(myactor, +, 500)</code>.</p><p>Finally we <a href="../api/#Actors.exit!"><code>exit!</code></a> the actor since we are finished with this introduction:</p><pre><code class="language-julia-repl">julia&gt; exit!(myactor)
+ERROR: TaskFailedException:
+MethodError: no method matching +(::Tuple{Int64}, ::Int64)
+Closest candidates are:
+  +(::Any, ::Any, !Matched::Any, !Matched::Any...) at operators.jl:538
+  +(!Matched::Complex{Bool}, ::Real) at complex.jl:301
+  +(!Matched::BigInt, ::Union{Int16, Int32, Int64, Int8}) at gmp.jl:530
+  ...
+Stacktrace:
+ [1] +(::Tuple{Int64}, ::Int64, ::Int64, ::Int64) at ./operators.jl:538
+ [2] (::Actors.var&quot;#4#6&quot;{Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}},typeof(+),Tuple{Tuple{Int64}}})(::Tuple{Int64,Int64,Int64}) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:40
+ [3] (::Bhv)(::Int64, ::Vararg{Int64,N} where N) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:42
+ [4] onmessage(::Actors._ACT, ::Actors.Call) at /home/runner/work/Actors.jl/Actors.jl/src/protocol.jl:12
+ [5] onmessage(::Actors._ACT, ::Val{:default}, ::Actors.Call) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:54
+ [6] _act(::Channel{Any}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:67
+ [7] (::Actors.var&quot;#32#36&quot;)() at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:110
 
 julia&gt; send(myactor, 500)
-ERROR: InvalidStateException(&quot;Channel is closed.&quot;, :closed)</code></pre><p>Trying to <code>send</code> it something now throws an exception.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Actors Documentation</a><a class="docs-footer-nextpage" href="../basics/">Actor Model »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Thursday 17 December 2020 10:02">Thursday 17 December 2020</span>. Using Julia version 1.5.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+ERROR: TaskFailedException:
+MethodError: no method matching +(::Tuple{Int64}, ::Int64)
+Closest candidates are:
+  +(::Any, ::Any, !Matched::Any, !Matched::Any...) at operators.jl:538
+  +(!Matched::Complex{Bool}, ::Real) at complex.jl:301
+  +(!Matched::BigInt, ::Union{Int16, Int32, Int64, Int8}) at gmp.jl:530
+  ...
+Stacktrace:
+ [1] +(::Tuple{Int64}, ::Int64, ::Int64, ::Int64) at ./operators.jl:538
+ [2] (::Actors.var&quot;#4#6&quot;{Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}},typeof(+),Tuple{Tuple{Int64}}})(::Tuple{Int64,Int64,Int64}) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:40
+ [3] (::Bhv)(::Int64, ::Vararg{Int64,N} where N) at /home/runner/work/Actors.jl/Actors.jl/src/types.jl:42
+ [4] onmessage(::Actors._ACT, ::Actors.Call) at /home/runner/work/Actors.jl/Actors.jl/src/protocol.jl:12
+ [5] onmessage(::Actors._ACT, ::Val{:default}, ::Actors.Call) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:54
+ [6] _act(::Channel{Any}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:67
+ [7] (::Actors.var&quot;#32#36&quot;)() at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:110</code></pre><p>Trying to <code>send</code> it something now throws an exception.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Actors Documentation</a><a class="docs-footer-nextpage" href="../basics/">Actor Model »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Thursday 17 December 2020 16:31">Thursday 17 December 2020</span>. Using Julia version 1.5.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

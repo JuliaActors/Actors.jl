@@ -8,9 +8,9 @@
 > - *create* a finite number of new actors;
 > - designate the *behavior* to be used for the next message it receives. [^1]
 
-`Actors` enhance Julia's capabilities for concurrent computing. They can be used together with other Julia functionality for multi-threading and distributed computing.
+Actors enhance Julia's capabilities for concurrent computing. They can be used together with other Julia functionality for multi-threading and distributed computing.
 
-`Actors` use Julia functions as behaviors and are
+Actors use Julia functions as behaviors and are
 
 - *responsive* – they react to users - and
 - *message-driven* - they rely on asynchronous message-passing [^2].

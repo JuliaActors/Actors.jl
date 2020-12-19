@@ -25,8 +25,7 @@ The behavior thus can be seen as a [partial application](https://en.wikipedia.or
 
 ```@repl
 f(a, c) = a + c         # define a function
-g(f, a) = (c)->f(a, c)  # a function to build a behavior
-bhv = g(f, 1)           # partially apply f to 1
+partial(f, a...; kw...) = (c...) -> f(a..., c...; kw...)bhv = partial(f, 1)     # partially apply f to 1
 bhv(2)                  # execute f(1,2)
 ```
 
@@ -34,7 +33,7 @@ Actor behavior can be represented in a functional or in an object-oriented style
 
 ## Functional Style
 
-We represent a behavior as a function `f` together with acquaintance arguments `a...` and `kw...` (keyword arguments) to it. [`Bhv`](@ref) creates a partial application (a closure) `ϕ(a...; kw...)` which then can be executed with the communication arguments `c...`:
+We represent a behavior as a function `f` together with acquaintance arguments `a...` and `kw...` (keyword arguments) to it. As above [`Bhv`](@ref) creates a partial application (a closure) `ϕ(a...; kw...)` which  can be executed with communication arguments `c...`:
 
 ```@repl
 using Actors

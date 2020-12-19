@@ -31,15 +31,18 @@ with parameters from the incoming communication.
 - `kw...`: stored keyword arguments,
 - `c...`: parameters from the incoming communication.
 """
-struct Bhv
+struct Bhv{F}
     f
     a::Tuple
     kw::Base.Iterators.Pairs
-    ϕ::Function
+    ϕ::F
 
-    Bhv(f, a...; kw...) =new(f, a, kw, (c)->f(a..., c...; kw...))
+    function Bhv(f, a...; kw...)
+        ϕ = (c...) -> f(a..., c...; kw...)
+        new{typeof(ϕ)}(f, a, kw, ϕ)
+    end
 end
-(p::Bhv)(c...) = p.ϕ(c)
+(p::Bhv)(c...) = p.ϕ(c...)
 
 #
 # Since Bhv contains an anonymous function, the following 

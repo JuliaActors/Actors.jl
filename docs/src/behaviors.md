@@ -25,7 +25,8 @@ The behavior thus can be seen as a [partial application](https://en.wikipedia.or
 
 ```@repl
 f(a, c) = a + c         # define a function
-partial(f, a...; kw...) = (c...) -> f(a..., c...; kw...)bhv = partial(f, 1)     # partially apply f to 1
+partial(f, a...; kw...) = (c...) -> f(a..., c...; kw...)
+bhv = partial(f, 1)     # partially apply f to 1
 bhv(2)                  # execute f(1,2)
 ```
 

@@ -37,7 +37,7 @@ pkg> add "https://github.com/JuliaActors/Actors.jl"
 module Actors
 
 "Gives the package version."
-const version = v"0.2.1"
+const version = v"0.2.2"
 
 using ActorInterfaces.Classic
 using Distributed, .Threads
@@ -54,10 +54,11 @@ include("api.jl")
 include("registry.jl")
 include("init.jl")
 include("diag.jl")
+include("utils.jl")
 
 export  
     # common types
-    Msg, Request, Response, Link, Bhv,
+    Msg, @msg, Request, Response, Link, Bhv,
     # -------------------------------
     # exported interface primitives
     send,  

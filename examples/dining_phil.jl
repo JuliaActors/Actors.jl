@@ -26,65 +26,67 @@ delay(time, msg, cust) = async() do
     send(cust, msg)
 end
 
-function (c::Chopstick)(cust, ::Val{:take})
+@msg Take Taken Busy Put Eat Think
+
+function (c::Chopstick)(cust, ::Take)
     if c.idle
-        send(cust, self(), Val(:taken))
+        send(cust, self(), Taken())
         c.idle = false
     else
-        send(cust, self(), Val(:busy))
+        send(cust, self(), Busy())
     end
 end
-(c::Chopstick)(::Val{:put}) = c.idle = true
+(c::Chopstick)(::Put) = c.idle = true
 
-function thinking(p::Phil, ::Val{:eat})
-    send(p.left, self(), Val(:take))
-    send(p.right, self(), Val(:take))
+function thinking(p::Phil, ::Eat)
+    send(p.left, self(), Take())
+    send(p.right, self(), Take())
     become(hungry, p)
 end
-function hungry(p::Phil, chop, ::Val{:taken})
+function hungry(p::Phil, chop, ::Taken)
     chop == p.left ?
         become(right_waiting, p) :
         become(left_waiting,  p)
 end
-hungry(p::Phil, chop, ::Val{:busy}) = become(denied, p)
-function denied(p::Phil, other, ::Val{:taken})
-    send(other, Val(:put))
+hungry(p::Phil, chop, ::Busy) = become(denied, p)
+function denied(p::Phil, other, ::Taken)
+    send(other, Put())
     become(thinking, p)
-    send(self(), Val(:eat))
+    send(self(), Eat())
 end
-function denied(p::Phil, chop, ::Val{:busy})
+function denied(p::Phil, chop, ::Busy)
     become(thinking, p)
-    send(self(), Val(:eat))
+    send(self(), Eat())
 end
-function right_waiting(p::Phil, chop, ::Val{:taken})
+function right_waiting(p::Phil, chop, ::Taken)
     if chop == p.right 
         become(eating, p)
         p.eaten += te = randn()+eating_time
-        delay(te, Val(:think), self())
+        delay(te, Think(), self())
     end
 end
-function right_waiting(p::Phil, chop, ::Val{:busy})
-    send(p.left, Val(:put))
+function right_waiting(p::Phil, chop, ::Busy)
+    send(p.left, Put())
     become(thinking, p)
-    send(self(), Val(:eat))
+    send(self(), Eat())
 end
-function left_waiting(p::Phil, chop, ::Val{:taken})
+function left_waiting(p::Phil, chop, ::Taken)
     if chop == p.left
         become(eating, p)
         p.eaten += te = randn()+eating_time
-        delay(te, Val(:think), self())
+        delay(te, Think(), self())
     end
 end
-function left_waiting(p::Phil, chop, ::Val{:busy})
-    send(p.right, Val(:put))
+function left_waiting(p::Phil, chop, ::Busy)
+    send(p.right, Put())
     become(thinking, p)
-    send(self(), Val(:eat))
+    send(self(), Eat())
 end
-function eating(p::Phil, ::Val{:think})
-    send(p.left, Val(:put))
-    send(p.right, Val(:put))
+function eating(p::Phil, ::Think)
+    send(p.left, Put())
+    send(p.right, Put())
     become(thinking, p)
-    delay(randn()+thinking_time, Val(:eat), self())
+    delay(randn()+thinking_time, Eat(), self())
 end
 
 eaten(phils...) = Tuple(round(Int, query(p, :bhv).a[1].eaten) for p in phils)
@@ -102,7 +104,7 @@ hume      = spawn(thinking, Phil(c4,c5,0.0))
 plato     = spawn(thinking, Phil(c5,c1,0.0))
 
 for p in (descartes, nietzsche, kant, hume, plato)
-    delay(thinking_time, Val(:eat), p)
+    delay(thinking_time, Eat(), p)
 end
 
 for i in 1:5

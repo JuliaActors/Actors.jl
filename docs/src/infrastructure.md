@@ -9,6 +9,10 @@ CurrentModule = Actors
 - actor tasks and
 - actor registry.
 
+## User Defined Messages
+
+Often you want to define your own message types. For  defining empty messages you can use the [`@msg`](@ref) macro.  
+
 ## Actor Tasks
 
 Actor tasks execute one computation, mostly without communicating with other actors. They can be used to compute values asynchronously.

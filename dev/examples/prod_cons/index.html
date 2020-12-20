@@ -17,28 +17,30 @@ end
 
 available(s::Store) = 0 &lt; length(s.items) &lt; s.capacity
 isfull(s::Store) = length(s.items) ≥ s.capacity
-Base.isempty(s::Store) = isempty(s.items)</code></pre><p>We implement the store&#39;s behavior as a functor receiving two messages <code>:put</code> and <code>:take</code>.</p><pre><code class="language-julia">function (s::Store)(::Val{:put}, prod, item)
+Base.isempty(s::Store) = isempty(s.items)</code></pre><p>We implement the store&#39;s behavior as a functor receiving two messages <code>Put()</code> and <code>Take()</code>.</p><pre><code class="language-julia">@msg Put Full Done Ok Take Empty Notify
+
+function (s::Store)(::Put, prod, item)
     if isfull(s)
-        send(prod, Val(:full), item)
+        send(prod, Full(), item)
         push!(s.prod, prod)
     elseif s.count &lt; maxitems
         push!(s.items, item)
         s.count += 1
         s.count == maxitems ?
-            send(prod, Val(:done)) :
-            send(prod, Val(:ok), item)
-        !isempty(s.cons) &amp;&amp; send(popfirst!(s.cons), Val(:notify))
+            send(prod, Done()) :
+            send(prod, Ok(), item)
+        !isempty(s.cons) &amp;&amp; send(popfirst!(s.cons), Notify())
     else
-        send(prod, Val(:done))
+        send(prod, Done())
     end
 end
-function (s::Store)(::Val{:take}, cons)
+function (s::Store)(::Take, cons)
     if isempty(s)
-        send(cons, Val(:empty))
+        send(cons, Empty())
         push!(s.cons, cons)
     else
         send(cons, popfirst!(s.items))
-        !isempty(s.prod) &amp;&amp; send(popfirst!(s.prod), Val(:notify))
+        !isempty(s.prod) &amp;&amp; send(popfirst!(s.prod), Notify())
     end
 end</code></pre><p>Producers and consumers have a name and a link to the store:</p><pre><code class="language-julia">struct Prod
     name::String
@@ -55,28 +57,28 @@ end</code></pre><p>Those are acquaintances of their behavior functions. We have 
 end
 function producing(p::Prod, item)
     sleep(rand())
-    send(p.store, Val(:put), self(), item)
+    send(p.store, Put(), self(), item)
 end
-function producing(p::Prod, ::Val{:ok}, item)
+function producing(p::Prod, ::Ok, item)
     send(prn, &quot;producer $(p.name) delivered item $item&quot;)
     send(self(), item+1)
 end
-function producing(p::Prod, ::Val{:full}, item)
+function producing(p::Prod, ::Full, item)
     send(prn, &quot;producer $(p.name) stalled with item $item&quot;)
     become(stalled, p, item)
 end
-function producing(p::Prod, ::Val{:done})
+function producing(p::Prod, ::Done)
     send(prn, &quot;producer $(p.name) done&quot;)
     stop()
 end
-function stalled(p::Prod, item, ::Val{:notify})
-    send(p.store, Val(:put), self(), item)
+function stalled(p::Prod, item, ::Notify)
+    send(p.store, Put(), self(), item)
     become(producing, p)
 end
 
 function cons_start(c::Cons)
     become(buying, c)
-    send(c.store, Val(:take), self())
+    send(c.store, Take(), self())
     send(prn, &quot;consumer $(c.name) started&quot;)
 end
 function buying(c::Cons, item)
@@ -84,18 +86,18 @@ function buying(c::Cons, item)
     send(self(), c)
     send(prn, &quot;consumer $(c.name) got item $item&quot;)
 end
-function buying(c::Cons, ::Val{:empty})
+function buying(c::Cons, ::Empty)
     become(waiting, c)
     send(prn, &quot;consumer $(c.name) found store empty&quot;)
 end
 function consuming(c)
     sleep(rand())
     become(buying, c)
-    send(c.store, Val(:take), self())
+    send(c.store, Take(), self())
 end
-function waiting(c::Cons, ::Val{:notify})
+function waiting(c::Cons, ::Notify)
     become(buying, c)
-    send(c.store, Val(:take), self())
+    send(c.store, Take(), self())
 end</code></pre><p>Finally we start the simulation with a print server, a store, three producers and two consumers.</p><pre><code class="language-julia">prn = spawn(s-&gt;print(@sprintf(&quot;%s\n&quot;, s)))
 st = spawn(Store(5))
 pr1 = spawn(prod_start, Prod(&quot;A&quot;, st), 100)
@@ -137,4 +139,4 @@ consumer V got item 102
 consumer U got item 103
 consumer V got item 104
 consumer U found store empty
-consumer V found store empty</code></pre><p>We had limited the sold items to 10. This is a queueing process.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../dining_phil/">« Dining Philosophers</a><a class="docs-footer-nextpage" href="../examples/">Further Examples »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Saturday 19 December 2020 18:24">Saturday 19 December 2020</span>. Using Julia version 1.5.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+consumer V found store empty</code></pre><p>We had limited the sold items to 10. This is a queueing process.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../dining_phil/">« Dining Philosophers</a><a class="docs-footer-nextpage" href="../examples/">Further Examples »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Sunday 20 December 2020 16:39">Sunday 20 December 2020</span>. Using Julia version 1.5.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

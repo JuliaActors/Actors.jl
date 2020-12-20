@@ -15,68 +15,70 @@ end
 delay(time, msg, cust) = async() do 
     sleep(time/speedup)
     send(cust, msg)
-end</code></pre><p>The first part of an actor based solution is that each chopstick between the philosophers is an actor. So only one access to a chopstick is possible at a time. And the philosophers will have to communicate with the chopsticks to take them:</p><pre><code class="language-julia">mutable struct Chopstick
+end
+
+@msg Take Taken Busy Put Eat Think</code></pre><p>The first part of an actor based solution is that each chopstick between the philosophers is an actor. So only one access to a chopstick is possible at a time. And the philosophers will have to communicate with the chopsticks to take them:</p><pre><code class="language-julia">mutable struct Chopstick
     idle::Bool
     Chopstick() = new(true)
 end
 
-function (c::Chopstick)(cust, ::Val{:take})
+function (c::Chopstick)(cust, ::Take)
     if c.idle
-        send(cust, self(), Val(:taken))
+        send(cust, self(), Taken())
         c.idle = false
     else
-        send(cust, self(), Val(:busy))
+        send(cust, self(), Busy())
     end
 end
-(c::Chopstick)(::Val{:put}) = c.idle = true</code></pre><p>We have modeled a chopstick actor as a functor with two messages, <code>:take</code> and <code>:put</code>.</p><p>Now the philosophers! We model them with behavior functions representing their state, the respective philosopher as an acquaintance and state transitions with <code>become</code>. So a philosopher is a finite state machine:</p><pre><code class="language-julia">function thinking(p::Phil, ::Val{:eat})
-    send(p.left, self(), Val(:take))
-    send(p.right, self(), Val(:take))
+(c::Chopstick)(::Put) = c.idle = true</code></pre><p>We have modeled a chopstick actor as a functor with two messages, <code>:take</code> and <code>:put</code>.</p><p>Now the philosophers! We model them with behavior functions representing their state, the respective philosopher as an acquaintance and state transitions with <code>become</code>. So a philosopher is a finite state machine:</p><pre><code class="language-julia">function thinking(p::Phil, ::Eat)
+    send(p.left, self(), Take())
+    send(p.right, self(), Take())
     become(hungry, p)
 end
-function hungry(p::Phil, chop, ::Val{:taken})
+function hungry(p::Phil, chop, ::Taken)
     chop == p.left ?
         become(right_waiting, p) :
         become(left_waiting,  p)
 end
-hungry(p::Phil, chop, ::Val{:busy}) = become(denied, p)
-function denied(p::Phil, other, ::Val{:taken})
-    send(other, Val(:put))
+hungry(p::Phil, chop, ::Busy) = become(denied, p)
+function denied(p::Phil, other, ::Taken)
+    send(other, Put())
     become(thinking, p)
-    send(self(), Val(:eat))
+    send(self(), Eat())
 end
-function denied(p::Phil, chop, ::Val{:busy})
+function denied(p::Phil, chop, ::Busy)
     become(thinking, p)
-    send(self(), Val(:eat))
+    send(self(), Eat())
 end
-function right_waiting(p::Phil, chop, ::Val{:taken})
+function right_waiting(p::Phil, chop, ::Taken)
     if chop == p.right 
         become(eating, p)
         p.eaten += te = randn()+eating_time
-        delay(te, Val(:think), self())
+        delay(te, Think(), self())
     end
 end
-function right_waiting(p::Phil, chop, ::Val{:busy})
-    send(p.left, Val(:put))
+function right_waiting(p::Phil, chop, ::Busy)
+    send(p.left, Put())
     become(thinking, p)
-    send(self(), Val(:eat))
+    send(self(), Eat())
 end
-function left_waiting(p::Phil, chop, ::Val{:taken})
+function left_waiting(p::Phil, chop, ::Taken)
     if chop == p.left
         become(eating, p)
         p.eaten += te = randn()+eating_time
-        delay(te, Val(:think), self())
+        delay(te, Think(), self())
     end
 end
-function left_waiting(p::Phil, chop, ::Val{:busy})
-    send(p.right, Val(:put))
+function left_waiting(p::Phil, chop, ::Busy)
+    send(p.right, Put())
     become(thinking, p)
-    send(self(), Val(:eat))
+    send(self(), Eat())
 end
-function eating(p::Phil, ::Val{:think})
-    send(p.left, Val(:put))
-    send(p.right, Val(:put))
+function eating(p::Phil, ::Think)
+    send(p.left, Put())
+    send(p.right, Put())
     become(thinking, p)
-    delay(randn()+thinking_time, Val(:eat), self())
+    delay(randn()+thinking_time, Eat(), self())
 end</code></pre><p>The crucial step here in preventing a deadlock is that a philosopher puts down his chopstick if he is  <code>right_waiting</code> or <code>left_waiting</code> and gets a <code>:busy</code> or if he is <code>denied</code> and gets a <code>:taken</code> message. Then he switches again to <code>thinking</code> and sends a message to himself to <code>:eat</code>. So he can try again.</p><p>We need a stats function for eating time and we setup everything:</p><pre><code class="language-julia">eaten(phils...) = Tuple(round(Int, query(p, :bhv).a[1].eaten) for p in phils)
 
 c1 = spawn(Chopstick())
@@ -92,7 +94,7 @@ hume      = spawn(thinking, Phil(c4,c5,0.0))
 plato     = spawn(thinking, Phil(c5,c1,0.0))
 
 for p in (descartes, nietzsche, kant, hume, plato)
-    delay(thinking_time, Val(:eat), p)
+    delay(thinking_time, Eat(), p)
 end</code></pre><p>To get some stats we print the eaten times every second:</p><pre><code class="language-julia">julia &gt; for i in 1:5
             sleep(1)
             println(i, &quot;s: &quot;, eaten(descartes, nietzsche, kant, hume, plato))
@@ -101,4 +103,4 @@ end</code></pre><p>To get some stats we print the eaten times every second:</p><
 2s: (57, 70, 61, 62, 65)
 3s: (86, 101, 89, 96, 100)
 4s: (119, 129, 123, 124, 132)
-5s: (151, 162, 155, 155, 162)</code></pre><p>So they are happy thinking and eating asynchronously. Since we have a speedup of 100, we can conclude that in 500 time units our philosophers eat around 155 (much more than programmers). We stop the whole thing in order to prevent overconsumption:</p><pre><code class="language-julia">julia &gt; foreach(a-&gt;exit!(a), (descartes, nietzsche, kant, hume, plato, c1, c2, c3, c4, c5))</code></pre><p>Actually Gul Agha proposed something else. He reasoned about to let philosophers talk to each other:</p><blockquote><p>An actor is free and able to figure out a deadlock situation by querying other actors as to their local state. ... While these philosophers may be &quot;busy&quot; eating or looking for a chopstick, they nevertheless accept communications sent to them. <sup class="footnote-reference"><a id="citeref-2" href="#footnote-2">[2]</a></sup></p></blockquote><p>We did not go this road in order to avoid philosophical debates about local state. But you can try for yourself.</p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>Dale Schumacher. It&#39;s Actors All The Way Down, 2010: <a href="http://www.dalnefre.com/wp/2010/08/dining-philosophers-in-humus/">&quot;Dining Philosophers&quot; in Humus</a></li><li class="footnote" id="footnote-2"><a class="tag is-link" href="#citeref-2">2</a>Gul Agha, 1986. Actors: A Model of Concurrent Computation in Distributed Systems, MIT,- p. 95</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../api/">« API</a><a class="docs-footer-nextpage" href="../prod_cons/">Producer-Consumer Problem »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Saturday 19 December 2020 18:24">Saturday 19 December 2020</span>. Using Julia version 1.5.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+5s: (151, 162, 155, 155, 162)</code></pre><p>So they are happy thinking and eating asynchronously. Since we have a speedup of 100, we can conclude that in 500 time units our philosophers eat around 155 (much more than programmers). We stop the whole thing in order to prevent overconsumption:</p><pre><code class="language-julia">julia &gt; foreach(a-&gt;exit!(a), (descartes, nietzsche, kant, hume, plato, c1, c2, c3, c4, c5))</code></pre><p>Actually Gul Agha proposed something else. He reasoned about to let philosophers talk to each other:</p><blockquote><p>An actor is free and able to figure out a deadlock situation by querying other actors as to their local state. ... While these philosophers may be &quot;busy&quot; eating or looking for a chopstick, they nevertheless accept communications sent to them. <sup class="footnote-reference"><a id="citeref-2" href="#footnote-2">[2]</a></sup></p></blockquote><p>We did not go this road in order to avoid philosophical debates about local state. But you can try for yourself.</p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>Dale Schumacher. It&#39;s Actors All The Way Down, 2010: <a href="http://www.dalnefre.com/wp/2010/08/dining-philosophers-in-humus/">&quot;Dining Philosophers&quot; in Humus</a></li><li class="footnote" id="footnote-2"><a class="tag is-link" href="#citeref-2">2</a>Gul Agha, 1986. Actors: A Model of Concurrent Computation in Distributed Systems, MIT,- p. 95</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../api/">« API</a><a class="docs-footer-nextpage" href="../prod_cons/">Producer-Consumer Problem »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Sunday 20 December 2020 16:39">Sunday 20 December 2020</span>. Using Julia version 1.5.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

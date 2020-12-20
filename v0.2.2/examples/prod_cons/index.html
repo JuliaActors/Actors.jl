@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Producer-Consumer Problem · Actors.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.svg" alt="Actors.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit">Actors.jl</span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Actors Documentation</a></li><li><input class="collapse-toggle" id="menuitem-2" type="checkbox"/><label class="tocitem" for="menuitem-2"><span class="docs-label">Manual</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../intro/">Getting Started with Actors</a></li><li><a class="tocitem" href="../../basics/">Actor Model</a></li><li><a class="tocitem" href="../../behaviors/">Behaviors</a></li><li><a class="tocitem" href="../../actors/"><code>Actors</code> and Julia</a></li><li><a class="tocitem" href="../../protocol/">The <code>Actors</code> Protocol</a></li><li><a class="tocitem" href="../../errors/">Error Handling</a></li><li><a class="tocitem" href="../../infrastructure/">Infrastructure</a></li><li><a class="tocitem" href="../../glossary/">A Glossary of Actor Terms</a></li></ul></li><li><a class="tocitem" href="../../api/">API</a></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox" checked/><label class="tocitem" for="menuitem-4"><span class="docs-label">Examples</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../dining_phil/">Dining Philosophers</a></li><li class="is-active"><a class="tocitem" href>Producer-Consumer Problem</a></li><li><a class="tocitem" href="../examples/">Further Examples</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox"/><label class="tocitem" for="menuitem-5"><span class="docs-label">Internals</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../messages/">Messages</a></li><li><a class="tocitem" href="../../interface/">Interface</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Producer-Consumer Problem</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Producer-Consumer Problem</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaActors/Actors.jl/blob/master/docs/src/examples/prod_cons.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Producer-Consumer-Problem"><a class="docs-heading-anchor" href="#Producer-Consumer-Problem">Producer-Consumer Problem</a><a id="Producer-Consumer-Problem-1"></a><a class="docs-heading-anchor-permalink" href="#Producer-Consumer-Problem" title="Permalink"></a></h1><p>This <a href="https://en.wikipedia.org/wiki/Producer–consumer_problem">classic problem</a> describes producers and consumers sharing a buffer with a given capacity. A producer produces an item at a time, puts it into the buffer and starts again. At the same time consumers are consuming the items (i.e. removing them from the buffer). The problem ist to make sure that a producer won&#39;t add items to the buffer if it is full and that a consumer won&#39;t try to remove them from an empty buffer. </p><p>The solution for a producer is to go to sleep if the buffer is full. The next time, a consumer removes an item from the buffer, the buffer notifies the stalled producer, who then starts to replenish the buffer again. In the same way, the consumer can go to waiting if it finds the buffer empty. The next time a producer delivers an item, the buffer notifies the waiting consumer.</p><p>We implement this problem with three kinds of actors for store, producer and consumer.</p><p>The store has a fixed capacity, holds items and queues of stalled producers and waiting customers and a counting variable.</p><pre><code class="language-julia"># examples/prod_cons.jl
+
+using Actors, Printf
+import Actors: spawn
+
+const maxitems = 10
+
+mutable struct Store
+    capacity::Int
+    items::Array{Any,1}
+    prod::Array{Link,1}
+    cons::Array{Link,1}
+    count::Int
+    Store(capacity::Int) = new(capacity, Any[], Link[], Link[], 0)
+end
+
+available(s::Store) = 0 &lt; length(s.items) &lt; s.capacity
+isfull(s::Store) = length(s.items) ≥ s.capacity
+Base.isempty(s::Store) = isempty(s.items)</code></pre><p>We implement the store&#39;s behavior as a functor receiving two messages <code>Put()</code> and <code>Take()</code>.</p><pre><code class="language-julia">@msg Put Full Done Ok Take Empty Notify
+
+function (s::Store)(::Put, prod, item)
+    if isfull(s)
+        send(prod, Full(), item)
+        push!(s.prod, prod)
+    elseif s.count &lt; maxitems
+        push!(s.items, item)
+        s.count += 1
+        s.count == maxitems ?
+            send(prod, Done()) :
+            send(prod, Ok(), item)
+        !isempty(s.cons) &amp;&amp; send(popfirst!(s.cons), Notify())
+    else
+        send(prod, Done())
+    end
+end
+function (s::Store)(::Take, cons)
+    if isempty(s)
+        send(cons, Empty())
+        push!(s.cons, cons)
+    else
+        send(cons, popfirst!(s.items))
+        !isempty(s.prod) &amp;&amp; send(popfirst!(s.prod), Notify())
+    end
+end</code></pre><p>Producers and consumers have a name and a link to the store:</p><pre><code class="language-julia">struct Prod
+    name::String
+    store::Link
+end
+
+struct Cons
+    name::String
+    store::Link
+end</code></pre><p>Those are acquaintances of their behavior functions. We have also a print server actor <code>prn</code> as a global variable.</p><pre><code class="language-julia">function prod_start(p::Prod, start)
+    become(producing, p)
+    send(self(), start+1)
+    send(prn, &quot;producer $(p.name) started&quot;)
+end
+function producing(p::Prod, item)
+    sleep(rand())
+    send(p.store, Put(), self(), item)
+end
+function producing(p::Prod, ::Ok, item)
+    send(prn, &quot;producer $(p.name) delivered item $item&quot;)
+    send(self(), item+1)
+end
+function producing(p::Prod, ::Full, item)
+    send(prn, &quot;producer $(p.name) stalled with item $item&quot;)
+    become(stalled, p, item)
+end
+function producing(p::Prod, ::Done)
+    send(prn, &quot;producer $(p.name) done&quot;)
+    stop()
+end
+function stalled(p::Prod, item, ::Notify)
+    send(p.store, Put(), self(), item)
+    become(producing, p)
+end
+
+function cons_start(c::Cons)
+    become(buying, c)
+    send(c.store, Take(), self())
+    send(prn, &quot;consumer $(c.name) started&quot;)
+end
+function buying(c::Cons, item)
+    become(consuming)
+    send(self(), c)
+    send(prn, &quot;consumer $(c.name) got item $item&quot;)
+end
+function buying(c::Cons, ::Empty)
+    become(waiting, c)
+    send(prn, &quot;consumer $(c.name) found store empty&quot;)
+end
+function consuming(c)
+    sleep(rand())
+    become(buying, c)
+    send(c.store, Take(), self())
+end
+function waiting(c::Cons, ::Notify)
+    become(buying, c)
+    send(c.store, Take(), self())
+end</code></pre><p>Finally we start the simulation with a print server, a store, three producers and two consumers.</p><pre><code class="language-julia">prn = spawn(s-&gt;print(@sprintf(&quot;%s\n&quot;, s)))
+st = spawn(Store(5))
+pr1 = spawn(prod_start, Prod(&quot;A&quot;, st), 100)
+pr2 = spawn(prod_start, Prod(&quot;B&quot;, st), 200)
+pr3 = spawn(prod_start, Prod(&quot;C&quot;, st), 300)
+cs1 = spawn(cons_start, Cons(&quot;U&quot;, st))
+cs2 = spawn(cons_start, Cons(&quot;V&quot;, st))
+
+foreach(x-&gt;send(x), (pr1,pr2,pr3,cs1,cs2))</code></pre><p>Let&#39;s see, what happens:</p><pre><code class="language-julia">julia&gt; include(&quot;examples/prod_cons.jl&quot;)
+
+julia&gt; producer A started
+consumer U started
+producer C started
+producer B started
+consumer V started
+consumer V found store empty
+consumer U found store empty
+producer A delivered item 101
+consumer U got item 101
+producer B delivered item 201
+consumer V got item 201
+producer C delivered item 301
+consumer V got item 301
+consumer U found store empty
+producer C delivered item 302
+consumer U got item 302
+producer B delivered item 202
+producer C delivered item 303
+producer B delivered item 203
+producer A delivered item 102
+producer A delivered item 103
+consumer U got item 202
+consumer V got item 303
+producer A done
+consumer V got item 203
+producer C done
+producer B done
+consumer V got item 102
+consumer U got item 103
+consumer V got item 104
+consumer U found store empty
+consumer V found store empty</code></pre><p>We had limited the sold items to 10. This is a queueing process.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../dining_phil/">« Dining Philosophers</a><a class="docs-footer-nextpage" href="../examples/">Further Examples »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Sunday 20 December 2020 17:27">Sunday 20 December 2020</span>. Using Julia version 1.5.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

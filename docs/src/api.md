@@ -27,6 +27,12 @@ Bhv
 _ACT
 ```
 
+You can create your own message types with
+
+```@docs
+@msg
+```
+
 ## Starting Actors, creating links
 
 `Actors.jl` doesn't export its functions to start actors and to create links. Thus other libraries building on it can implement their own actors and links.

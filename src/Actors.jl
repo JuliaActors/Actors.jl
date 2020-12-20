@@ -54,10 +54,11 @@ include("api.jl")
 include("registry.jl")
 include("init.jl")
 include("diag.jl")
+include("utils.jl")
 
 export  
     # common types
-    Msg, Request, Response, Link, Bhv,
+    Msg, @msg, Request, Response, Link, Bhv,
     # -------------------------------
     # exported interface primitives
     send,  

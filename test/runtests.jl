@@ -22,6 +22,7 @@ length(procs()) == 1 && addprocs(1)
 @safetestset "Diagnosis"     begin include("test_diag.jl") end
 @safetestset "Tasks"         begin include("test_task.jl") end
 @testset "Registry"          begin include("test_registry.jl") end
+@safetestset "Utilities"     begin include("test_utils.jl") end
 
 println("running examples, output suppressed!")
 redirect_devnull() do

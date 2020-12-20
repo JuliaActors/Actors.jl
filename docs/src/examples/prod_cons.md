@@ -30,31 +30,33 @@ isfull(s::Store) = length(s.items) ≥ s.capacity
 Base.isempty(s::Store) = isempty(s.items)
 ```
 
-We implement the store's behavior as a functor receiving two messages `:put` and `:take`.
+We implement the store's behavior as a functor receiving two messages `Put()` and `Take()`.
 
 ```julia
-function (s::Store)(::Val{:put}, prod, item)
+@msg Put Full Done Ok Take Empty Notify
+
+function (s::Store)(::Put, prod, item)
     if isfull(s)
-        send(prod, Val(:full), item)
+        send(prod, Full(), item)
         push!(s.prod, prod)
     elseif s.count < maxitems
         push!(s.items, item)
         s.count += 1
         s.count == maxitems ?
-            send(prod, Val(:done)) :
-            send(prod, Val(:ok), item)
-        !isempty(s.cons) && send(popfirst!(s.cons), Val(:notify))
+            send(prod, Done()) :
+            send(prod, Ok(), item)
+        !isempty(s.cons) && send(popfirst!(s.cons), Notify())
     else
-        send(prod, Val(:done))
+        send(prod, Done())
     end
 end
-function (s::Store)(::Val{:take}, cons)
+function (s::Store)(::Take, cons)
     if isempty(s)
-        send(cons, Val(:empty))
+        send(cons, Empty())
         push!(s.cons, cons)
     else
         send(cons, popfirst!(s.items))
-        !isempty(s.prod) && send(popfirst!(s.prod), Val(:notify))
+        !isempty(s.prod) && send(popfirst!(s.prod), Notify())
     end
 end
 ```
@@ -83,28 +85,28 @@ function prod_start(p::Prod, start)
 end
 function producing(p::Prod, item)
     sleep(rand())
-    send(p.store, Val(:put), self(), item)
+    send(p.store, Put(), self(), item)
 end
-function producing(p::Prod, ::Val{:ok}, item)
+function producing(p::Prod, ::Ok, item)
     send(prn, "producer $(p.name) delivered item $item")
     send(self(), item+1)
 end
-function producing(p::Prod, ::Val{:full}, item)
+function producing(p::Prod, ::Full, item)
     send(prn, "producer $(p.name) stalled with item $item")
     become(stalled, p, item)
 end
-function producing(p::Prod, ::Val{:done})
+function producing(p::Prod, ::Done)
     send(prn, "producer $(p.name) done")
     stop()
 end
-function stalled(p::Prod, item, ::Val{:notify})
-    send(p.store, Val(:put), self(), item)
+function stalled(p::Prod, item, ::Notify)
+    send(p.store, Put(), self(), item)
     become(producing, p)
 end
 
 function cons_start(c::Cons)
     become(buying, c)
-    send(c.store, Val(:take), self())
+    send(c.store, Take(), self())
     send(prn, "consumer $(c.name) started")
 end
 function buying(c::Cons, item)
@@ -112,18 +114,18 @@ function buying(c::Cons, item)
     send(self(), c)
     send(prn, "consumer $(c.name) got item $item")
 end
-function buying(c::Cons, ::Val{:empty})
+function buying(c::Cons, ::Empty)
     become(waiting, c)
     send(prn, "consumer $(c.name) found store empty")
 end
 function consuming(c)
     sleep(rand())
     become(buying, c)
-    send(c.store, Val(:take), self())
+    send(c.store, Take(), self())
 end
-function waiting(c::Cons, ::Val{:notify})
+function waiting(c::Cons, ::Notify)
     become(buying, c)
-    send(c.store, Val(:take), self())
+    send(c.store, Take(), self())
 end
 ```
 

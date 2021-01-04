@@ -37,7 +37,7 @@ pkg> add "https://github.com/JuliaActors/Actors.jl"
 module Actors
 
 "Gives the package version."
-const version = v"0.2.2"
+const version = v"0.2.3"
 
 using ActorInterfaces.Classic
 using Distributed, .Threads, Dates

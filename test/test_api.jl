@@ -24,7 +24,7 @@ sleep(sleeptime)
 @test t[].state == :runnable
 
 # test diag and actor startup, become! (implicitly)
-act = request(A, Actors.Diag, 1)
+act = request(A, Actors.Diag, 9999)
 sleep(sleeptime)
 @test act.sta == nothing
 @test act.bhv.f == incx

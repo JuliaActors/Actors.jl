@@ -1,15 +1,16 @@
 name = "Actors"
 uuid = "18269d71-cc38-4e02-b8c8-1db30113a6dd"
 authors = ["Oliver Schulz", "Paul Bayer"]
-version = "0.2.2"
+version = "0.2.3"
 
 [deps]
 ActorInterfaces = "7e194583-e687-41a0-9133-1c22a29c80af"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [compat]
-julia = "1.5"
 ActorInterfaces = "0.1"
+julia = "1.5"
 
 [extras]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"

@@ -37,16 +37,18 @@ pkg> add "https://github.com/JuliaActors/Actors.jl"
 module Actors
 
 "Gives the package version."
-const version = v"0.2.2"
+const version = v"0.2.3"
 
 using ActorInterfaces.Classic
-using Distributed, .Threads
+using Distributed, .Threads, Dates
 import ActorInterfaces.Classic: onmessage
 
 include("types.jl")
 include("messages.jl")
 include("links.jl")
 include("com.jl")
+include("connections.jl")
+include("errorhandling.jl")
 include("actor.jl")
 include("protocol.jl")
 include("task.jl")
@@ -77,6 +79,8 @@ export
     # Tasks
     ATask, async, await,
     # Registry
-    register, unregister, whereis, registered
+    register, unregister, whereis, registered,
+    # Supervision
+    connect, disconnect, monitor, demonitor
     
 end

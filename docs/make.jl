@@ -13,8 +13,8 @@ makedocs(
         "Manual" => [
             "intro.md",
             "basics.md",
-            "behaviors.md",
             "actors.md",
+            "behaviors.md",
             "protocol.md",
             "errors.md",
             "infrastructure.md",

@@ -4,24 +4,33 @@
 CurrentModule = Actors
 ```
 
-A behavior is a ...
-
-> ... function to express what an actor does when it processes a message. [^1]
+An actor embodies the essential elements of  computation: 1) processing, 2) storage and 3) communication.
+> When an Actor receives a message, it can concurrently:
 >
-> The behavior of an actor maps the incoming communication to a three tuple of tasks created, new actors created, and the replacement behavior. [^2]
+> - send messages to ... addresses of Actors that it has;
+> - create new Actors;
+> - designate how to handle the next message it receives. [^1]
+
+For that Gul Agha introduced the *behavior* as a ...
+
+> ... function of the incoming communication. 
+> 
+> Two lists of identifiers are used in a behavior definition. Values for the first list of parameters must be specified when the actor is created. This list is called the *acquaintance list*. The second list of parameters, called the *communication list*, gets its bindings from an incoming communication. [^2]
+
+Thus a behavior maps the incoming communication to a three tuple of messages sent, new actors created and the replacement behavior:
 
 ```math
 \begin{array}{lrl}
-f_i(a_i)[c_i] & \rightarrow &\{\{\tau_u,\tau_v, ...\},\;\{\alpha_x,\alpha_y,...\},\;f_{i+1}(a_{i+1})\} \quad\\
+f_i(a_i)[c_i] & \rightarrow &\{\{\mu_u,\mu_v, ...\},\;\{\alpha_x,\alpha_y,...\},\;f_{i+1}(a_{i+1})\} \quad\\
 \textrm{with} & f: & \textrm{behavior function} \\
  & a: & \textrm{acquaintances,} \\
  & c: & \textrm{communication,} \\
- & \tau: & \textrm{tasks created,} \\
+ & \mu: & \textrm{messages sent,} \\
  & \alpha: & \textrm{actors created.} \\
 \end{array}
 ```
 
-The behavior thus can be seen as a [partial application](https://en.wikipedia.org/wiki/Partial_application) of a function ``f`` to acquaintances ``a`` (variables or values the actor knows of). If a communication ``c`` arrives, the behavior executes ``f(a,c)``:
+`Actors` represents a behavior as [partial application](https://en.wikipedia.org/wiki/Partial_application) of a function ``f`` to acquaintances ``a`` (variables, values or actors the actor knows of). If a communication ``c`` arrives, the behavior executes ``f(a,c)``:
 
 ```@repl
 f(a, c) = a + c         # define a function
@@ -34,7 +43,7 @@ Actor behavior can be represented in a functional or in an object-oriented style
 
 ## Functional Style
 
-We represent a behavior as a function `f` together with acquaintance arguments `a...` and `kw...` (keyword arguments) to it. As above [`Bhv`](@ref) creates a partial application (a closure) `ϕ(a...; kw...)` which  can be executed with communication arguments `c...`:
+The behavior is a function `f` together with acquaintance arguments `a...` and `kw...` (keyword arguments) to it. [`Bhv`](@ref) creates a partial application (a closure) `ϕ(a...; kw...)` which  can be executed with communication arguments `c...`:
 
 ```@repl
 using Actors
@@ -151,6 +160,6 @@ It is thread-safe to share actors between threads or other actors. Each call to 
 
 As those examples show, it is surprisingly easy to avoid race conditions by using actors.
 
-[^1]: see the [Actor Model](https://en.wikipedia.org/wiki/Actor_model#Behaviors) on Wikipedia.
+[^1]: Carl Hewitt. Actor Model of Computation: Scalable Robust Information Systems.- [arXiv:1008.1459](https://arxiv.org/abs/1008.1459).
 [^2]: Gul Agha 1986. *Actors. a model of concurrent computation in distributed systems*, MIT.- p. 30
 [^3]: ibid. p. 34

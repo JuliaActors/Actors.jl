@@ -3,27 +3,26 @@
 # MIT license, part of https://github.com/JuliaActors
 #
 
-_terminate!(A::_ACT, reason) = isnothing(A.term) || Base.invokelatest(A.term.f, reason)
-
 #
-# default dispatch on Any, this is the 1st actor layer 
-# analog to the classical Actor Model
+# The onmessage protocol is executed by an actor on an
+# arriving message. It has several layers:
 #
-
+# 1st layer: (default) dispatch on Any
+#
 """
-    onmessage(bhv, msg...)
+    onmessage(bhv, msg)
 
 Default behavior function to execute the current actor 
 behavior `bhv` with the message `msg`. The actor calls
-`bhv(msg...)` when a message arrives. 
+`bhv(msg)` when a message arrives. 
 
 # Parameters
 - `bhv`: excutable object (closure or functor) taking
-    parameters `msg...`,
-- `msg...`: message parameters to `bhv`.
+    parameters `msg`,
+- `msg`: message parameters to `bhv`.
 """
-Classic.onmessage(bhv, msg) = Base.invokelatest(bhv, msg...)
-Classic.onmessage(bhv::Bhv, msg) = bhv(msg...)
+onmessage(bhv, msg) = Base.invokelatest(bhv, msg...)
+onmessage(bhv::Bhv, msg) = bhv(msg...)
 
 """
 ```
@@ -37,21 +36,21 @@ Actor libraries or applications can use this to
 - plugin the `Actors.jl` API (first form) or
 - extend it to other protocols by using the 2nd form.
 """
-Classic.onmessage(A::_ACT, msg) = (A.res = onmessage(A.bhv, msg))
+onmessage(A::_ACT, msg) = (A.res = onmessage(A.bhv, msg))
 
 # 
-# the 2nd actor layer is realized by the Msg protocol 
-# (see protocol.jl) and enables the API
+# 2nd layer: dispatch on msg::Msg (see protocol.jl)
 #
 
 #
-# the 3rd actor layer is bound to the mode argument.
-# This enables 3rd libraries to implement methods such as
-# onmessage(A::_ACT, ::Val{:mymode}, msg::Call)
-# If no such methods are implemented it defaults to the
+# 3rd layer: dispatch on mode
+#
+# This allows other libraries to implement methods
+# such as onmessage(A::_ACT, ::Val{:mymode}, msg::Call).
+# If no such methods are implemented, it defaults to the
 # 1st and 2nd layer.
 #
-Classic.onmessage(A::_ACT, mode, msg) = onmessage(A, msg) 
+onmessage(A::_ACT, mode, msg) = onmessage(A, msg) 
 
 #
 # this is the actor loop
@@ -64,8 +63,22 @@ function _act(ch::Channel)
     task_local_storage("_ACT", A)
     while true
         msg = take!(ch)
-        onmessage(A, Val(A.mode), msg)
-        msg isa Exit && break
+        if isempty(A.conn)
+            onmessage(A, Val(A.mode), msg)
+        else
+            try
+                onmessage(A, Val(A.mode), msg)
+            catch exc
+                if exc isa ActorExit
+                    msg = Stop(exc.reason, nothing)
+                else
+                    onerror(A, exc)
+                    isnothing(A.name) || call(_REG, unregister, A.name)
+                    rethrow()
+                end
+            end
+        end
+        msg isa Stop && break
     end
     isnothing(A.name) || call(_REG, unregister, A.name)
 end
@@ -171,4 +184,4 @@ end
 
 Cause your actor to stop with a `reason`.
 """
-stop(reason::Symbol=:ok) = send!(self(), Exit(reason))
+stop(reason::Symbol=:ok) = send!(self(), Stop(reason))

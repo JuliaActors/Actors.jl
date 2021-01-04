@@ -43,6 +43,18 @@ end
 Cast() = Cast(())
 
 """
+    Connect(x, remove=false)
+
+A [`Msg`](@ref) to an actor to connect with `x`. If 
+`remove=true`, an existing connection gets removed.
+"""
+struct Connect{C} <: Msg
+    x::C
+    remove::Bool
+    Connect(x; remove=false) = new{typeof(x)}(x, remove)
+end
+
+"""
     Diag(x, from::Link)
 
 A synchronous [`Msg`](@ref) to an actor to send diagnostic
@@ -52,19 +64,6 @@ struct Diag <: Msg
     x
     from::Link
 end
-
-"""
-    Exit(reason=:ok, stack=nothing)
-
-A [`Msg`](@ref) causing an actor to stop with an exit
-`reason`. If present, it calls its [`term!`](@ref) 
-function with `reason` as last argument.
-"""
-struct Exit{T,U} <: Msg 
-    reason::T
-    stack::U
-end
-Exit(reason=:ok) = Exit(reason, nothing)
 
 """
     Exec(func::Bhv, from::Link)
@@ -77,6 +76,19 @@ struct Exec <: Msg
     from::Link
 end
 Exec(t::Tuple, from::Link) = Exec(first(t), from)
+
+"""
+    Exit(from, reason, link, state)
+
+A [`Msg`](@ref) to another actor indicating that an error
+has occurred or a [`Stop`](@ref) has been received.
+"""
+struct Exit{L,T,U,V} <: Msg
+    from::L
+    reason::T
+    link::U
+    state::V
+end
 
 """
     Init(f::Bhv)
@@ -103,6 +115,18 @@ struct Query <: Msg
     from::Link
 end
 Query(t::Tuple, from::Link) = Query(first(t), from)
+
+"""
+    Stop(reason, from)
+
+A [`Msg`](@ref) causing an actor to stop with a
+`reason`. If present, it calls its [`term!`](@ref) 
+function with `reason` as last argument.
+"""
+struct Stop{T,U} <: Msg 
+    reason::T
+    from::U
+end
 
 """
     Term(x::Bhv)

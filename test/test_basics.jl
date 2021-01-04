@@ -17,7 +17,7 @@ me = newLink()
 act = spawn(inca, a, taskref=t)
 
 @test t[].state == :runnable
-A = request(act, Actors.Diag, 1)
+A = request(act, Actors.Diag, 9999)
 @test A.mode == :default
 
 send(act, 1)

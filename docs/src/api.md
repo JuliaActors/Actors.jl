@@ -115,11 +115,22 @@ The registry works transparently over distributed worker processes such that loc
 
 ## Actor Supervision
 
-This is not yet implemented.
-
 ```@docs
+ActorExit
+Connection
 init!
 term!
+connect
+disconnect
+monitor
+demonitor
+trapExit
+```
+
+## Utilities
+
+```@docs
+tid
 ```
 
 ## Diagnosis

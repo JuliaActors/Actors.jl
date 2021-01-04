@@ -58,3 +58,12 @@ macro msg(syms...)
             Core.eval(__module__, :(struct $m end))
     end
 end
+
+"""
+    tid(n::Int)
+
+Return a threadid where an `n`-th calculation could run.
+
+This is for emulating a `@threads for` loop with actors.
+"""
+tid(n::Int) = t = n % nthreads() == 0 ? nthreads() : t

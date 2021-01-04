@@ -12,11 +12,13 @@ Actors can be called, updated, queried … To do it they follow a `onmessage` pr
 Become
 Call
 Cast
+Connect
 Diag
 Exit
 Exec
 Init
 Query
+Stop
 Term
 Timeout
 Update

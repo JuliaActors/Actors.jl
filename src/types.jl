@@ -6,6 +6,15 @@
 # -----------------------------------------------
 # Basic Types
 # -----------------------------------------------
+
+"""
+An exception thrown when an actor receives an [`Exit`](@ref) 
+signal from another connected actor.
+"""
+struct ActorExit <: Exception
+    reason
+end
+
 """
     Args(args...; kwargs...)
 
@@ -73,6 +82,9 @@ mutable struct Link{C} <: Addr
     mode::Symbol
 end
 
+"Abstract type for connections between actors."
+abstract type Connection end
+
 """
 ```
 _ACT
@@ -89,7 +101,8 @@ Internal actor status variable.
 6. `name::Union{Nothing,Symbol}`: the actor's registered name.
 7. `res::Any`: the result of the last behavior execution,
 8. `sta::Any`: a variable for representing state,
-9. `usr::Any`: user variable for plugging in something.
+9. `usr::Any`: user variable for plugging in something,
+10. `conn::Array{Connection,1}`: connected actors.
 
 see also: [`Bhv`](@ref), [`Link`](@ref)
 """
@@ -103,6 +116,7 @@ mutable struct _ACT
     res::Any
     sta::Any
     usr::Any
+    conn::Array{Connection,1}
 end
 
 """
@@ -110,7 +124,7 @@ end
 
 Return a actor variable `_ACT`.
 """
-_ACT(mode=:default) = _ACT(mode, Bhv(+), fill(nothing, 7)...)
+_ACT(mode=:default) = _ACT(mode, Bhv(+), fill(nothing, 7)..., Connection[])
 
 # -----------------------------------------------
 # Public message types

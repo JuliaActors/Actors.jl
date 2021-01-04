@@ -24,6 +24,7 @@ function info(lk::Link)
 		return lk.chn.cond_take.waitq.head.donenotify.waitq.head.code.task.state
 	end
 end
+info(lks::Array{Link,1}) = foreach(lk->show(info(lk)), lks)
 
 """
 ```

@@ -1,9 +1,28 @@
 # Error Handling
 
-`Actors` follows Erlang's philosophy to let actors fail and then to recover.
+`Actors` provides Erlang-like [^1] mechanisms to
 
-The error handling based on this has yet to be implemented:
+1. handle errors in actors and tasks and to
+2. write fault-tolerant programs.
 
-- grouping of actors
-- monitoring
-- system actors (for supervision)
+## Let it Crash
+
+- detecting errors,
+- connecting actors,
+- checking tasks,
+- performing an action when an actor or a task dies
+
+## Fault-Tolerance
+
+> Fault tolerance is an important subject in distributed systems design. Fault tolerance is defined as the characteristic by which a system can mask the occurrence and recovery from failures. In other words, a system is fault tolerant if it can continue to operate in the presence of failures. [^2]
+
+- system actors
+- restarting actors
+
+## Supervision
+
+- task supervision
+- supervision tree
+
+[^1]: The definitive source for actor-based error handling is Joe Armstrong's dissertation: [Making reliable distributed systems in the presence of software errors](https://erlang.org/download/armstrong_thesis_2003.pdf)
+[^2]: Maarten van Steen, Andrew S. Tanenbaum. Distributed Systems, v3.02 (2018).- p. 499

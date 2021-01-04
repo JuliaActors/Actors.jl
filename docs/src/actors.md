@@ -4,32 +4,39 @@
 CurrentModule = Actors
 ```
 
+> It is important to distinguish the following:
+>
+> - modeling arbitrary computational systems using Actors. It is difficult to find physical computational systems (regardless of how idiosyncratic) that cannot be modeled using Actors.
+> - securely implementing practical computational applications using Actors remains an active area of research and development. [^1]
+
+## Julia is Well Suited for Actors
+
 `Actors` implements the [Actor model](basics.md) using Julia's concurrency primitives:
 
 - Actors are implemented as `Task`s.
 - They communicate over `Channel`s.
 
-## Julia is Not an Actor Language
+Both tasks and channels could be modeled as actors, but they are not. Thus `Actors` is a library and not "Actors all the way down" [^2].
 
-> The actor model adopts the philosophy that everything is an actor. [^1]
+Given its concurrency primitives, particularly Julia's expressiveness with functions allows a practical implementation of the Actor model:
 
-That implies that everything from access to variables or calling a function with multiple arguments in a programming language down to the routines of the operating system can and should be modeled as actors. But Erlang/Elixir/OTP and Scala/Akka show that actors can be successfully implemented even if they are not "Actors all the way down" [^2].
+1. Actors are created with functions or functors as behaviors which
+2. can be partially applied to acquaintance parameters.
+3. Communication parameters get delivered via messages causing an actor to execute its behavior.
 
-`Actors` therefore follows a pragmatic approach to integrate actors in a non-actor language. Sutter and Larus justified that as follows:
+## `Actors` Complements Julia
+
+Actors allows Julia users to complement and enrich their programs where they find them useful. Sutter and Larus justified that as follows:
 
 > We need higher-level language abstractions, including evolutionary extensions to current imperative languages, so that existing applications can incrementally become concurrent. The programming model must make concurrency easy to understand and reason about, not only during initial development but also during maintenance. [^3]
 
-## Julia is Well Suited for Actors
+Actors make it easier to write clear, correct concurrent programs and offer better alternatives to sharing memory in concurrent computing:
 
-Like the Go language Julia goes beyond Communicating Sequential Processes (CSP) by introducing channels. Furthermore Julia is particularly strong with functions. Thus it offers better alternatives to sharing (global) memory between threads:
+- Share by communicating [^4] to functions and
+- use functions to localize variables and
+- make actors serve mutable variables without using locks.
 
-- share by communicating [^4] and
-- use functions with local variables and
-- wrap shared mutable variables into actors.
-
-Actors both use functions as behaviors and communicate function parameters via messages. This makes it easier to write clear, correct concurrent programs.
-
-Below I will argue and show that it makes sense to use  actors in standard multi-threading or distributed Julia code.
+Below I will show how you can use actors in common multi-threading or distributed Julia code.
 
 ## Multi-threading
 
@@ -174,7 +181,7 @@ When sending mutable variables over remote links, they are automatically copied.
 
 Since actors are Julia tasks, they have a local dictionary in which you can store values. You can use [`task_local_storage`](https://docs.julialang.org/en/v1/base/parallel/#Base.task_local_storage-Tuple{Any}) to access it in behavior functions. But normally argument passing should be enough to handle values in actors.
 
-[^1]: Wikipedia. Actor Model: [Fundamental Concepts](https://en.wikipedia.org/wiki/Actor_model#Fundamental_concepts)
+[^1]: Carl Hewitt. Actor Model of Computation: Scalable Robust Information Systems.- [arXiv:1008.1459](https://arxiv.org/abs/1008.1459)
 [^2]: That is to paraphrase Dale Schumacher's wonderful blog [Actors all the way down](http://www.dalnefre.com/wp).
 [^3]: H. Sutter and J. Larus. Software and the concurrency revolution. ACM Queue, 3(7), 2005.
 [^4]: Effective Go: [Share by Communicating](https://golang.org/doc/effective_go.html#sharing)

@@ -96,8 +96,8 @@ exec(name::Symbol, args...; kwargs...) = exec(whereis(name), args...; kwargs...)
 exit!(lk::Link, reason=:ok)
 exit!(name::Symbol, ....)
 ```
-Tell an actor `lk` (or `name` if registered) to exit. If it 
-has a [`term`](@ref _ACT) function, it calls it with 
+Tell an actor `lk` (or `name` if registered) to stop. If it 
+has a [`term`](@ref _ACT) function, it calls that with 
 `reason` as last argument. 
 
 !!! note "This behavior is not yet fully implemented!"
@@ -105,7 +105,7 @@ has a [`term`](@ref _ACT) function, it calls it with
     It is needed for supervision.
 
 """
-exit!(lk::Link, reason=:ok) = send(lk, Exit(reason))
+exit!(lk::Link, reason=:ok) = send(lk, Stop(reason, nothing))
 exit!(name::Symbol, reason=:ok) = exit!(whereis(name), reason)
 
 """
@@ -204,7 +204,7 @@ Update an actor's internal state `s` with `args...`.
 - actor `lk::Link` or `name::Symbol` if registered,
 - `x`: value/variable to update the choosen state with,
 - `arg::Args`: arguments to update,
-- `s::Symbol`: one of `:arg`,`:mode`,`:name`,`:self`,`:sta`,`:usr`.
+- `s::Symbol`: one of `:arg`, `:mode`, `:name`, `:self`, `:sta`, `:usr`.
 
 *Note:* If you want to update the stored arguments to the 
 behavior function with `s=:arg`, you must pass an [`Args`](@ref) 

@@ -5,26 +5,35 @@
 #
 
 """
-	istaskfailed(lk::Link)
-
-Returns true if a task associated with `lk` has failed.
-"""
-Base.istaskfailed(lk::Link) = !isnothing(lk.chn.excp)
-
-"""
 	info(lk::Link)
 
-Return the state (eventually the stacktrace) of a task associated 
-with `lk`.
+Return the state of an actor associated with `lk`:
+
+- `:runnable` if it is runnable,
+- `:done` if it has finished,
+- else return the failed task. 
 """
-function info(lk::Link)
-	if istaskfailed(lk)
-		return hasfield(typeof(lk.chn.excp), :task) ? lk.chn.excp.task : lk.chn.excp
-	else
-		return lk.chn.cond_take.waitq.head.donenotify.waitq.head.code.task.state
+function info(lk::Link{Channel{Any}})
+	!isnothing(lk.chn.excp) ?
+		hasfield(typeof(lk.chn.excp), :task) ? 
+			lk.chn.excp.task : 
+			:done :
+		:runnable
+end
+function info(lk::Link{RemoteChannel{Channel{Any}}})
+	try
+		diag(lk)
+		return :runnable
+	catch exc
+		return exc.captured.ex isa InvalidStateException ?
+			:done :
+			exc.captured.ex.task
 	end
 end
-info(lks::Array{Link,1}) = foreach(lk->show(info(lk)), lks)
+info(lks::Array{Link,1}) = foreach(lks) do lk
+	t = info(lk)
+	println(t, ": ", t.exception)
+end
 
 """
 ```

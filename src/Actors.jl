@@ -81,6 +81,6 @@ export
     # Registry
     register, unregister, whereis, registered,
     # Supervision
-    connect, disconnect, monitor, demonitor
+    connect, disconnect, monitor, demonitor, trapExit
     
 end

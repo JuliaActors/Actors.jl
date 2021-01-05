@@ -4,6 +4,7 @@
 #
 
 const ERR_BUF = 10
+const _WARN = [true]
 
 _terminate!(A::_ACT, reason) = isnothing(A.term) || Base.invokelatest(A.term.f, reason)
 
@@ -23,6 +24,7 @@ from a `:system` actor.
 trapExit(lk::Link=self()) = send(lk, Update(:mode, :system))
 
 function saveerror(lk::Link)
+    err = Link[]
     try
         err = task_local_storage("_ERR")
     catch exc
@@ -31,7 +33,7 @@ function saveerror(lk::Link)
             rethrow()
     end
     length(err) ≥ ERR_BUF && popfirst!(err)
-    push!(lk)
+    push!(err, lk)
 end
 function errored()
     try

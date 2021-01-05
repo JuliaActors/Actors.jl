@@ -4,29 +4,24 @@
 CurrentModule = Actors
 ```
 
+In one of his later papers (2010) Carl Hewitt wrote:
+
 > It is important to distinguish the following:
 >
 > - modeling arbitrary computational systems using Actors. It is difficult to find physical computational systems (regardless of how idiosyncratic) that cannot be modeled using Actors.
 > - securely implementing practical computational applications using Actors remains an active area of research and development. [^1]
 
+`Actors`' focus is on the second point, namely to give a practical computational application. It builds on Julia's native features: tasks, channels and functions and is not "Actors all the way down" [^2].
+
 ## Julia is Well Suited for Actors
 
-`Actors` implements the [Actor model](basics.md) using Julia's concurrency primitives:
+`Actors` uses Julia's concurrency primitives `Task`s and `Channel`s to run actors and to let them communicate.
 
-- Actors are implemented as `Task`s.
-- They communicate over `Channel`s.
+An actor represents a Julia function or functor. Some function parameters (acquaintances) can be given to the actor at startup. Other parameters (communication) are delivered via messages. Functions incorporate two of the basic elements of computation: processing and storage. If a function is started as an actor it incorporates also the third element: communication. Functions as actors become responsive and composable in new ways.
 
-Both tasks and channels could be modeled as actors, but they are not. Thus `Actors` is a library and not "Actors all the way down" [^2].
+## Actors Complement Julia
 
-Given its concurrency primitives, particularly Julia's expressiveness with functions allows a practical implementation of the Actor model:
-
-1. Actors are created with functions or functors as behaviors which
-2. can be partially applied to acquaintance parameters.
-3. Communication parameters get delivered via messages causing an actor to execute its behavior.
-
-## `Actors` Complements Julia
-
-Actors allows Julia users to complement and enrich their programs where they find them useful. Sutter and Larus justified that as follows:
+`Actors` gives Julia users additional ways to deal with concurrency. Sutter and Larus justified that as follows:
 
 > We need higher-level language abstractions, including evolutionary extensions to current imperative languages, so that existing applications can incrementally become concurrent. The programming model must make concurrency easy to understand and reason about, not only during initial development but also during maintenance. [^3]
 
@@ -40,7 +35,7 @@ Below I will show how you can use actors in common multi-threading or distribute
 
 ## Multi-threading
 
-The Julia manual encourages the use of locks [^5] in order to ensure data-race freedom. But be aware that
+Julia's manual encourages the use of locks [^5] in order to ensure data-race freedom. But be aware that
 
 > they are not composable. You can’t take two correct lock-based pieces of code, combine them, and know that the result is still correct. Modern software development relies on the ability to compose libraries into larger programs, and so it is a serious difficulty that we cannot build on lock-based components without examining their implementations. [^6]
 

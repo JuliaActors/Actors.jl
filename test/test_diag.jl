@@ -14,5 +14,4 @@ act = spawn(fail)
 @test Actors.info(act) == :runnable
 send(act)
 sleep(0.1)
-@test istaskfailed(act)
 @test Actors.info(act) == act.chn.excp.task

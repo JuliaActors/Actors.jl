@@ -16,8 +16,9 @@
 
 > Fault tolerance is an important subject in distributed systems design. Fault tolerance is defined as the characteristic by which a system can mask the occurrence and recovery from failures. In other words, a system is fault tolerant if it can continue to operate in the presence of failures. [^2]
 
-- system actors
-- restarting actors
+- system actors,
+- restarting actors,
+- dynamic code loading
 
 ## Supervision
 

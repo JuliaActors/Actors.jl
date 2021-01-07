@@ -20,21 +20,40 @@ struct Monitor{L} <: Connection
     lk::L
 end
 
+struct Monitored{L} <: Connection
+    lk::L
+    action::Any
+end
+
 """
     connect(lk::Link)
 
 Create a peer connection between the calling actor and 
-the actor represented by `lk`. Peer connected actors 
-will send each other [`Exit`](@ref) signals. A peer 
-actor will exit with the signaled reason unless it is
-`:normal` and if it is not a `:system` actor.
+the actor represented by `lk`. 
+
+Peer connected actors will send each other [`Exit`](@ref) 
+signals. A peer actor will exit with the signaled reason 
+unless it is `:normal`. If it is a `:system` actor, 
+a peer actor will not exit (see [`trapExit`](@ref)).
+
+**Note:** If this is called from the `Main` scope, `lk` 
+is connected as a peer to the `_ROOT` actor.
 """
 function connect(lk::L) where L<:Link
-    act = task_local_storage("_ACT")
-    if act.self != lk
-        push!(act.conn, Peer(lk))
-        unique!(act.conn)
-        send(lk, Connect(Peer(act.self)))
+    try
+        act = task_local_storage("_ACT")
+        if act.self != lk
+            push!(act.conn, Peer(lk))
+            unique!(act.conn)
+            send(lk, Connect(Peer(act.self)))
+        end            
+    catch exc
+        if exc isa KeyError
+            send(_ROOT, Connect(Peer(lk)))
+            send(lk, Connect(Peer(_ROOT)))
+        else
+            rethrow()
+        end
     end
 end
 # 
@@ -57,21 +76,34 @@ function connect(lk::L, W::Type{Child}, restart=:transient) where L<:Link
 end
 
 """
-    monitor(lk::Link)
+    monitor(lk::Link, onsignal...)
 
-Start monitoring the actor represented by `lk`.
+Start monitoring the actor represented by `lk` and
+execute `onsignal...` if it sends [`Down`](@ref).
+
+# Parameters
+- `onsignal...`: if empty, it gives a warning; 
+    if it is one argument `f`, it executes with 
+    `f(msg.reason)`; if it is `f, args...`, it gets
+    executed with `f(args..., msg.reason)`.
 """
-function monitor(lk::L) where L<:Link
+function monitor(lk::L, onsignal...) where L<:Link
+    onsignal = isempty(onsignal) ? nothing :
+        length(onsignal) == 1 ? first(onsignal) :
+            Bhv(first(onsignal), onsignal[2:end]...)
     try
         act = task_local_storage("_ACT")
         send(lk, Connect(Monitor(act.self)))
+        !isnothing(onsignal) && push!(act.conn, Monitored(lk, onsignal))
     catch exc
         if exc isa KeyError
             send(lk, Connect(Monitor(_ROOT)))
+            !isnothing(onsignal) && send(_ROOT, Connect(Monitored(lk, onsignal)))
         else
             rethrow()
         end
     end
+    return :ok
 end
 
 """
@@ -79,11 +111,14 @@ end
 
 Remove the connection between the calling actor and the
 actor represented by `lk`.
+
+**Note:** If this is called from the `Main` scope, `lk` 
+is disconnected from the `_ROOT` actor.
 """
 function disconnect(lk::L) where L<:Link
     try
         act = task_local_storage("_ACT")
-        filter!(c->c.x==lk, act.conn)
+        filter!(c->c.lk!=lk, act.conn)
         send(lk, Connect(act.self, remove=true))
     catch exc
         if exc isa KeyError

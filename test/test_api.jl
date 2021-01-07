@@ -102,4 +102,4 @@ exit!(A)
 sleep(sleeptime)
 @test t[].state == :done
 @test A.chn.state == :closed
-@test tvar[1] == :ok
+@test tvar[1] == :normal

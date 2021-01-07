@@ -66,6 +66,18 @@ struct Diag <: Msg
 end
 
 """
+    Down(from, reason, task)
+
+A [`Msg`](@ref) to another actor indicating that an error
+has occurred or a [`Stop`](@ref) has been received.
+"""
+struct Down{L,T,U} <: Msg
+    from::L
+    reason::T
+    task::U
+end
+
+"""
     Exec(func::Bhv, from::Link)
 
 A synchronous [`Msg`](@ref) to an actor to execute `func`

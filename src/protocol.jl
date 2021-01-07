@@ -33,8 +33,12 @@ end
 
 # Connect
 function onmessage(A::_ACT, msg::Connect)
-    push!(A.conn, msg.x)
-    unique!(A.conn)
+    if !msg.remove
+        push!(A.conn, msg.x)
+        unique!(A.conn)
+    else
+        filter!(c->c.lk!=msg.x, A.conn)
+    end
 end
 
 # Exec
@@ -42,37 +46,6 @@ onmessage(A::_ACT, msg::Exec) = send(msg.from, Response(_current(msg.func)(), A.
 function onmessage(A::_ACT, msg::Init)
     A.init = _current(msg.x)
     A.sta  = A.init()
-end
-
-# Exit
-function onmessage(A::_ACT, msg::Exit)
-    for c in A.conn
-        c.lk != msg.from && send(c.lk, Exit(self(), msg.reason, msg.link, msg.state))
-    end
-    _terminate!(A, msg.reason)
-    throw(ActorExit(msg.reason))
-end
-function onmessage(A::_ACT, ::Val{:system}, msg::Exit)
-    if msg.reason isa Exception
-        saveerror(msg.link)
-        t = msg.link.chn.excp.task
-        enable_finalizers(false)
-        _WARN[1] && @warn "Actor failure: $t, $(t.exception)"
-        enable_finalizers(true)
-    end
-    ix = findfirst(==(msg.from), A.conn)
-    if !isnothing(ix)
-        # eventually restart a child
-        deleteat!(A.conn, ix)
-    end
-end
-
-# Stop
-function onmessage(A::_ACT, msg::Stop)
-    for c in A.conn
-        c.lk != msg.from && send(c.lk, Exit(self(), msg.reason, nothing, nothing))
-    end
-    _terminate!(A, msg.reason)
 end
 
 # Term

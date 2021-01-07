@@ -14,6 +14,7 @@ Call
 Cast
 Connect
 Diag
+Down
 Exit
 Exec
 Init

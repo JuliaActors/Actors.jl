@@ -178,10 +178,9 @@ end
 #       work.
 # 
 
-
 """
-    stop(reason::Symbol)
+    stop(reason=:normal)
 
 Cause your actor to stop with a `reason`.
 """
-stop(reason::Symbol=:ok) = send!(self(), Stop(reason))
+stop(reason=:normal) = send!(self(), Stop(reason))

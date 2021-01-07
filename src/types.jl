@@ -94,9 +94,9 @@ Internal actor status variable.
 # Fields
 
 1. `mode::Symbol`: the actor mode,
-2. `bhv::AbstractBehavior`: a partial function or a function object,
-3. `init::Union{Nothing,Function}`: the init function and its arguments,
-4. `term::Union{Nothing,Function}`: the terminate function and its arguments,
+2. `bhv::Any`:  behavior - a callable object,
+3. `init::Any`: initialization - a callable object, 
+4. `term::Any`: termination - a callable object,
 5. `self::Link`: the actor's address,
 6. `name::Union{Nothing,Symbol}`: the actor's registered name.
 7. `res::Any`: the result of the last behavior execution,

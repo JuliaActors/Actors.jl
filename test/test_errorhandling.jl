@@ -154,6 +154,7 @@ sleep(sleeptime)
 act1 = spawn(threadid, taskref=t1)
 monitor(act1, send, me)
 a1 = diag(act1, 9999)
+sleep(sleeptime)
 @test a1.conn[1] isa Actors.Monitor
 @test a1.conn[1].lk == Actors._ROOT
 @test rt.conn[1] isa Actors.Monitored
@@ -176,6 +177,7 @@ sleep(sleeptime)
 @test isempty(me.chn)
 act1 = spawn(threadid, taskref=t1)
 monitor(act1, send, me)
+sleep(sleeptime)
 a1 = diag(act1, 9999)
 @test a1.conn[1].lk == Actors._ROOT
 @test rt.conn[1].lk == act1

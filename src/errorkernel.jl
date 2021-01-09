@@ -7,6 +7,14 @@ const ERR_BUF = 10
 const _WARN = [true]
 
 _terminate!(A::_ACT, reason) = isnothing(A.term) || Base.invokelatest(A.term.f, reason)
+_sticky(A::_ACT) = A.mode in (:system, :sticky)
+function trysend(lk::Link, msg...)
+    try
+        send(lk, msg...)
+    catch
+        nothing
+    end
+end
 
 function saveerror(lk::Link)
     err = Link[]
@@ -34,13 +42,13 @@ function onerror(A::_ACT, exc)
         c isa Monitor ?
             send(c.lk, Down(self(), exc, current_task())) :
             c isa Parent ?
-                send(c.lk, Exit(self(), exc, self(), A)) :
-                send(c.lk, Exit(self(), exc, self(), nothing))
+                send(c.lk, Exit(exc, self(), self(), A)) :
+                send(c.lk, Exit(exc, self(), self(), nothing))
     end
 end
 
 # 
-# Actors protocol on Down, Exit, Stop
+# Actors protocol on Down, Exit
 #
 
 # Down
@@ -73,11 +81,15 @@ end
 # Exit
 function onmessage(A::_ACT, msg::Exit)
     for c in A.conn
-        c.lk != msg.from && send(c.lk, Exit(self(), msg.reason, msg.link, msg.state))
+        if c.lk != msg.from
+            c isa Monitor ?
+                trysend(c.lk, Down(self(), msg.reason)) :
+                send(c.lk, Exit(msg.reason, self(), msg.link, msg.link))
+        end
     end
     _terminate!(A, msg.reason)
-    throw(ActorExit(msg.reason))
 end
+onmessage(A::_ACT, ::Val{:sticky}, msg::Exit) = onmessage(A, Val(:system), msg)
 function onmessage(A::_ACT, ::Val{:system}, msg::Exit)
     if msg.reason != :normal
         saveerror(msg.link)
@@ -93,20 +105,7 @@ function onmessage(A::_ACT, ::Val{:system}, msg::Exit)
         end
     end
     ix = findfirst(c->c.lk==msg.from, A.conn)
-    if !isnothing(ix)
-        # eventually restart a child
+    isnothing(ix) ? # Exit not from a connection
+        A.mode = Symbol(string(A.mode)*"∇") :
         deleteat!(A.conn, ix)
-    end
-end
-
-# Stop
-function onmessage(A::_ACT, msg::Stop)
-    for c in A.conn
-        if c.lk != msg.from 
-            c isa Monitor ?
-                send(c.lk, Down(self(), msg.reason)) :
-                send(c.lk, Exit(self(), msg.reason, nothing, nothing))
-        end
-    end
-    _terminate!(A, msg.reason)
 end

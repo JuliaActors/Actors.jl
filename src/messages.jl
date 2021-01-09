@@ -68,8 +68,8 @@ end
 """
     Down(from, reason, task)
 
-A [`Msg`](@ref) to another actor indicating that an error
-has occurred or a [`Stop`](@ref) has been received.
+A [`Msg`](@ref) to a monitor actor indicating that an error
+has occurred or a [`Exit`](@ref) has been received.
 """
 struct Down{L,T,U} <: Msg
     from::L
@@ -90,14 +90,17 @@ end
 Exec(t::Tuple, from::Link) = Exec(first(t), from)
 
 """
-    Exit(from, reason, link, state)
+    Exit(reason, from, link, state)
 
-A [`Msg`](@ref) to another actor indicating that an error
-has occurred or a [`Stop`](@ref) has been received.
+A [`Msg`](@ref) to an actor causing it to terminate. 
+`Exit` messages are sent to [`connect`](@ref)ed actors 
+if an error has occurred and then are propagated further.
+They are not propagated by `:sticky` actors, see 
+[`trapExit`](@ref).
 """
-struct Exit{L,T,U,V} <: Msg
-    from::L
+struct Exit{T,L,U,V} <: Msg
     reason::T
+    from::L
     link::U
     state::V
 end
@@ -127,18 +130,6 @@ struct Query <: Msg
     from::Link
 end
 Query(t::Tuple, from::Link) = Query(first(t), from)
-
-"""
-    Stop(reason, from)
-
-A [`Msg`](@ref) causing an actor to stop with a
-`reason`. If present, it calls its [`term!`](@ref) 
-function with `reason` as last argument.
-"""
-struct Stop{T,U} <: Msg 
-    reason::T
-    from::U
-end
 
 """
     Term(x::Bhv)

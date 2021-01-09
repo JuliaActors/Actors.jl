@@ -15,7 +15,8 @@ The actor protocol can be described as a series of messaging patterns. For every
 | [`Become`](@ref) | Tell an actor to change its behavior. |
 | [`Call`](@ref) - [`Response`](@ref) | Call an actor to execute its behavior and to respond with the result. | [`Cast`](@ref) | Cast an actor a message to execute its behavior. |
 | [`Diag`](@ref) - [`Response`](@ref) | Call an actor to respond with diagnostic information. |
-| [`Exit`](@ref) | Tell an actor to exit. |
+| [`Down`](@ref) | A message to a monitor actor signaling an exit or a failure. |
+| [`Exit`](@ref) | A message causing an actor to exit. |
 | [`Exec`](@ref) - [`Response`](@ref) | Call an actor to execute a function and to respond with the result. |
 | [`Init`](@ref) | Tell an actor to execute an initialization function and to store it in its internal state. |
 | [`Query`](@ref) - [`Response`](@ref) | Call an actor to send a status variable/value. |

@@ -69,16 +69,12 @@ function _act(ch::Channel)
             try
                 onmessage(A, Val(A.mode), msg)
             catch exc
-                if exc isa ActorExit
-                    msg = Stop(exc.reason, nothing)
-                else
-                    onerror(A, exc)
-                    isnothing(A.name) || call(_REG, unregister, A.name)
-                    rethrow()
-                end
+                onerror(A, exc)
+                isnothing(A.name) || call(_REG, unregister, A.name)
+                rethrow()
             end
         end
-        msg isa Stop && break
+        msg isa Exit && !_sticky(A) && break
     end
     isnothing(A.name) || call(_REG, unregister, A.name)
 end
@@ -183,4 +179,4 @@ end
 
 Cause your actor to stop with a `reason`.
 """
-stop(reason=:normal) = send!(self(), Stop(reason))
+stop(reason=:normal) = send!(self(), Exit(reason, fill(nothing, 3...)))

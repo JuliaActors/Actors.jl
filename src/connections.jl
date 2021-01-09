@@ -28,16 +28,17 @@ end
 """
     connect(lk::Link)
 
-Create a peer connection between the calling actor and 
+Create a connection between the calling actor and 
 the actor represented by `lk`. 
 
-Peer connected actors will send each other [`Exit`](@ref) 
-signals. A peer actor will exit with the signaled reason 
-unless it is `:normal`. If it is a `:system` actor, 
-a peer actor will not exit (see [`trapExit`](@ref)).
+Connected actors will send each other [`Exit`](@ref) 
+signals. A connected actor will exit with the signaled reason 
+unless it is `:normal`.
 
-**Note:** If this is called from the `Main` scope, `lk` 
-is connected as a peer to the `_ROOT` actor.
+**Note:**
+- An actor can be made `:sticky` with [`trapExit`](@ref) and then will not exit.
+- If this is called from the `Main` scope, `lk` is 
+connected to the `Actors._ROOT` actor.
 """
 function connect(lk::L) where L<:Link
     try
@@ -75,17 +76,34 @@ function connect(lk::L, W::Type{Child}, restart=:transient) where L<:Link
     end
 end
 
-"""
-    monitor(lk::Link, onsignal...)
+function _taskmonitor(t::Task, m::Link; timeout::Real=5.0, pollint::Real=0.1)
+    res = timedwait(()->t.state!=:runnable, timeout; pollint)
+    res == :ok ?
+        t.state == :done ?
+            send(m, Down(t, :normal, nothing)) :
+            send(m, Down(t, t.exception, t)) :
+        send(m, Down(t, res, nothing))
+end
 
-Start monitoring the actor represented by `lk` and
-execute `onsignal...` if it sends [`Down`](@ref).
+"""
+```
+monitor(lk::Link, onsignal...)
+monitor(t::Task, onsignal...; timeout::Real=5.0, pollint::Real=0.1)
+```
+Start monitoring the actor represented by `lk` or the
+task `t` and execute `onsignal...` if it sends [`Down`](@ref)
+or if it fails.
 
 # Parameters
 - `onsignal...`: if empty, it gives a warning; 
     if it is one argument `f`, it executes with 
     `f(msg.reason)`; if it is `f, args...`, it gets
     executed with `f(args..., msg.reason)`.
+- `timeout::Real=5.0`: how many seconds should a task 
+    be monitored? After that a [`Down`](@ref) with
+    reason `:timed_out` is sent.
+- `pollint::Real=0.1`: polling interval in seconds for
+    task monitoring.
 """
 function monitor(lk::L, onsignal...) where L<:Link
     onsignal = isempty(onsignal) ? nothing :
@@ -99,6 +117,24 @@ function monitor(lk::L, onsignal...) where L<:Link
         if exc isa KeyError
             send(lk, Connect(Monitor(_ROOT)))
             !isnothing(onsignal) && send(_ROOT, Connect(Monitored(lk, onsignal)))
+        else
+            rethrow()
+        end
+    end
+    return :ok
+end
+function monitor(t::Task, onsignal...; timeout::Real=5.0, pollint::Real=0.1)
+    onsignal = isempty(onsignal) ? nothing :
+        length(onsignal) == 1 ? first(onsignal) :
+            Bhv(first(onsignal), onsignal[2:end]...)
+    try
+        act = task_local_storage("_ACT")
+        @async _taskmonitor(t, self(); timeout, pollint)
+        !isnothing(onsignal) && push!(act.conn, Monitored(t, onsignal))
+    catch exc
+        if exc isa KeyError
+            @async _taskmonitor(t, _ROOT; timeout, pollint)
+            !isnothing(onsignal) && send(_ROOT, Connect(Monitored(t, onsignal)))
         else
             rethrow()
         end

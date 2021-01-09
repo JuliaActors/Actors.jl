@@ -19,7 +19,6 @@ Exit
 Exec
 Init
 Query
-Stop
 Term
 Timeout
 Update

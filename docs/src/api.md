@@ -24,7 +24,6 @@ Request
 Response
 Link
 Bhv
-_ACT
 ```
 
 You can create your own message types with
@@ -113,19 +112,33 @@ registered
 
 The registry works transparently over distributed worker processes such that local links are transformed to remote links when shared between workers.
 
-## Actor Supervision
+## Error Handling
 
 ```@docs
-ActorExit
-Connection
 init!
 term!
+```
+
+### Connections
+
+Connected actors send each other [`Exit`](@ref) signals and terminate together unless they are made `:sticky` with `trapExit`:
+
+```@docs
 connect
 disconnect
-monitor
-demonitor
 trapExit
 ```
+
+### Monitors
+
+Actors can warn or take actions if their monitored actors or tasks terminate.
+
+```@docs
+monitor
+demonitor
+```
+
+### Supervisors
 
 ## Utilities
 

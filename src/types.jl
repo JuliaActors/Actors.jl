@@ -8,14 +8,6 @@
 # -----------------------------------------------
 
 """
-An exception thrown when an actor receives an [`Exit`](@ref) 
-signal from another connected actor.
-"""
-struct ActorExit <: Exception
-    reason
-end
-
-"""
     Args(args...; kwargs...)
 
 A structure for updating arguments to an actor's behavior.

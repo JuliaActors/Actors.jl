@@ -52,7 +52,7 @@ send(act1, act2)
 send(act3, act2)
 trapExit(act3)
 sleep(sleeptime)
-@test act3.mode == :system
+@test act3.mode == :sticky
 send(act1, "boom")
 sleep(sleeptime)
 @test t1[].state == :failed

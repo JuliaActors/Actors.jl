@@ -100,7 +100,7 @@ Tell an actor `lk` (or `name` if registered) to stop. If it
 has a [`term`](@ref _ACT) function, it calls that with 
 `reason` as last argument. 
 """
-exit!(lk::Link, reason=:normal) = send(lk, Stop(reason, nothing))
+exit!(lk::Link, reason=:normal) = send(lk, Exit(reason, fill(nothing, 3)...))
 exit!(name::Symbol, reason=:normal) = exit!(whereis(name), reason)
 
 """
@@ -188,19 +188,19 @@ term!(lk::Link, func, args...; kwargs...) =
 term!(name::Symbol, args...; kwargs...) = term!(whereis(name), args...; kwargs...)
 
 """
-    trapExit(lk::Link=self())
+    trapExit(lk::Link=self(), mode=:sticky)
 
-Change the mode of an actor to `:system`.
+Change the mode of an actor.
 
-A `:system` actor does not stop if it receives an 
-[`Exit`](@ref) signal and does not propagate it
-further. Instead it reports the failure and saves a
-link to the failed actor. 
+A `:sticky` actor does not exit if it receives an 
+[`Exit`](@ref) signal from a connected actor and does 
+not propagate it further. Instead it reports the failure 
+and saves a link to the failed actor. 
 
 See [`diag`](@ref) for getting links to failed actors 
-from a `:system` actor.
+from a `:sticky` actor.
 """
-trapExit(lk::Link=self()) = send(lk, Update(:mode, :system))
+trapExit(lk::Link=self(), mode=:sticky) = send(lk, Update(:mode, mode))
 
 """
 ```

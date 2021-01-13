@@ -1,4 +1,4 @@
-# `Actors` and Julia
+# Actors and Julia
 
 ```@meta
 CurrentModule = Actors

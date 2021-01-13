@@ -1,4 +1,4 @@
-# Behaviors
+# Actor Behavior
 
 ```@meta
 CurrentModule = Actors

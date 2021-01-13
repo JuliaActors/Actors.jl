@@ -71,7 +71,8 @@ Supervisors allow for more automation and control of error handling in an actor 
 | [`supervisor`](@ref) | start a supervisor actor, |
 | [`supervise`](@ref) | add the current actor to a supervisor's child list, |
 | [`unsupervise`](@ref) | delete the current actor from a supervisor's child list, |
-| [`start_child`](@ref) | tell a supervisor to start a new child, |
+| [`start_actor`](@ref) | tell a supervisor to start an actor as a child, |
+| [`start_task`](@ref) | tell a supervisor to start a task as a child, |
 | [`delete_child`](@ref) | tell a supervisor to remove an actor from its child list, |
 | [`terminate_child`](@ref) | tell a supervisor to terminate a child and to remove it from its child list, |
 | [`count_children`](@ref) | tell a supervisor to return a children count, |

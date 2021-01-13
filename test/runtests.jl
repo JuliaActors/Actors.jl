@@ -21,7 +21,6 @@ length(procs()) == 1 && addprocs(1)
 @safetestset "Error handling" begin include("test_errorhandling.jl") end
 @safetestset "API"            begin include("test_api.jl") end
 @safetestset "Diagnosis"      begin include("test_diag.jl") end
-@safetestset "Tasks"          begin include("test_task.jl") end
 @testset "Registry"           begin include("test_registry.jl") end
 @safetestset "Utilities"      begin include("test_utils.jl") end
 

@@ -91,14 +91,6 @@ The following is needed for updating arguments:
 Args
 ```
 
-## Actor Tasks
-
-```@docs
-ATask
-async
-await
-```
-
 ## Actor Registry
 
 Actors can be registered with `Symbol`s to a registry. API functions on actors can then be called with their registered names.
@@ -146,10 +138,11 @@ A supervisor actor can restart its children if they should terminate.
 supervisor
 supervise
 unsupervise
+start_actor
+start_task
 count_children
 which_children
 delete_child
-start_child
 terminate_child
 ```
 

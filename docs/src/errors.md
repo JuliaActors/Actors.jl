@@ -58,13 +58,13 @@ In the depicted case the supervisor `A10` has child actors `A1`-`A6`. What it do
 
 ### Child restart options
 
-| restart&nbsp;option | brief description |
+| restart option | brief description |
 |:---------------|:------------------|
-| `:permanent` |  the child actor is always restarted |
-| `:temporary` | the child is never restarted, regardless of the supervision strategy |
-| `:transient` | the child is restarted only if it terminates abnormally, i.e., with an exit reason other than :normal, :shutdown |
+| `:permanent` |  the child actor is always restarted, |
+| `:temporary` | the child is never restarted, regardless of the supervision strategy, |
+| `:transient` | the child is restarted only if it terminates abnormally, i.e., with an exit reason other than `:normal` or `:shutdown`. |
 
-Supervisors allow for more automation and control of error handling in an actor system. Therefore they have the following API:
+Supervisors allow for more automation and control of error handling in an actor system. For that they have the following API:
 
 | API function | brief description |
 |:-------------|:------------------|
@@ -85,16 +85,18 @@ If `connect` or `monitor` are called from the REPL or a user script and not from
 
 ## Fault Tolerance
 
-To use the above mechanisms for fault-tolerance successfully supervisors, monitors or :sticky actors must haveO solid behaviors which are unlikely to fail.
+To use the above mechanisms for fault-tolerance successfully, supervisors, monitors or `:sticky` actors must have behaviors which are unlikely to fail.
 Therefore actors with complicated and error-prone behaviors should not be made monitors or `:sticky`.
 
-Connections, monitors and supervisors represent quite different protocols. When do you use which? 
+Connections, monitors and supervisors represent quite different protocols. When do you use which?
 
 1. If you want a failure in one actor to terminate others, then use [`connect`](@ref).
 2. If instead you need to know or take action when some other actor or task exits for any reason, choose a monitor.
 3. If you want to realize a hierarchy of actors and tasks, use supervisors.
 
 The approaches can be combined to realize arbitrary structures of connected and monitored actors.
+
+### Supervisory trees
 
 Often you may be interested in building a hierarchical structure containing all actors and tasks in your application. This is called a supervisory tree, and there is the [`Supervisors`](https://github.com/JuliaActors/Supervisors.jl) package facilitating to build that.
 

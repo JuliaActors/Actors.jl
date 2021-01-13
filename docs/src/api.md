@@ -140,6 +140,19 @@ demonitor
 
 ### Supervisors
 
+A supervisor actor can restart its children if they should terminate.
+
+```@docs
+supervisor
+supervise
+unsupervise
+count_children
+which_children
+delete_child
+start_child
+terminate_child
+```
+
 ## Utilities
 
 ```@docs

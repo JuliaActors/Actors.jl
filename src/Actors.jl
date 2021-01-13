@@ -49,6 +49,7 @@ include("links.jl")
 include("com.jl")
 include("connections.jl")
 include("errorkernel.jl")
+include("supervisor.jl")
 include("protocol.jl")
 include("actor.jl")
 include("task.jl")
@@ -76,11 +77,15 @@ export
     Args, become, self, stop,
     become!, call, cast, exec, exit!, init!, 
     query, term!, update!,
-    # Tasks
+    # tasks
     ATask, async, await,
-    # Registry
+    # registry
     register, unregister, whereis, registered,
-    # Supervision
-    connect, disconnect, monitor, demonitor, trapExit
+    # error handling
+    connect, disconnect, monitor, demonitor, trapExit,
+    # supervising
+    supervisor, supervise, unsupervise, 
+    count_children, which_children,
+    delete_child, start_child, terminate_child
     
 end

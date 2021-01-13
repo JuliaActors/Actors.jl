@@ -10,6 +10,7 @@ struct Which end
 
 const strategies = (:one_for_one, :one_for_all, :rest_for_one)
 const restarts   = (:permanent, :temporary, :transient)
+const reasons    = (:normal, :shutdown, :timed_out)
 
 """
 ```
@@ -39,18 +40,22 @@ struct Supervisor
 end
 
 function restart_child(c::Child)
-    lk = spawn(c.start)
-    c.lk.chn = lk.chn
+    if c.lk isa Link
+        lk = spawn(c.start)
+        c.lk.chn = lk.chn
+    else
+        c.lk = Threads.@spawn s.start()
+    end
 end
 
 function shutdown_child(c::Child)
-    exit!(c.lk, :shutdown)
+    c.lk isa Link && exit!(c.lk, :shutdown)
 end
 
 function restart(s::Supervisor, c::Child, reason::Symbol)
     start = c.restart == :permanent ? true :
         c.restart == :temporary ? false :
-            reason in (:normal, :shutdown) ? false : true
+            reason in reasons ? false : true
     if start && !isnothing(c.start)
         length(s.rtime) ≥ s.max_restarts && popfirst!(s.rtime)
         push!(s.rtime, time_ns()/1e9)
@@ -89,7 +94,7 @@ function (s::Supervisor)(child::Child)
     push!(act.conn, child)
     send(child.lk, Connect(Super(act.self)))
 end
-function (s::Supervisor)(::Delete, lk::Link)
+function (s::Supervisor)(::Delete, lk)
     act = task_local_storage("_ACT")
     filter!(c->c.lk!=lk, act.conn)
     filter!(c->c.lk!=lk, s.childs)
@@ -152,9 +157,9 @@ delete_child(sv::Link, c::Link) = send(sv, Delete(), c)
 
 """
 ```
-start_child(sv::Link, start, restart::Symbol; kwargs...)
+start_actor(sv::Link, start, restart::Symbol; kwargs...)
 ```
-Tell a supervisor `sv` to start a child actor, to add 
+Tell a supervisor `sv` to start an actor, to add 
 it to its childs list and to return a link to it.
 
 # Parameters
@@ -164,11 +169,46 @@ it to its childs list and to return a link to it.
     `:permanent`, `:temporary`, `:transient`,
 - `kwargs...`: keyword arguments to [`spawn`](@ref).
 """
-function start_child(sv::Link, start, restart::Symbol=:transient; kwargs...)
+function start_actor(sv::Link, start, restart::Symbol=:transient; kwargs...)
     @assert restart in restarts "Not a known restart strategy: $restart"
     lk = spawn(start; kwargs...)
     send(sv, Child(lk, start, restart))
     return lk
+end
+
+function _supervisetask(t::Task, m::Link; timeout, pollint)
+    res = timedwait(()->t.state!=:runnable, timeout; pollint)
+    res == :ok ?
+        t.state == :done ?
+            send(m, Exit(t, :normal, nothing, nothing)) :
+            send(m, Exit(t, t.exception, t, nothing)) :
+        send(m, Exit(t, res, nothing, nothing))
+end
+
+"""
+```
+start_task(sv::Link, start, restart::Symbol; 
+           timeout::Real=5.0, pollint::Real=0.1)
+```
+Tell a supervisor `sv` to start a child task, to add 
+it to its childs list and to return it.
+
+# Parameters
+- `sv::Link`: link to a started supervisor,
+- `start`: must be callable with no arguments,
+- `restart::Symbol=:transient`: restart option, one of 
+    `:temporary`, `:transient`,
+- `timeout::Real=5.0`: how many seconds should a task 
+    be supervised, 
+- `pollint::Real=0.1`: polling interval in seconds.
+"""
+function start_task(sv::Link, start, restart::Symbol=:transient; 
+                    timeout::Real=5.0, pollint::Real=0.1)
+    @assert restart in (:temporary, :transient) "Not a known restart strategy: $restart"
+    t = @spawn start()
+    @async _supervisetask(t, self(); timeout, pollint)
+    send(sv, Child(t, start, restart))
+    return t
 end
 
 """
@@ -191,8 +231,8 @@ which_children(sv::Link) = call(sv, Which())
 supervise(sv::Link, start, restart::Symbol=:transient; 
           timeout::Real=5.0, pollint::Real=0.1)
 ```
-Tell a supervisor `sv` to add the calling actor to 
-its childs list.
+Tell a supervisor `sv` to add the calling actor or
+task to its childs list.
 
 # Parameters
 - `sv::Link`: link to a started supervisor,
@@ -201,8 +241,15 @@ its childs list.
     `:permanent`, `:temporary`, `:transient`,
 """
 function supervise(sv::Link, start, restart::Symbol=:transient; timeout::Real=5.0, pollint::Real=0.1)
-    @assert restart in restarts "Not a known restart strategy: $restart"
-    send(sv, Child(self(), start, restart))
+    me = try
+        self()
+    catch
+        current_task()
+    end
+    me isa Link ?
+        (@assert restart in restarts "Not a known restart strategy: $restart") :
+        (@assert restart in (:temporary, :transient) "Not allowed for tasks: $restart")
+    send(sv, Child(me, start, restart))
 end
 
 """
@@ -211,4 +258,11 @@ end
 Tell a supervisor `sv` to delete the calling actor 
 from the childs list. 
 """
-unsupervise(sv::Link) = delete_child(self())
+function unsupervise(sv::Link)
+    me = try
+        self()
+    catch
+        current_task()
+    end
+    send(sv, Delete(), me)
+end

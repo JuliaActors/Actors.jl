@@ -41,7 +41,7 @@ function onerror(A::_ACT, exc)
     for c in A.conn
         c isa Monitor ?
             send(c.lk, Down(self(), exc, current_task())) :
-            c isa Parent ?
+            c isa Super ?
                 send(c.lk, Exit(exc, self(), self(), A)) :
                 send(c.lk, Exit(exc, self(), self(), nothing))
     end

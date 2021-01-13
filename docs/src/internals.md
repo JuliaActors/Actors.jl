@@ -27,5 +27,17 @@ The error handling between actors is realized by connections between them
 
 ```@docs
 Connection
+Peer
+Monitor
+Monitored
+Super
+Child
 ```
 
+## Supervision
+
+A supervisor actor has a functor as behavior:
+
+```@docs
+Supervisor
+```

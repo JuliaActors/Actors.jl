@@ -1,13 +1,10 @@
-# Infrastructure
+# More Useful Stuff
 
 ```@meta
 CurrentModule = Actors
 ```
 
-`Actors` provides some functionality going beyond the classical model:
-
-- actor tasks and
-- actor registry.
+`Actors` provides some more functionality going beyond the classical model.
 
 ## User Defined Messages
 
@@ -99,9 +96,3 @@ julia> fetch(@spawnat 2 registered())         # get it on pid 2
 ```
 
 The registry works transparently across workers. All workers have access to registered actors on other workers via remote links.
-
-## Actor Supervision
-
-!!! note "This is not yet implemented!"
-
-    It is due to come with `Actors` v0.3.

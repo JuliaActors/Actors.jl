@@ -3,23 +3,36 @@
 # MIT license, part of https://github.com/JuliaActors
 #
 
-struct Parent{L} <: Connection
+"Connection to a supervisor."
+struct Super{L} <: Connection
     lk::L
 end
 
+"""
+Connection to a supervised actor or task.
+
+# Fields
+- `lk::L`: Link or Task,
+- `start::Any`: callable object for restarting it,
+- `restart::Symbol`: `:permanent`, `:temporary` or `:transient`.
+"""
 struct Child{L} <: Connection
     lk::L
+    start::Any
     restart::Symbol
 end
 
+"Connection to a peer actor"
 struct Peer{L} <: Connection
     lk::L
 end
 
+"Connection to a monitor"
 struct Monitor{L} <: Connection
     lk::L
 end
 
+"Connection to a monitored actor or task"
 struct Monitored{L} <: Connection
     lk::L
     action::Any
@@ -76,7 +89,7 @@ function connect(lk::L, W::Type{Child}, restart=:transient) where L<:Link
     end
 end
 
-function _taskmonitor(t::Task, m::Link; timeout::Real=5.0, pollint::Real=0.1)
+function _monitortask(t::Task, m::Link; timeout::Real=5.0, pollint::Real=0.1)
     res = timedwait(()->t.state!=:runnable, timeout; pollint)
     res == :ok ?
         t.state == :done ?
@@ -129,11 +142,11 @@ function monitor(t::Task, onsignal...; timeout::Real=5.0, pollint::Real=0.1)
             Bhv(first(onsignal), onsignal[2:end]...)
     try
         act = task_local_storage("_ACT")
-        @async _taskmonitor(t, self(); timeout, pollint)
+        @async _monitortask(t, self(); timeout, pollint)
         !isnothing(onsignal) && push!(act.conn, Monitored(t, onsignal))
     catch exc
         if exc isa KeyError
-            @async _taskmonitor(t, _ROOT; timeout, pollint)
+            @async _monitortask(t, _ROOT; timeout, pollint)
             !isnothing(onsignal) && send(_ROOT, Connect(Monitored(t, onsignal)))
         else
             rethrow()

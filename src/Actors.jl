@@ -21,8 +21,18 @@ It provides:
     [`cast`](@ref), [`exec`](@ref), [`exit!`](@ref), 
     [`init!`](@ref), [`query`](@ref), [`term!`](@ref), 
     [`update!`](@ref),
-- actor tasks with [`async`](@ref) and [`await`](@ref),
-- an actor registry and more.
+- error handling with actor
+    - connections: [`connect`](@ref), [`disconnect`](@ref), [`trapExit`](@ref),
+    - monitors: [`monitor`](@ref), [`demonitor`](@ref),
+    - supervisors: [`supervisor`](@ref), [`supervise`](@ref), 
+        [`unsupervise`](@ref), [`start_actor`](@ref), 
+        [`start_task`](@ref), [`count_children`](@ref), 
+        [`which_children`](@ref), [`delete_child`](@ref), 
+        [`terminate_child`](@ref), 
+- an actor registry: [`register`](@ref), [`unregister`](@ref), 
+    [`whereis`](@ref), [`registered`](@ref)
+
+and more.
 
 The current stable, registered version is installed with
 ```julia
@@ -52,7 +62,6 @@ include("errorkernel.jl")
 include("supervisor.jl")
 include("protocol.jl")
 include("actor.jl")
-include("task.jl")
 include("api.jl")
 include("registry.jl")
 include("init.jl")
@@ -77,8 +86,6 @@ export
     Args, become, self, stop,
     become!, call, cast, exec, exit!, init!, 
     query, term!, update!,
-    # tasks
-    ATask, async, await,
     # registry
     register, unregister, whereis, registered,
     # error handling
@@ -86,6 +93,6 @@ export
     # supervising
     supervisor, supervise, unsupervise, 
     count_children, which_children,
-    delete_child, start_child, terminate_child
+    delete_child, start_actor, starttask, terminate_child
     
 end

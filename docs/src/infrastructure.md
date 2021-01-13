@@ -10,18 +10,6 @@ CurrentModule = Actors
 
 Often you want to define your own message types. For  defining empty messages you can use the [`@msg`](@ref) macro.  
 
-## Actor Tasks
-
-Actor tasks execute one computation, mostly without communicating with other actors. They can be used to compute values asynchronously.
-
-You can start actor tasks with [`async`](@ref) and get their result with [`await`](@ref).
-
-```@repl
-using Actors
-t = async(Bhv(^, 123, 456));
-await(t)
-```
-
 ## Actor Registry
 
 If a parent actor or worker process creates a new actor, the link to it is only locally known. It has to be sent to all other actors that want to communicate with it.

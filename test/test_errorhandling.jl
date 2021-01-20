@@ -189,3 +189,41 @@ demonitor(act1)
 sleep(sleeptime)
 @test isempty(a1.conn)
 @test isempty(rt.conn)
+
+# monitor a task
+struct Stop end
+me = newLink()
+tc = Channel(1)
+function ttask(ch)
+    while true
+        msg = take!(ch) 
+        msg isa Stop ? break : error(msg)
+    end
+end
+tt = Threads.@spawn ttask(tc)
+act1 = spawn(Bhv(monitor, tt, timeout=2), taskref=t1)
+mt = call(act1, send, me)
+@test mt[].state == :runnable
+sleep(sleeptime)
+a1 = diag(act1, 9999)
+@test a1.conn[1] isa Actors.Monitored
+@test a1.conn[1].lk === tt
+@test receive(me) == :timed_out
+@test isempty(a1.conn)
+mt = call(act1, send, me)
+@test mt[].state == :runnable
+put!(tc, Stop())
+@test receive(me) == :normal
+@test mt[].state == :done
+@test tt.state == :done
+tt = Threads.@spawn ttask(tc)
+become!(act1, Bhv(monitor, tt, timeout=2))
+mt = call(act1, send, me)
+@test mt[].state == :runnable
+put!(tc, "boom")
+msg = receive(me)
+@test msg isa ErrorException
+@test msg.msg == "boom"
+@test tt.state == :failed
+@test mt[].state == :done
+@test isempty(a1.conn)

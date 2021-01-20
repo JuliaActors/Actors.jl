@@ -108,10 +108,12 @@ task `t` and execute `onsignal...` if it sends [`Down`](@ref)
 or if it fails.
 
 # Parameters
-- `onsignal...`: if empty, it gives a warning; 
-    if it is one argument `f`, it executes with 
-    `f(msg.reason)`; if it is `f, args...`, it gets
-    executed with `f(args..., msg.reason)`.
+- `onsignal...`: action to take on `Down` signal: 
+    - if empty, it gives a warning; 
+    - if it is one argument `f`, it executes with 
+      `f(msg.reason)`; 
+    - if `f, args...`, it gets executed with 
+      `f(args..., msg.reason)`.
 - `timeout::Real=5.0`: how many seconds should a task 
     be monitored? After that a [`Down`](@ref) with
     reason `:timed_out` is sent.
@@ -137,22 +139,24 @@ function monitor(lk::L, onsignal...) where L<:Link
     return :ok
 end
 function monitor(t::Task, onsignal...; timeout::Real=5.0, pollint::Real=0.1)
+    mt = Ref{Task}()
     onsignal = isempty(onsignal) ? nothing :
         length(onsignal) == 1 ? first(onsignal) :
             Bhv(first(onsignal), onsignal[2:end]...)
     try
         act = task_local_storage("_ACT")
-        @async _monitortask(t, self(); timeout, pollint)
+        mt[] = @async _monitortask(t, act.self; timeout, pollint)
         !isnothing(onsignal) && push!(act.conn, Monitored(t, onsignal))
     catch exc
         if exc isa KeyError
-            @async _monitortask(t, _ROOT; timeout, pollint)
+            mt[] = @async _monitortask(t, _ROOT; timeout, pollint)
             !isnothing(onsignal) && send(_ROOT, Connect(Monitored(t, onsignal)))
         else
             rethrow()
         end
     end
-    return :ok
+    # return :ok
+    return mt
 end
 
 """

@@ -129,6 +129,10 @@ return a link to it.
 - `name=nothing`: name (Symbol) under which it should
     be registered,
 - `kwargs...`: keyword arguments to [`spawn`](@ref).
+
+!!! note
+    See the manual chapter on error handling for
+    explanations of strategy.
 """
 function supervisor(strategy=:one_for_one, max_restarts::Int=3, max_seconds::Real=5; name=nothing, kwargs...)
     @assert strategy in strategies "Unknown strategy: $strategy"
@@ -168,6 +172,10 @@ it to its childs list and to return a link to it.
 - `restart::Symbol=:transient`: restart option, one of 
     `:permanent`, `:temporary`, `:transient`,
 - `kwargs...`: keyword arguments to [`spawn`](@ref).
+
+!!! note
+    See the manual chapter on error handling for
+    explanations of restart options.
 """
 function start_actor(sv::Link, start, restart::Symbol=:transient; kwargs...)
     @assert restart in restarts "Not a known restart strategy: $restart"
@@ -201,6 +209,10 @@ it to its childs list and to return it.
 - `timeout::Real=5.0`: how many seconds should a task 
     be supervised, 
 - `pollint::Real=0.1`: polling interval in seconds.
+
+!!! note
+    See the manual chapter on error handling for
+    explanations of restart options.
 """
 function start_task(sv::Link, start, restart::Symbol=:transient; 
                     timeout::Real=5.0, pollint::Real=0.1)
@@ -239,6 +251,10 @@ task to its childs list.
 - `start`: start behavior of the child, a callable object,
 - `restart::Symbol=:transient`: restart option, one of 
     `:permanent`, `:temporary`, `:transient`,
+
+!!! note
+    See the manual chapter on error handling for
+    explanations of restart options.
 """
 function supervise(sv::Link, start, restart::Symbol=:transient; timeout::Real=5.0, pollint::Real=0.1)
     me = try

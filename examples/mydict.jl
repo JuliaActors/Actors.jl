@@ -19,7 +19,7 @@ Base.setindex!(d::DictSrv, value, key) = call(d.lk, setindex!, value, key)
 
 # dict server behavior
 ds(d::Dict, f::Function, args...) = f(d, args...)
-ds(d::Dict) = d
+ds(d::Dict) = copy(d)
 # start dict server
 dictsrv(d::Dict; remote=false) = DictSrv(spawn(ds, d, remote=remote))
 

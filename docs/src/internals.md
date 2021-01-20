@@ -36,7 +36,7 @@ Child
 
 ## Supervision
 
-A supervisor actor has a functor as behavior:
+A supervisor actor has a function object as behavior:
 
 ```@docs
 Supervisor

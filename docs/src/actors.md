@@ -11,23 +11,21 @@ In one of his later papers (2010) Carl Hewitt wrote:
 > - modeling arbitrary computational systems using Actors. It is difficult to find physical computational systems (regardless of how idiosyncratic) that cannot be modeled using Actors.
 > - securely implementing practical computational applications using Actors remains an active area of research and development. [^1]
 
-`Actors`' focus is on the second point, namely to give a practical computational application. It builds on Julia's native features: tasks, channels and functions and is not "Actors all the way down" [^2].
+We focus on the second point, namely on practical computational applications.
 
 ## Julia is Well Suited for Actors
 
-`Actors` uses Julia's concurrency primitives `Task`s and `Channel`s to run actors and to let them communicate.
-
-An actor represents a Julia function or functor. Some function parameters (acquaintances) can be given to the actor at startup. Other parameters (communication) are delivered via messages. Functions incorporate two of the basic elements of computation: processing and storage. If a function is started as an actor it incorporates also the third element: communication. Functions as actors become responsive and composable in new ways.
+`Actors` uses Julia's `Task`s to execute functions concurrently and `Channel`s to let them communicate. An actor has a Julia function or callable object as [behavior](behaviors.md). That gets parametrized with the arguments given to the actor at startup (acquaintances). The other arguments are delivered via messages (communication). Then an actor executes its behavior. Actors incorporate processing, storage and communication. Functions thus become responsive and composable in new ways.
 
 ## Actors Complement Julia
 
-`Actors` gives Julia users additional ways to deal with concurrency. Sutter and Larus justified that as follows:
+Actors give Julia users additional ways to deal with concurrency. Sutter and Larus justified that as follows:
 
-> We need higher-level language abstractions, including evolutionary extensions to current imperative languages, so that existing applications can incrementally become concurrent. The programming model must make concurrency easy to understand and reason about, not only during initial development but also during maintenance. [^3]
+> We need higher-level language abstractions, including evolutionary extensions to current imperative languages, so that existing applications can incrementally become concurrent. The programming model must make concurrency easy to understand and reason about, not only during initial development but also during maintenance. [^2]
 
-Actors make it easier to write clear, correct concurrent programs and offer better alternatives to sharing memory in concurrent computing:
+Actors support clear, correct concurrent programs and are an alternative to sharing memory in concurrent computing:
 
-- Share by communicating [^4] to functions and
+- Share by communicating [^3] to functions and
 - use functions to localize variables and
 - make actors serve mutable variables without using locks.
 
@@ -35,9 +33,9 @@ Below I will show how you can use actors in common multi-threading or distribute
 
 ## Multi-threading
 
-Julia's manual encourages the use of locks [^5] in order to ensure data-race freedom. But be aware that
+Julia's manual encourages the use of locks [^4] in order to ensure data-race freedom. But be aware that
 
-> they are not composable. You can’t take two correct lock-based pieces of code, combine them, and know that the result is still correct. Modern software development relies on the ability to compose libraries into larger programs, and so it is a serious difficulty that we cannot build on lock-based components without examining their implementations. [^6]
+> they are not composable. You can’t take two correct lock-based pieces of code, combine them, and know that the result is still correct. Modern software development relies on the ability to compose libraries into larger programs, and so it is a serious difficulty that we cannot build on lock-based components without examining their implementations. [^5]
 
 An actor controlling the access to a variable or to another resource is lock-free and there are no limits to composability. Therefore if you write multi-threaded programs which should be composable or maybe used by other programs within a lock, you might consider using `Actors`.
 
@@ -47,7 +45,11 @@ Actors are location transparent. You can share their links across workers to acc
 
 ## [A `Dict` Server](@id dict-server)
 
-This example shows how to implement a `Dict`-server actor that can be used in multi-threaded and distributed Julia code:
+This example shows how to implement a `Dict`-server actor that can be used in multi-threaded and distributed Julia code.
+
+1. We implement `DictSrv` as a function object containing a link to an actor.
+2. `DictSrv` gets an indexing interface.
+3. The actor behavior `ds` takes a `Dict` variable as acquaintance and executes the communicated function `f` and `args...` on it. If called without arguments it returns a copy of its `Dict` variable.
 
 ```julia
 # examples/mydict.jl
@@ -67,7 +69,7 @@ Base.setindex!(d::DictSrv, value, key) = call(d.lk, setindex!, value, key)
 
 # dict server behavior
 ds(d::Dict, f::Function, args...) = f(d, args...)
-ds(d::Dict) = d
+ds(d::Dict) = copy(d)
 # start dict server
 dictsrv(d::Dict; remote=false) = DictSrv(spawn(ds, d, remote=remote))
 
@@ -76,7 +78,7 @@ export DictSrv, dictsrv
 end
 ```
 
-This module implements a `DictSrv` type with an indexing interface. A dict server is started with `dictsrv`. Let's try it out:
+A dict server is started with `dictsrv`. It does not share its `Dict` variable. Let's try it out:
 
 ```julia
 julia> include("examples/mydict.jl")
@@ -177,8 +179,7 @@ When sending mutable variables over remote links, they are automatically copied.
 Since actors are Julia tasks, they have a local dictionary in which you can store values. You can use [`task_local_storage`](https://docs.julialang.org/en/v1/base/parallel/#Base.task_local_storage-Tuple{Any}) to access it in behavior functions. But normally argument passing should be enough to handle values in actors.
 
 [^1]: Carl Hewitt. Actor Model of Computation: Scalable Robust Information Systems.- [arXiv:1008.1459](https://arxiv.org/abs/1008.1459)
-[^2]: That is to paraphrase Dale Schumacher's wonderful blog [Actors all the way down](http://www.dalnefre.com/wp).
-[^3]: H. Sutter and J. Larus. Software and the concurrency revolution. ACM Queue, 3(7), 2005.
-[^4]: Effective Go: [Share by Communicating](https://golang.org/doc/effective_go.html#sharing)
-[^5]: see [Data race freedom](https://docs.julialang.org/en/v1/manual/multi-threading/#Data-race-freedom) in the Julia manual.
-[^6]: H. Sutter and J. Larus. see above
+[^2]: H. Sutter and J. Larus. Software and the concurrency revolution. ACM Queue, 3(7), 2005.
+[^3]: Effective Go: [Share by Communicating](https://golang.org/doc/effective_go.html#sharing)
+[^4]: see [Data race freedom](https://docs.julialang.org/en/v1/manual/multi-threading/#Data-race-freedom) in the Julia manual.
+[^5]: H. Sutter and J. Larus. see above

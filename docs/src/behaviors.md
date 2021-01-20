@@ -54,7 +54,7 @@ bhv(1, 1)                      # execute it with communication parameters
 
 ## Object-oriented Style
 
-Alternatively we put the acquaintance parameters in an object which we make executable (e.g. a [functor](https://en.wikipedia.org/wiki/Function_object)) with communication parameters:
+Alternatively we put the acquaintance parameters in an object which we make executable (see: [function object](https://en.wikipedia.org/wiki/Function_object)) with communication parameters:
 
 ```@repl
 struct Acqu                    # define an object with acquaintances

@@ -3,6 +3,8 @@
 # MIT license, part of https://github.com/JuliaActors
 #
 
+Base.:(==)(l1::Link, l2::Link) = hash(l1) == hash(l2)
+
 using Actors, Test, .Threads
 import Actors: spawn, info, diag, newLink
 
@@ -23,9 +25,9 @@ a2   = diag(act2, 9999)
 send(act1, act2)
 sleep(sleeptime)
 @test a1.conn[1] isa Actors.Peer
-@test a1.conn[1].lk === act2
+@test a1.conn[1].lk == act2
 @test a2.conn[1] isa Actors.Peer
-@test a2.conn[1].lk === act1
+@test a2.conn[1].lk == act1
 @test t1[].state == :runnable
 @test t2[].state == :runnable
 send(act1, "boom")
@@ -70,10 +72,10 @@ send(act3, act2)
 a1   = diag(act1, 9999)
 a2   = diag(act2, 9999)
 a3   = diag(act3, 9999)
-@test a1.conn[1].lk === act2
-@test a2.conn[1].lk === act1
-@test a2.conn[2].lk === act3
-@test a3.conn[1].lk === act2
+@test a1.conn[1].lk == act2
+@test a2.conn[1].lk == act1
+@test a2.conn[2].lk == act3
+@test a3.conn[1].lk == act2
 become!(act1, disconnect)
 send(act1, act2)
 become!(act2, disconnect)
@@ -88,8 +90,8 @@ act1 = spawn(threadid, taskref=t1)
 connect(act1)
 a1   = diag(act1, 9999)
 rt   = diag(Actors._ROOT, 9999)
-@test a1.conn[1].lk === Actors._ROOT
-@test rt.conn[1].lk === act1
+@test a1.conn[1].lk == Actors._ROOT
+@test rt.conn[1].lk == act1
 send(act1, "boom")
 sleep(sleeptime)
 @test Actors.info(Actors._ROOT) == :runnable
@@ -101,8 +103,8 @@ act1 = spawn(threadid, taskref=t1)
 connect(act1)
 a1   = diag(act1, 9999)
 sleep(sleeptime)
-@test a1.conn[1].lk === Actors._ROOT
-@test rt.conn[1].lk === act1
+@test a1.conn[1].lk == Actors._ROOT
+@test rt.conn[1].lk == act1
 disconnect(act1)
 sleep(sleeptime)
 @test isempty(a1.conn)
@@ -118,9 +120,9 @@ send(act2, send, me)
 a1 = diag(act1, 9999)
 a2 = diag(act2, 9999)
 @test a1.conn[1] isa Actors.Monitor
-@test a1.conn[1].lk === act2
+@test a1.conn[1].lk == act2
 @test a2.conn[1] isa Actors.Monitored
-@test a2.conn[1].lk === act1
+@test a2.conn[1].lk == act1
 @test a2.conn[1].action.f == send 
 send(act1, "boom")
 f1 = receive(me)
@@ -132,7 +134,7 @@ become!(act2, monitor, act1)
 send(act2)
 a1 = diag(act1, 9999)
 @test a1.conn[1] isa Actors.Monitor
-@test a1.conn[1].lk === act2
+@test a1.conn[1].lk == act2
 @test isempty(a2.conn)
 send(act1, "boom")
 sleep(sleeptime)
@@ -142,8 +144,8 @@ become!(act2, monitor, act1)
 send(act2, send, me)
 a1 = diag(act1, 9999)
 sleep(sleeptime)
-@test a1.conn[1].lk === act2
-@test a2.conn[1].lk === act1
+@test a1.conn[1].lk == act2
+@test a2.conn[1].lk == act1
 become!(act2, demonitor)
 send(act2, act1)
 sleep(sleeptime)
@@ -157,9 +159,9 @@ sleep(sleeptime)
 a1 = diag(act1, 9999)
 rt = diag(Actors._ROOT, 9999)
 @test a1.conn[1] isa Actors.Monitor
-@test a1.conn[1].lk === Actors._ROOT
+@test a1.conn[1].lk == Actors._ROOT
 @test rt.conn[1] isa Actors.Monitored
-@test rt.conn[1].lk === act1
+@test rt.conn[1].lk == act1
 @test rt.conn[1].action.f == send 
 send(act1, "boom")
 f1 = receive(me)
@@ -171,7 +173,7 @@ monitor(act1)
 a1 = diag(act1, 9999)
 sleep(sleeptime)
 @test a1.conn[1] isa Actors.Monitor
-@test a1.conn[1].lk === Actors._ROOT
+@test a1.conn[1].lk == Actors._ROOT
 @test isempty(rt.conn)
 send(act1, "boom")
 sleep(sleeptime)
@@ -180,8 +182,8 @@ act1 = spawn(threadid, taskref=t1)
 monitor(act1, send, me)
 a1 = diag(act1, 9999)
 rt = diag(Actors._ROOT, 9999)
-@test a1.conn[1].lk === Actors._ROOT
-@test rt.conn[1].lk === act1
+@test a1.conn[1].lk == Actors._ROOT
+@test rt.conn[1].lk == act1
 demonitor(act1)
 a1 = diag(act1, 9999)
 rt = diag(Actors._ROOT, 9999)
@@ -205,7 +207,7 @@ mt = call(act1, send, me)
 sleep(sleeptime)
 a1 = diag(act1, 9999)
 @test a1.conn[1] isa Actors.Monitored
-@test a1.conn[1].lk === tt
+@test a1.conn[1].lk == tt
 @test receive(me) == :timed_out
 @test isempty(a1.conn)
 mt = call(act1, send, me)

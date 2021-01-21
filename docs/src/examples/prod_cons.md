@@ -30,7 +30,7 @@ isfull(s::Store) = length(s.items) ≥ s.capacity
 Base.isempty(s::Store) = isempty(s.items)
 ```
 
-We implement the store's behavior as a functor receiving two messages `Put()` and `Take()`.
+We implement the store's behavior as a function object receiving two messages `Put()` and `Take()`.
 
 ```julia
 @msg Put Full Done Ok Take Empty Notify

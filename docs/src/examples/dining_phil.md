@@ -43,9 +43,9 @@ end
 (c::Chopstick)(::Put) = c.idle = true
 ```
 
-We have modeled a chopstick actor as a functor with two messages, `:take` and `:put`.
+We have modeled a chopstick actor as a function object with two message arguments, `Take` and `Put`.
 
-Now the philosophers! We model them with behavior functions representing their state, the respective philosopher as an acquaintance and state transitions with `become`. So a philosopher is a finite state machine:
+Now the philosophers! We model them with behavior functions representing their state, the respective philosopher as an acquaintance and state transitions with `become`. So a philosopher is modeled as a finite state machine:
 
 ```julia
 function thinking(p::Phil, ::Eat)
@@ -100,7 +100,7 @@ function eating(p::Phil, ::Think)
 end
 ```
 
-The crucial step here in preventing a deadlock is that a philosopher puts down his chopstick if he is  `right_waiting` or `left_waiting` and gets a `:busy` or if he is `denied` and gets a `:taken` message. Then he switches again to `thinking` and sends a message to himself to `:eat`. So he can try again.
+The crucial step in preventing a deadlock is that a philosopher puts down his chopstick if he is  `right_waiting` or `left_waiting` and gets a `:busy` or if he is `denied` and gets a `:taken` message. Then he switches again to `thinking` and sends a message to himself to `:eat`. So he can try again.
 
 We need a stats function for eating time and we setup everything:
 

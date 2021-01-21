@@ -13,9 +13,8 @@ It provides:
     with `Addr` and [`self`](@ref),
 - [`onmessage`](@ref), executed by an actor on a 
     received message,
-- a `Msg` message protocol with `onmessage` and 
-    predefined messages,
-- an actor API based on the protocol with primitives
+- a message protocol with predefined messages,
+- an API based on the protocol with primitives
     [`receive`](@ref) and [`request`](@ref) and further 
     API functions [`become!`](@ref), [`call`](@ref), 
     [`cast`](@ref), [`exec`](@ref), [`exit!`](@ref), 

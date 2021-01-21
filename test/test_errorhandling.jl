@@ -3,10 +3,10 @@
 # MIT license, part of https://github.com/JuliaActors
 #
 
-Base.:(==)(l1::Link, l2::Link) = hash(l1) == hash(l2)
-
 using Actors, Test, .Threads
 import Actors: spawn, info, diag, newLink
+
+Base.:(==)(l1::Link, l2::Link) = hash(l1) == hash(l2)
 
 const sleeptime = 0.3
 t1 = Ref{Task}()

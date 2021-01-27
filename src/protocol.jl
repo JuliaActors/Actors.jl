@@ -26,8 +26,10 @@ onmessage(A::_ACT, msg::Cast) = A.res = A.bhv(msg.x...)
 
 # Diag
 function onmessage(A::_ACT, msg::Diag)
-    res = first(msg.x) == 9999 ? A :
-        first(msg.x) == 99 ? errored() : :ok
+    res = first(msg.x) == :act ? A :
+          first(msg.x) == :task ? current_task() :
+          first(msg.x) == :err ? errored() : 
+          first(msg.x) == :state ? :ok : :unknown_request
     send(msg.from, Response(res, A.self))
 end
 

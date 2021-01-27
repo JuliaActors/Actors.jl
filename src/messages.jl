@@ -90,7 +90,7 @@ end
 Exec(t::Tuple, from::Link) = Exec(first(t), from)
 
 """
-    Exit(reason, from, link, state)
+    Exit(reason, from, task, state)
 
 A [`Msg`](@ref) to an actor causing it to terminate. 
 `Exit` messages are sent to [`connect`](@ref)ed actors 
@@ -101,7 +101,7 @@ They are not propagated by `:sticky` actors, see
 struct Exit{T,L,U,V} <: Msg
     reason::T
     from::L
-    link::U
+    task::U
     state::V
 end
 

@@ -10,7 +10,8 @@ struct Which end
 
 const strategies = (:one_for_one, :one_for_all, :rest_for_one)
 const restarts   = (:permanent, :temporary, :transient)
-const reasons    = (:normal, :shutdown, :timed_out)
+
+isnormal(reason) = reason in (:normal, :shutdown, :timed_out)
 
 """
 ```
@@ -52,31 +53,33 @@ function shutdown_child(c::Child)
     c.lk isa Link && exit!(c.lk, :shutdown)
 end
 
-function restart(s::Supervisor, c::Child, reason::Symbol)
-    start = c.restart == :permanent ? true :
+function must_restart(c::Child, reason)
+    return isnothing(c.start) ? false :
+        c.restart == :permanent ? true :
         c.restart == :temporary ? false :
-            reason in reasons ? false : true
-    if start && !isnothing(c.start)
-        length(s.rtime) ≥ s.max_restarts && popfirst!(s.rtime)
-        push!(s.rtime, time_ns()/1e9)
-        if length(s.rtime) ≥ s.max_restarts &&
-            s.rtime[end]-s.rtime[begin] ≤ s.max_seconds
-            send(self(), Exit(:shutdown, fill(nothing, 3)...))
-        else
-            if s.strategy == :one_for_one
-                restart_child(c)
-            elseif s.strategy == :one_for_all
-                for child in s.childs
-                    child != c && shutdown_child(child)
-                    restart_child(child)
-                end
-            else
-                ix = findfirst(==(c), s.childs)
-                for child in s.childs[ix:end] 
-                    child != c && shutdown_child(child)
-                    restart_child(child)
-                end
-            end
+        isnormal(reason) ? false : true
+end
+
+function restart_limit!(s::Supervisor)
+    length(s.rtime) ≥ s.max_restarts && popfirst!(s.rtime)
+    push!(s.rtime, time_ns()/1e9)
+    return length(s.rtime) ≥ s.max_restarts &&
+        s.rtime[end]-s.rtime[begin] ≤ s.max_seconds
+end
+
+function restart(s::Supervisor, c::Child)
+    if s.strategy == :one_for_one
+        restart_child(c)
+    elseif s.strategy == :one_for_all
+        for child in s.childs
+            child != c && shutdown_child(child)
+            restart_child(child)
+        end
+    else
+        ix = findfirst(==(c), s.childs)
+        for child in s.childs[ix:end] 
+            child != c && shutdown_child(child)
+            restart_child(child)
         end
     end
 end
@@ -86,7 +89,12 @@ end
 #
 function (s::Supervisor)(msg::Exit)
     ix = findfirst(c->c.lk==msg.from, s.childs)
-    restart(s, s.childs[ix], msg.reason)
+    isnothing(ix) && throw(AssertionError("child not found"))
+    if must_restart(s.childs[ix], msg.reason)
+        restart_limit!(s) ?
+            send(self(), Exit(:shutdown, fill(nothing, 3)...)) :
+            restart(s, s.childs[ix])
+    end
 end
 function (s::Supervisor)(child::Child)
     act = task_local_storage("_ACT")
@@ -138,7 +146,7 @@ function supervisor(strategy=:one_for_one, max_restarts::Int=3, max_seconds::Rea
     @assert strategy in strategies "Unknown strategy: $strategy"
     lk = spawn(Supervisor(strategy, max_restarts, max_seconds); kwargs...)
     !isnothing(name) && register(name, lk)
-    send(lk, Update(:mode, :sv))
+    send(lk, Update(:mode, :supervisor))
     return lk
 end
 

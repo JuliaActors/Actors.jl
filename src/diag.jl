@@ -37,13 +37,21 @@ end
 
 """
 ```
-diag(lk::Link, check=0)
+diag(lk::Link, check::Symbol=:state)
 diag(name::Symbol, ....)
 ```
-Give an actor state or stacktrace.
+Diagnose an actor, get a state or stacktrace.
 
-If `check != 0` return the internal `_ACT` variable of the 
-actor. This is for diagnosis and testing only!
+# Arguments
+- `lk::Link`: actor link,
+- `check::Symbol`: requested information,
+	- `:state`: :ok if the actor is running, 
+	- `:task`: current actor task,
+	- `:act`: actor `_ACT` variable,
+	- `:err`: error log (only monitors or supervisors).
+
+!!! warn "This is for diagnosis only!"
+	Don't use this for other purposes than for diagnosis.
 """
-diag(lk::Link, check=0) = request(lk, Diag, check)
+diag(lk::Link, check::Symbol=:state) = request(lk, Diag, check)
 diag(name::Symbol, args...) = diag(whereis(name), args...)

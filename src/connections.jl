@@ -16,7 +16,7 @@ Connection to a supervised actor or task.
 - `start::Any`: callable object for restarting it,
 - `restart::Symbol`: `:permanent`, `:temporary` or `:transient`.
 """
-struct Child{L} <: Connection
+mutable struct Child{L} <: Connection
     lk::L
     start::Any
     restart::Symbol

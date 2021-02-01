@@ -44,13 +44,20 @@ function restart_child(c::Child)
     if c.lk isa Link
         lk = spawn(c.start)
         c.lk.chn = lk.chn
+        send(lk, Connect(Super(self())))
+        update!(c.lk, c.lk, s=:self)
     else
         c.lk = Threads.@spawn s.start()
     end
 end
 
 function shutdown_child(c::Child)
-    c.lk isa Link && exit!(c.lk, :shutdown)
+    if c.lk isa Link
+        try
+            exit!(c.lk, :shutdown)
+        catch
+        end
+    end
 end
 
 function must_restart(c::Child, reason)
@@ -98,8 +105,10 @@ function (s::Supervisor)(msg::Exit)
 end
 function (s::Supervisor)(child::Child)
     act = task_local_storage("_ACT")
-    push!(s.childs, child)
-    push!(act.conn, child)
+    ix = findfirst(c->c.lk==child, s.childs)
+    isnothing(ix) && push!(s.childs, child)
+    ix = findfirst(c->c.lk==child, act.conn)
+    isnothing(ix) && push!(act.conn, child)
     send(child.lk, Connect(Super(act.self)))
 end
 function (s::Supervisor)(::Delete, lk)
@@ -143,7 +152,7 @@ return a link to it.
     explanations of strategy.
 """
 function supervisor(strategy=:one_for_one, max_restarts::Int=3, max_seconds::Real=5; name=nothing, kwargs...)
-    @assert strategy in strategies "Unknown strategy: $strategy"
+    @assert strategy in strategies "Unknown strategy $strategy"
     lk = spawn(Supervisor(strategy, max_restarts, max_seconds); kwargs...)
     !isnothing(name) && register(name, lk)
     send(lk, Update(:mode, :supervisor))

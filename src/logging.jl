@@ -5,26 +5,20 @@
 
 const _WARN = [true]
 
-function warn(msg::Down)
-    if _WARN[1]
-        enable_finalizers(false)
-        if msg.reason isa Exception
-            @warn "Down: $(msg.task), $(msg.task.exception)"
-        else
-            @warn "Down: $(msg.reason)"
-        end
-        enable_finalizers(true)
-    end
+function warn(msg::Down, info::String="")
+    warn(msg.reason isa Exception ?
+            "Down: $info $(msg.task), $(msg.task.exception)" :
+            "Down: $info $(msg.reason)")
 end
-function warn(msg::Exit)
+function warn(msg::Exit, info::String="")
+    warn(msg.reason isa Exception && !isnothing(msg.task.exception) ?
+            "Exit: $info $(msg.task), $(msg.task.exception)" :
+            "Exit: $info $(msg.reason)")
+end
+function warn(s::String)
     if _WARN[1]
         enable_finalizers(false)
-        if msg.reason isa Exception && !isnothing(msg.task.exception)
-            t = msg.task
-            @warn "Exit: $t, $(t.exception)"
-        else
-            @warn "Exit: $(msg.reason)"
-        end
+        @warn s
         enable_finalizers(true)
     end
 end

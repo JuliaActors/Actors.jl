@@ -34,8 +34,10 @@ a2 = diag(act2, :act)
 
 oldch2 = act2.chn
 oldtsk = t2[]
+# first failure
 send(act2, "boom")
 sleep(sleeptime)
+a2 = diag(act2, :act)
 @test t2[].state == :failed
 @test t1[].state == :runnable
 @test oldch2 != act2.chn
@@ -44,5 +46,28 @@ t2[] = diag(act2, :task)
 @test t2[].state == :runnable
 @test length(a1.bhv.rtime) == 1
 @test oldtsk == diag(sv, :err)[1]
+@test a1.conn[1] isa Actors.Child
+@test a1.conn[1].lk == act2
+@test a1.bhv.childs[1].lk == act2
+@test a2.conn[1].lk == sv
+# second failure
+send(act2, "boom")
+sleep(sleeptime)
+@test t1[].state == :runnable
+@test t2[].state == :failed
+t2[] = diag(act2, :task)
+@test length(a1.bhv.rtime) == 2
+# third failure
+send(act2, "boom")
+sleep(sleeptime)
+@test t1[].state == :done
 
-
+# supervisor shutdown
+sv = supervisor(taskref=t1)
+act2 = spawn(threadid, taskref=t2)
+exec(act2, supervise, sv, threadid)
+sleep(sleeptime)
+exit!(sv, :shutdown)
+sleep(sleeptime)
+@test t1[].state == :done
+@test t2[].state == :done

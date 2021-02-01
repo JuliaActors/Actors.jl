@@ -16,33 +16,32 @@ function trysend(lk::Link, msg...)
 end
 
 function saveerror(t::Task)
-    err = Task[]
-    try
-        err = task_local_storage("_ERR")
+    err = try
+        task_local_storage("_ERR")
     catch exc
         exc isa KeyError ?
-            err = task_local_storage("_ERR", Task[]) :
+            task_local_storage("_ERR", Task[]) :
             rethrow()
     end
     length(err) ≥ ERR_BUF && popfirst!(err)
     push!(err, t)
 end
+saveerror(::Nothing) = nothing
 function errored()
     try
-        return task_local_storage("_ERR")
+        task_local_storage("_ERR")
     catch exc
-        exc isa KeyError && return nothing
-        rethrow()
+        exc isa KeyError ? nothing : rethrow()
     end
 end
 
 function onerror(A::_ACT, exc)
     for c in A.conn
         c isa Monitor ?
-            send(c.lk, Down(self(), exc, current_task())) :
+            trysend(c.lk, Down(self(), exc, current_task())) :
             c isa Super ?
-                send(c.lk, Exit(exc, self(), current_task(), A)) :
-                send(c.lk, Exit(exc, self(), current_task(), nothing))
+                trysend(c.lk, Exit(exc, self(), current_task(), A)) :
+                trysend(c.lk, Exit(exc, self(), current_task(), nothing))
     end
 end
 
@@ -81,7 +80,7 @@ onmessage(A::_ACT, ::Val{:sticky}, msg::Exit) = onmessage(A, Val(:system), msg)
 function onmessage(A::_ACT, ::Val{:system}, msg::Exit)
     if msg.reason != :normal
         saveerror(msg.task)
-        warn(msg)
+        warn(msg, "monitored")
     end
     ix = findfirst(c->c.lk==msg.from, A.conn)
     isnothing(ix) ? # Exit not from a connection
@@ -91,7 +90,23 @@ end
 function onmessage(A::_ACT, ::Val{:supervisor}, msg::Exit)
     !isnormal(msg.reason) && saveerror(msg.task)
     ix = findfirst(c->c.lk==msg.from, A.conn)
-    isnothing(ix) ? # Exit not from a connection
-        A.mode = Symbol(string(A.mode)*"∇") :
+    if !isnothing(ix) && A.conn[ix] isa Child
         A.bhv(msg)
+    elseif !isnothing(ix) && A.conn[ix] isa Peer
+        if msg.reason != :normal 
+            saveerror(msg.task)
+            warn(msg, "from peer")
+        end
+    else
+        for c in A.conn
+            if c.lk != msg.from
+                c isa Monitor ? trysend(c.lk, Down(self(), msg.reason)) :
+                c isa Child   ? shutdown_child(c) :
+                    send(c.lk, Exit(msg.reason, self(), msg.task, A))
+            end
+        end
+        msg.reason != :normal && warn(msg, "Supervisor")
+        _terminate!(A, msg.reason)            
+        A.mode = Symbol(string(A.mode)*"∇")
+    end
 end

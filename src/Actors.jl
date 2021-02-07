@@ -49,7 +49,7 @@ module Actors
 const version = v"0.2.3"
 
 using ActorInterfaces.Classic
-using Distributed, .Threads, Dates
+using Distributed, .Threads, Dates, Proquint
 import ActorInterfaces.Classic: onmessage
 
 include("types.jl")
@@ -84,7 +84,7 @@ export
     receive, request,
     # API
     Args, become, self, stop,
-    become!, call, cast, exec, exit!, init!, 
+    become!, call, cast, exec, exit!, info, init!, 
     query, term!, update!,
     # registry
     register, unregister, whereis, registered,

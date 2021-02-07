@@ -105,7 +105,7 @@ function onmessage(A::_ACT, ::Val{:supervisor}, msg::Exit)
                     send(c.lk, Exit(msg.reason, self(), msg.task, A))
             end
         end
-        msg.reason != :normal && warn(msg, "Supervisor")
+        msg.reason != :normal && warn(msg, "supervisor")
         _terminate!(A, msg.reason)            
         A.mode = Symbol(string(A.mode)*"∇")
     end

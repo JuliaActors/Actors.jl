@@ -81,6 +81,7 @@ call
 cast
 exec
 exit!
+info
 query
 update!
 ```
@@ -155,6 +156,5 @@ tid
 ## Diagnosis
 
 ```@docs
-info
 diag
 ```

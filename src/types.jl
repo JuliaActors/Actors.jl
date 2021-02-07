@@ -118,6 +118,24 @@ Return a actor variable `_ACT`.
 """
 _ACT(mode=:default) = _ACT(mode, Bhv(+), fill(nothing, 7)..., Connection[])
 
+"""
+## Actor information
+- `mode::Symbol`: actor mode,
+- `bhvf::Any`: behavior function,
+- `pid::Int`: process identifier,
+- `thrd::Int`: thread,
+- `task::Task`: actor task address,
+- `tid::String`: proquint identifier based on task address.
+"""
+struct Info
+    mode::Symbol
+    bhvf::Any
+    pid::Int
+    thrd::Int
+    task::UInt
+    tid::String
+end
+
 # -----------------------------------------------
 # Public message types
 # -----------------------------------------------

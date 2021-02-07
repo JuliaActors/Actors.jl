@@ -27,6 +27,7 @@ makedocs(
             "examples/examples.md"
             ],
         "Internals" => [
+            "diag.md",
             "internals.md",
             "messages.md",
             "interface.md",

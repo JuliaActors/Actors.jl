@@ -10,23 +10,24 @@ You may have heard about the Actor Model, but at first we present actors as prac
 The basic mechanism to *create* a new actor is the [`spawn`](@ref) function. You have to import it explicitly:
 
 ```@repl intro
-using Actors
+using Actors, .Threads
 import Actors: spawn, newLink
 ```
 
 You `spawn` an actor with a *behavior*. A behavior is a callable Julia object.
 
 ```@repl intro
-myactor = spawn(Threads.threadid)
+myactor = spawn(threadid)
 ```
 
 `spawn` returned an actor *link*. Now - as we will discover right away - our actor is *responsive* and waits for our *messages*.
 
 ## Actor `Link`s
 
-A [`Link`](@ref) is the actor's mail address and its only representation. Over the returned link it is possible to *send* messages to the actor or to use other messaging functions. For example if you `call` or `request` it, you `send` a `Call` message to the actor to execute its behavior and to respond with the result:
+A [`Link`](@ref) is the actor's mail address and its only representation. Over the returned link it is possible to *send* messages to the actor or to use other messaging functions. `Actors`' API functions like `info` use an actors link to communicate with it. If you `call` or `request` it, you `send` a `Call` message to the actor to execute its behavior and to respond with the result:
 
 ```@repl intro
+info(myactor)
 call(myactor)
 ```
 
@@ -34,7 +35,7 @@ Now what happens if you `send` your actor a message which it cannot understand?
 
 ```@repl intro
 send(myactor, "Boom")
-Actors.info(myactor)
+info(myactor)
 ```
 
 We caused our actor to fail. Ouch!

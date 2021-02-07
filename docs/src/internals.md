@@ -4,10 +4,13 @@
 CurrentModule = Actors
 ```
 
+Actors have internal data structures controlling their behavior:
+
 ## Actor State
 
 ```@docs
 _ACT
+Info
 ```
 
 ## Actor Mode

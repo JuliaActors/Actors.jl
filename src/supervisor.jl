@@ -98,9 +98,12 @@ function (s::Supervisor)(msg::Exit)
     ix = findfirst(c->c.lk==msg.from, s.childs)
     isnothing(ix) && throw(AssertionError("child not found"))
     if must_restart(s.childs[ix], msg.reason)
-        restart_limit!(s) ?
-            send(self(), Exit(:shutdown, fill(nothing, 3)...)) :
+        if restart_limit!(s)
+            warn("Supervisor: restart limit exceeded!")
+            send(self(), Exit(:shutdown, fill(nothing, 3)...))
+        else
             restart(s, s.childs[ix])
+        end
     end
 end
 function (s::Supervisor)(child::Child)

@@ -3,16 +3,16 @@
 # MIT license, part of https://github.com/JuliaActors
 #
 
-#
-# the following is needed for giving a warning from a thread. 
-# see: https://github.com/JuliaLang/julia/issues/35689
-# 
-enable_finalizers(on::Bool) = ccall(:jl_gc_enable_finalizers, Cvoid, (Ptr{Cvoid}, Int32,), Core.getptls(), on)
-
 # 
 # those functions realize the Msg protocol
 # this is the 2nd actor layer
 #
+
+# return the behavior function
+function bhvf(A::_ACT) 
+    f = A.bhv isa Bhv ? A.bhv.f : A.bhv
+    return f isa Function ? f : typeof(f)
+end
 
 # Become
 onmessage(A::_ACT, msg::Become) = A.bhv = _current(msg.x)
@@ -26,10 +26,14 @@ onmessage(A::_ACT, msg::Cast) = A.res = A.bhv(msg.x...)
 
 # Diag
 function onmessage(A::_ACT, msg::Diag)
-    res = first(msg.x) == :act ? A :
-          first(msg.x) == :task ? current_task() :
-          first(msg.x) == :err ? errored() : 
-          first(msg.x) == :state ? :ok : :unknown_request
+    x = first(msg.x)
+    res = x == :act   ? A :
+          x == :task  ? current_task() :
+          x == :tid   ? pqtid() :
+          x == :pid   ? myid() :
+          x == :err   ? errored() :
+          x == :info  ? Info(A.mode,bhvf(A),myid(),threadid(),tid(),pqtid()) :
+          x == :state ? :ok : :unknown_request
     send(msg.from, Response(res, A.self))
 end
 

@@ -95,7 +95,7 @@ rt   = diag(Actors._ROOT, :act)
 @test rt.conn[1].lk == act1
 send(act1, "boom")
 sleep(sleeptime)
-@test Actors.info(Actors._ROOT) == :runnable
+@test Actors.diag(Actors._ROOT, :task).state == :runnable
 @test isempty(rt.conn)
 errors = exec(Actors._ROOT, Actors.errored)
 @test errors[end] == at1
@@ -128,7 +128,7 @@ a2 = diag(act2, :act)
 send(act1, "boom")
 f1 = receive(me)
 @test f1 isa MethodError
-@test Actors.info(act2) == :runnable
+@test Actors.diag(act2, :task).state == :runnable
 @test isempty(a2.conn)
 act1 = spawn(threadid, taskref=t1)
 become!(act2, monitor, act1)
@@ -167,7 +167,7 @@ rt = diag(Actors._ROOT, :act)
 send(act1, "boom")
 f1 = receive(me)
 @test f1 isa MethodError
-@test Actors.info(Actors._ROOT) == :runnable
+@test Actors.diag(Actors._ROOT, :task).state == :runnable
 @test isempty(rt.conn)
 act1 = spawn(threadid, taskref=t1)
 monitor(act1)

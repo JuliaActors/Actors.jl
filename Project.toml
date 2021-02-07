@@ -11,6 +11,7 @@ Proquint = "710532b4-0dcf-4e85-9a00-0fba2d710edd"
 
 [compat]
 ActorInterfaces = "0.1"
+Proquint = "0.1"
 julia = "1.5"
 
 [extras]

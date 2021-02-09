@@ -63,7 +63,8 @@ Diagnose an actor, get a state or stacktrace.
 	- `:err`: error log (only monitors or supervisors).
 
 !!! warn "This is for diagnosis only!"
-	Don't use this for other purposes than for diagnosis.
+
+	Modifying an actor's state can cause a race condition.
 """
 diag(lk::Link, check::Symbol=:state) = request(lk, Diag, check)
 diag(name::Symbol, args...) = diag(whereis(name), args...)

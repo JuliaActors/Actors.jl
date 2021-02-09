@@ -56,7 +56,7 @@ function onmessage(A::_ACT, msg::Down)
         if c.lk == msg.from && c isa Monitored 
             !isnothing(c.action) ?
                 c.action(msg.reason) :
-                warn(msg)
+                warn(msg, "monitored")
             ix = i
         end
     end
@@ -80,7 +80,7 @@ onmessage(A::_ACT, ::Val{:sticky}, msg::Exit) = onmessage(A, Val(:system), msg)
 function onmessage(A::_ACT, ::Val{:system}, msg::Exit)
     if msg.reason != :normal
         saveerror(msg.task)
-        warn(msg, "monitored")
+        warn(msg, "connected")
     end
     ix = findfirst(c->c.lk==msg.from, A.conn)
     isnothing(ix) ? # Exit not from a connection
@@ -91,22 +91,22 @@ function onmessage(A::_ACT, ::Val{:supervisor}, msg::Exit)
     !isnormal(msg.reason) && saveerror(msg.task)
     ix = findfirst(c->c.lk==msg.from, A.conn)
     if !isnothing(ix) && A.conn[ix] isa Child
+        warn(msg, "supervised")
         A.bhv(msg)
     elseif !isnothing(ix) && A.conn[ix] isa Peer
-        if msg.reason != :normal 
-            saveerror(msg.task)
-            warn(msg, "from peer")
-        end
+        msg.reason != :normal && warn(msg, "connected")
     else
-        for c in A.conn
-            if c.lk != msg.from
-                c isa Monitor ? trysend(c.lk, Down(self(), msg.reason)) :
-                c isa Child   ? shutdown_child(c) :
-                    send(c.lk, Exit(msg.reason, self(), msg.task, A))
+        if msg.reason ∉ (:done, :timed_out)
+            for c in A.conn
+                if c.lk != msg.from
+                    c isa Monitor ? trysend(c.lk, Down(self(), msg.reason)) :
+                    c isa Child   ? shutdown_child(c) :
+                        send(c.lk, Exit(msg.reason, self(), msg.task, A))
+                end
             end
+            warn(msg, "supervisor")
+            _terminate!(A, msg.reason)            
+            A.mode = Symbol(string(A.mode)*"∇")
         end
-        msg.reason != :normal && warn(msg, "supervisor")
-        _terminate!(A, msg.reason)            
-        A.mode = Symbol(string(A.mode)*"∇")
     end
 end

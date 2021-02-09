@@ -47,7 +47,7 @@ function restart_child(c::Child)
         send(lk, Connect(Super(self())))
         update!(c.lk, c.lk, s=:self)
     else
-        c.lk = Threads.@spawn s.start()
+        c.lk = Threads.@spawn c.start()
     end
 end
 
@@ -68,9 +68,9 @@ function must_restart(c::Child, reason)
 end
 
 function restart_limit!(s::Supervisor)
-    length(s.rtime) ≥ s.max_restarts && popfirst!(s.rtime)
+    length(s.rtime) > s.max_restarts && popfirst!(s.rtime)
     push!(s.rtime, time_ns()/1e9)
-    return length(s.rtime) ≥ s.max_restarts &&
+    return length(s.rtime) > s.max_restarts &&
         s.rtime[end]-s.rtime[begin] ≤ s.max_seconds
 end
 
@@ -99,11 +99,15 @@ function (s::Supervisor)(msg::Exit)
     isnothing(ix) && throw(AssertionError("child not found"))
     if must_restart(s.childs[ix], msg.reason)
         if restart_limit!(s)
-            warn("Supervisor: restart limit exceeded!")
+            warn("Supervisor: restart limit $(s.max_restarts) exceeded!")
             send(self(), Exit(:shutdown, fill(nothing, 3)...))
         else
             restart(s, s.childs[ix])
         end
+    else
+        act = task_local_storage("_ACT")
+        filter!(c->c.lk!=msg.from, act.conn)
+        filter!(c->c.lk!=msg.from, s.childs)
     end
 end
 function (s::Supervisor)(child::Child)
@@ -112,13 +116,13 @@ function (s::Supervisor)(child::Child)
     isnothing(ix) && push!(s.childs, child)
     ix = findfirst(c->c.lk==child, act.conn)
     isnothing(ix) && push!(act.conn, child)
-    send(child.lk, Connect(Super(act.self)))
+    child.lk isa Link && send(child.lk, Connect(Super(act.self)))
 end
 function (s::Supervisor)(::Delete, lk)
     act = task_local_storage("_ACT")
     filter!(c->c.lk!=lk, act.conn)
     filter!(c->c.lk!=lk, s.childs)
-    send(lk, Connect(act.self, remove=true))
+    lk isa Link && send(lk, Connect(act.self, remove=true))
 end
 function (s::Supervisor)(::Terminate, lk::Link)
     s(Delete(), lk)
@@ -204,13 +208,13 @@ function start_actor(sv::Link, start, restart::Symbol=:transient; kwargs...)
     return lk
 end
 
-function _supervisetask(t::Task, m::Link; timeout, pollint)
+function _supervisetask(t::Task, sv::Link; timeout::Real=5.0, pollint::Real=0.1)
     res = timedwait(()->t.state!=:runnable, timeout; pollint)
     res == :ok ?
         t.state == :done ?
-            send(m, Exit(t, :normal, nothing, nothing)) :
-            send(m, Exit(t, t.exception, t, nothing)) :
-        send(m, Exit(t, res, nothing, nothing))
+            send(sv, Exit(:done, t, t, nothing)) :
+            send(sv, Exit(t.exception, t, t, nothing)) :
+        send(sv, Exit(res, t, t, nothing))
 end
 
 """
@@ -282,16 +286,19 @@ function supervise(sv::Link, start, restart::Symbol=:transient; timeout::Real=5.
     catch
         current_task()
     end
-    me isa Link ?
-        (@assert restart in restarts "Not a known restart strategy: $restart") :
-        (@assert restart in (:temporary, :transient) "Not allowed for tasks: $restart")
+    if me isa Link
+        @assert restart in restarts "Not a known restart strategy: $restart"
+    else
+        @assert restart in (:temporary, :transient) "Not allowed for tasks: $restart"
+        @async _supervisetask(me, sv; timeout, pollint)
+    end
     send(sv, Child(me, start, restart))
 end
 
 """
     unsupervise(sv::Link)
 
-Tell a supervisor `sv` to delete the calling actor 
+Tell a supervisor `sv` to delete the calling actor or task
 from the childs list. 
 """
 function unsupervise(sv::Link)

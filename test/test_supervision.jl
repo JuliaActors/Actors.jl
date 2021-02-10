@@ -68,6 +68,22 @@ send(act2, "boom")
 sleep(sleeptime)
 @test t1[].state == :done
 
+# temporary actors
+sv = supervisor(taskref=t1)
+act2 = spawn(threadid, taskref=t2)
+exec(act2, supervise, sv, nothing, :temporary)
+a2 = diag(act2, :act)
+a1 = diag(sv, :act)
+@test t1[].state == :runnable
+@test a1.conn[1].lk == act2
+@test a1.conn[1].restart == :temporary
+send(act2, "boom")
+sleep(sleeptime)
+@test isempty(a1.bhv.childs)
+@test isempty(a1.conn)
+@test diag(sv, :err)[1] == t2[]
+@test t1[].state == :runnable
+
 # test task supervision
 tvar = [0]
 function ttask(sv::Link, delay, fail=false)
@@ -79,7 +95,6 @@ function ttask(sv::Link, delay, fail=false)
 end
 
 println("supervisor restart!")
-sv = supervisor(taskref=t1)
 t = Threads.@spawn ttask(sv, sleeptime*2)
 a1 = diag(sv, :act)
 sleep(sleeptime)
@@ -97,9 +112,38 @@ sleep(sleeptime*2)
 t = Threads.@spawn ttask(sv, sleeptime, true)  # with failure
 sleep(sleeptime)
 @test t1[].state == :runnable
-sleep(sleeptime*4) # 3rd and 4th error
+sleep(sleeptime*4) # 4 task errors
 @test t1[].state == :done
 @test tvar[1] == 5
+
+# test restart strategies
+function checkTasks(actors, tnr, equ)
+    for i in eachindex(actors)
+        t = diag(actors[i], :task)
+        @test t.state == :runnable
+        @test equ[i](tnr[i], convert(UInt, pointer_from_objref(t)))
+    end
+end
+ctask = [Ref{Task}() for _ in 1:5]
+sv = supervisor(:one_for_all, taskref=t1)
+cact = [spawn(threadid, taskref=ctask[i]) for i in 1:5]
+foreach(act->exec(act, supervise, sv, threadid), cact)
+sleep(sleeptime)
+a1 = diag(sv, :act)
+@test length(a1.bhv.childs) == 5
+@test length(a1.conn) == 5
+ptask = map(t->convert(UInt, pointer_from_objref(t[])), ctask)
+send(cact[3], "boom")
+sleep(sleeptime)
+checkTasks(cact, ptask, fill(!=,5))
+@test length(a1.bhv.childs) == 5
+@test length(a1.conn) == 5
+
+a1.bhv.strategy = :rest_for_one
+ptask = map(a->convert(UInt, pointer_from_objref(diag(a,:task))), cact)
+send(cact[3], "boom")
+sleep(sleeptime)
+checkTasks(cact, ptask, (==,==,!=,!=,!=))
 
 # supervisor shutdown
 sv = supervisor(taskref=t1)

@@ -36,3 +36,5 @@ act1 = spawn(threadid, sticky=true)
 @test request(act1) == 1
 act2 = spawn(threadid, thrd=2)
 @test request(act2) == 2
+
+println(info(act2))

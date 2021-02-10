@@ -29,10 +29,6 @@ function info(lk::Link{RemoteChannel{Channel{Any}}})
 			exc.captured.ex.task
 	end
 end
-info(lks::Array{Link,1}) = foreach(lks) do lk
-	t = info(lk)
-	println(t, ": ", t.exception)
-end
 
 pretty(i::Info) = """
 Actor    $(i.mode)

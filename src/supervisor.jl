@@ -29,7 +29,7 @@ Supervisor functor for actors, has data and behavior.
 - `childs::Array{Child,1}`: supervised childs,
 - `rtime::Array{Float64,1}`: last restart times.
 """
-struct Supervisor
+mutable struct Supervisor
     strategy::Symbol
     max_restarts::Int
     max_seconds::Float64
@@ -54,6 +54,7 @@ end
 function shutdown_child(c::Child)
     if c.lk isa Link
         try
+            send(c.lk, Connect(self(), remove=true))
             exit!(c.lk, :shutdown)
         catch
         end
@@ -76,16 +77,19 @@ end
 
 function restart(s::Supervisor, c::Child)
     if s.strategy == :one_for_one
+        warn("supervisor: restarting")
         restart_child(c)
     elseif s.strategy == :one_for_all
+        warn("supervisor: restarting all")
         for child in s.childs
-            child != c && shutdown_child(child)
+            child.lk != c.lk && shutdown_child(child)
             restart_child(child)
         end
     else
-        ix = findfirst(==(c), s.childs)
+        warn("supervisor: restarting rest")
+        ix = findfirst(x->x.lk==c.lk, s.childs)
         for child in s.childs[ix:end] 
-            child != c && shutdown_child(child)
+            child.lk != c.lk && shutdown_child(child)
             restart_child(child)
         end
     end
@@ -99,7 +103,7 @@ function (s::Supervisor)(msg::Exit)
     isnothing(ix) && throw(AssertionError("child not found"))
     if must_restart(s.childs[ix], msg.reason)
         if restart_limit!(s)
-            warn("Supervisor: restart limit $(s.max_restarts) exceeded!")
+            warn("supervisor: restart limit $(s.max_restarts) exceeded!")
             send(self(), Exit(:shutdown, fill(nothing, 3)...))
         else
             restart(s, s.childs[ix])
@@ -112,9 +116,9 @@ function (s::Supervisor)(msg::Exit)
 end
 function (s::Supervisor)(child::Child)
     act = task_local_storage("_ACT")
-    ix = findfirst(c->c.lk==child, s.childs)
+    ix = findfirst(c->child.lk==c.lk, s.childs)
     isnothing(ix) && push!(s.childs, child)
-    ix = findfirst(c->c.lk==child, act.conn)
+    ix = findfirst(c->child.lk==c.lk, act.conn)
     isnothing(ix) && push!(act.conn, child)
     child.lk isa Link && send(child.lk, Connect(Super(act.self)))
 end

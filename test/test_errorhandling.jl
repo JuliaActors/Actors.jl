@@ -8,7 +8,7 @@ import Actors: spawn, info, diag, newLink
 
 Base.:(==)(l1::Link, l2::Link) = hash(l1) == hash(l2)
 
-const sleeptime = 0.3
+const sleeptime = 0.5
 t1 = Ref{Task}()
 t2 = Ref{Task}()
 t3 = Ref{Task}()

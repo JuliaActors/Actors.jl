@@ -6,15 +6,15 @@ Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)</code></pre><
 Actor    default
 Behavior threadid
 Pid      1, Thread 1
-Task     @0x00007fc5f541d120
-Ident    x-luzaj-zijad-tahob
+Task     @0x00007fb26c85b820
+Ident    x-luvuf-kufaj-robob
 
 julia&gt; call(myactor)
 1</code></pre><p>Now what happens if you <code>send</code> your actor a message which it cannot understand?</p><pre><code class="language-julia-repl">julia&gt; send(myactor, &quot;Boom&quot;)
 (&quot;Boom&quot;,)
 
 julia&gt; info(myactor)
-Task (failed) @0x00007fc5f541d120
+Task (failed) @0x00007fb26c85b820
 MethodError: no method matching threadid(::String)
 Closest candidates are:
   threadid(!Matched::Task) at task.jl:187
@@ -25,7 +25,7 @@ onmessage(::Function, ::Tuple{String}) at /home/runner/work/Actors.jl/Actors.jl/
 onmessage(::Actors._ACT, ::Tuple{String}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:39
 onmessage(::Actors._ACT, ::Val{:default}, ::Tuple{String}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:53
 _act(::Channel{Any}) at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:67
-(::Actors.var&quot;#81#85&quot;)() at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:122</code></pre><p>We caused our actor to fail. Ouch!</p><h2 id="Behaviors:-become-and-become!"><a class="docs-heading-anchor" href="#Behaviors:-become-and-become!">Behaviors: <code>become</code> and <code>become!</code></a><a id="Behaviors:-become-and-become!-1"></a><a class="docs-heading-anchor-permalink" href="#Behaviors:-become-and-become!" title="Permalink"></a></h2><p>We want our actor to do something more meaningful! Let&#39;s write our own behavior. We want it to calculate something and to <code>send</code> the result back to a given address:</p><pre><code class="language-julia-repl">julia&gt; function calc(addr::Link, f::Function, args...)
+(::Actors.var&quot;#86#90&quot;)() at /home/runner/work/Actors.jl/Actors.jl/src/actor.jl:122</code></pre><p>We caused our actor to fail. Ouch!</p><h2 id="Behaviors:-become-and-become!"><a class="docs-heading-anchor" href="#Behaviors:-become-and-become!">Behaviors: <code>become</code> and <code>become!</code></a><a id="Behaviors:-become-and-become!-1"></a><a class="docs-heading-anchor-permalink" href="#Behaviors:-become-and-become!" title="Permalink"></a></h2><p>We want our actor to do something more meaningful! Let&#39;s write our own behavior. We want it to calculate something and to <code>send</code> the result back to a given address:</p><pre><code class="language-julia-repl">julia&gt; function calc(addr::Link, f::Function, args...)
            send(addr, f(args...))
        end
 calc (generic function with 1 method)</code></pre><p>With <code>newLink</code> we create a link for ourselves, <code>spawn</code> a new actor with a <code>calc</code> behavior and give it that newly created link as <em>acquaintance</em> parameter:</p><pre><code class="language-julia-repl">julia&gt; me = newLink()
@@ -76,4 +76,4 @@ julia&gt; call(myactor, 500)
 Actors.Exit{Symbol,Nothing,Nothing,Nothing}(:normal, nothing, nothing, nothing)
 
 julia&gt; send(myactor, 500)
-ERROR: InvalidStateException(&quot;Channel is closed.&quot;, :closed)</code></pre><p>Trying to <code>send</code> it something now throws an exception.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Actors Documentation</a><a class="docs-footer-nextpage" href="../basics/">Actor Model »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Wednesday 10 February 2021 19:56">Wednesday 10 February 2021</span>. Using Julia version 1.5.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+ERROR: InvalidStateException(&quot;Channel is closed.&quot;, :closed)</code></pre><p>Trying to <code>send</code> it something now throws an exception.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Actors Documentation</a><a class="docs-footer-nextpage" href="../basics/">Actor Model »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Thursday 11 February 2021 17:14">Thursday 11 February 2021</span>. Using Julia version 1.5.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

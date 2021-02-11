@@ -70,24 +70,6 @@ function connect(lk::L) where L<:Link
         end
     end
 end
-# 
-# this is for child actors
-#
-# function connect(lk::L, W::Type{Child}, restart=:transient) where L<:Link
-#     try
-#         act = task_local_storage("_ACT")
-#         push!(act.conn, W(lk, restart))
-#         unique!(act.conn)
-#         send(lk, Connect(Parent(act.self)))
-#     catch exc
-#         if exc isa KeyError
-#             send(_ROOT, Connect(W(lk, restart)))
-#             send(lk, Connect(Parent(_ROOT)))
-#         else
-#             rethrow()
-#         end
-#     end
-# end
 
 function _monitortask(t::Task, m::Link; timeout::Real=5.0, pollint::Real=0.1)
     res = timedwait(()->t.state!=:runnable, timeout; pollint)

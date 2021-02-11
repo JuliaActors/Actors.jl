@@ -189,7 +189,7 @@ function count_children(sv::Link)
         d[m] = length(filter(==(m), ms))
     end
     tasks > 0 &&  (d[:tasks] = tasks)
-    NamedTuple(d)
+    (; d...)
 end
 
 """

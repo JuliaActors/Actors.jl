@@ -126,11 +126,15 @@ function (s::Supervisor)(::Delete, lk)
     act = task_local_storage("_ACT")
     filter!(c->c.lk!=lk, act.conn)
     filter!(c->c.lk!=lk, s.childs)
-    lk isa Link && send(lk, Connect(act.self, remove=true))
+    lk isa Link && trysend(lk, Connect(act.self, remove=true))
 end
 function (s::Supervisor)(::Terminate, lk::Link)
     s(Delete(), lk)
-    exit!(lk, :shutdown)
+    try
+        send(lk, Connect(self(), remove=true))
+        exit!(lk, :shutdown)
+    catch
+    end
 end
 (s::Supervisor)(::Which) = s.childs
 
@@ -173,30 +177,39 @@ end
 """
     count_children(sv::Link)
 
-Return a named tuple containing counts for the given
+Return a named tuple containing children counts for the given
 supervisor `sv`.
 """
 function count_children(sv::Link)
     childs = call(sv, Which())
+    d = Dict(:all => length(childs))
+    ms = [c.lk.mode for c in childs if c.lk isa Link]
+    tasks = length(childs)- length(ms)
+    for m in Set(ms)
+        d[m] = length(filter(==(m), ms))
+    end
+    tasks > 0 &&  (d[:tasks] = tasks)
+    NamedTuple(d)
 end
 
 """
-    delete_child(sv::Link, c::Link)
+    delete_child(sv::Link, child)
 
-Tell a supervisor `sv` to delete `c` from the childs list. 
+Tell a supervisor `sv` to delete `child` (a `Link` or `Task`) from 
+the childs list. 
 """
-delete_child(sv::Link, c::Link) = send(sv, Delete(), c)
+delete_child(sv::Link, child) = send(sv, Delete(), child)
 
 """
 ```
-start_actor(sv::Link, start, restart::Symbol; kwargs...)
+start_actor(start, sv::Link, restart::Symbol; kwargs...)
 ```
 Tell a supervisor `sv` to start an actor, to add 
 it to its childs list and to return a link to it.
 
 # Parameters
-- `sv::Link`: link to a started supervisor,
 - `start`: start behavior of the child, a callable object,
+- `sv::Link`: link to a started supervisor,
 - `restart::Symbol=:transient`: restart option, one of 
     `:permanent`, `:temporary`, `:transient`,
 - `kwargs...`: keyword arguments to [`spawn`](@ref).
@@ -205,7 +218,7 @@ it to its childs list and to return a link to it.
     See the manual chapter on error handling for
     explanations of restart options.
 """
-function start_actor(sv::Link, start, restart::Symbol=:transient; kwargs...)
+function start_actor(start, sv::Link, restart::Symbol=:transient; kwargs...)
     @assert restart in restarts "Not a known restart strategy: $restart"
     lk = spawn(start; kwargs...)
     send(sv, Child(lk, start, restart))
@@ -223,15 +236,15 @@ end
 
 """
 ```
-start_task(sv::Link, start, restart::Symbol; 
+start_task(start, sv::Link, restart::Symbol=:transient; 
            timeout::Real=5.0, pollint::Real=0.1)
 ```
 Tell a supervisor `sv` to start a child task, to add 
 it to its childs list and to return it.
 
 # Parameters
-- `sv::Link`: link to a started supervisor,
 - `start`: must be callable with no arguments,
+- `sv::Link`: link to a started supervisor,
 - `restart::Symbol=:transient`: restart option, one of 
     `:temporary`, `:transient`,
 - `timeout::Real=5.0`: how many seconds should a task 
@@ -242,29 +255,41 @@ it to its childs list and to return it.
     See the manual chapter on error handling for
     explanations of restart options.
 """
-function start_task(sv::Link, start, restart::Symbol=:transient; 
+function start_task(start, sv::Link, restart::Symbol=:transient; 
                     timeout::Real=5.0, pollint::Real=0.1)
     @assert restart in (:temporary, :transient) "Not a known restart strategy: $restart"
-    t = @spawn start()
-    @async _supervisetask(t, self(); timeout, pollint)
+    t = Threads.@spawn start()
+    !isinf(timeout) && @async _supervisetask(t, self(); timeout, pollint)
     send(sv, Child(t, start, restart))
     return t
 end
 
 """
-    terminate_child(sv::Link, c::Link)
+    terminate_child(sv::Link, child::Link)
 
 Tell a supervisor `sv` to remove a child `c` from its 
 childs and to terminate it with reason `:shutdown`.
 """
-terminate_child(sv::Link, c::Link) = call(sv, Terminate(), c)
+terminate_child(sv::Link, child::Link) = call(sv, Terminate(), child)
 
 """
-    which_children(sv::Link)
+    which_children(sv::Link, info=false)
 
-Tell a supervisor `sv` to return its childs list.
+Tell a supervisor `sv` to return its childs list. If `info=true` 
+it returns a list of named tuples with more child information.
 """
-which_children(sv::Link) = call(sv, Which())
+function which_children(sv::Link, info=false)
+    function cinfo(c::Child)
+        if c.lk isa Link
+            i = Actors.info(c.lk)
+            (actor=i.mode, bhv=i.bhvf, pid=i.pid, thrd=i.thrd, task=i.task, id=i.tid, restart=c.restart)
+        else
+            (task=c.lk, restart=c.restart)
+        end
+    end 
+    childs = call(sv, Which())
+    return info ? map(cinfo, childs) : childs
+end
 
 """
 ```
@@ -294,7 +319,7 @@ function supervise(sv::Link, start, restart::Symbol=:transient; timeout::Real=5.
         @assert restart in restarts "Not a known restart strategy: $restart"
     else
         @assert restart in (:temporary, :transient) "Not allowed for tasks: $restart"
-        @async _supervisetask(me, sv; timeout, pollint)
+        !isinf(timeout) && @async _supervisetask(me, sv; timeout, pollint)
     end
     send(sv, Child(me, start, restart))
 end

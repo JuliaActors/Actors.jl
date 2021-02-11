@@ -23,4 +23,8 @@ if length(workers()) > 0
     @test a == [2,2,2]
     become!(mut, myid)
     @test request(mut) == 2
+    @test info(mut).pid == 2
+    send(mut, :boom)
+    sleep(0.5)
+    @test info(mut).exception isa MethodError
 end

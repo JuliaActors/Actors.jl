@@ -93,6 +93,6 @@ export
     # supervising
     supervisor, supervise, unsupervise, 
     count_children, which_children,
-    delete_child, start_actor, starttask, terminate_child
+    delete_child, start_actor, start_task, terminate_child
     
 end

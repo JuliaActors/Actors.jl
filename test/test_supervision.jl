@@ -145,6 +145,32 @@ send(cact[3], "boom")
 sleep(sleeptime)
 checkTasks(cact, ptask, (==,==,!=,!=,!=))
 
+# API
+ch = Channel(0)
+t = Threads.@spawn (supervise(sv, nothing, timeout=Inf); take!(ch))
+sleep(sleeptime)
+@test length(which_children(sv)) == 6
+@test length(which_children(sv, true)) == 6
+delete_child(sv, cact[5])
+delete_child(sv, t)
+put!(ch, 0)
+sleep(sleeptime)
+@test length(which_children(sv)) == 4
+@test Actors.diag(cact[5], :task).state == :runnable
+act2 = start_actor(sv) do
+    threadid()
+end
+t = start_task(sv, timeout=Inf) do
+    take!(ch)
+end
+sleep(sleeptime)
+@test length(which_children(sv)) == 6
+terminate_child(sv, act2)
+sleep(sleeptime)
+@test length(which_children(sv)) == 5
+@test info(act2) == :done
+@test count_children(sv).all == 5
+
 # supervisor shutdown
 sv = supervisor(taskref=t1)
 act2 = spawn(threadid, taskref=t2)

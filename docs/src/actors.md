@@ -160,8 +160,7 @@ The remote `DictSrv` actor is available on all workers.
 Based on that *checkpoint* and *restore* as used for  fault-tolerance in high performance computing (HPC) can be implemented.
 
 !!! note "This is currently work in progress!"
-
-  Those features should be considered experimental!
+    Those features should be considered experimental!
 
 ## Actor Isolation
 

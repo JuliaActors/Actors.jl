@@ -151,9 +151,17 @@ The remote `DictSrv` actor is available on all workers.
 
 ## Fault Tolerance
 
-!!! note "This has yet to be developed!"
+`Actors` provides explicit methods for fault tolerant computing used mainly in telecommunications and internet services with Erlang/OTP[^6]:
 
-    This will be implemented with the next major version.
+- *group* actors and force them to fail together,
+- *monitor* tasks and actors and take action if they fail or time out,
+- *supervise* tasks and actors and restart them if a failure occurs.
+
+Based on that *checkpoint* and *restore* as used for  fault-tolerance in high performance computing (HPC) can be implemented.
+
+!!! warn "This is currently work in progress!"
+
+  Those features should be considered experimental!
 
 ## Actor Isolation
 
@@ -183,3 +191,4 @@ Since actors are Julia tasks, they have a local dictionary in which you can stor
 [^3]: Effective Go: [Share by Communicating](https://golang.org/doc/effective_go.html#sharing)
 [^4]: see [Data race freedom](https://docs.julialang.org/en/v1/manual/multi-threading/#Data-race-freedom) in the Julia manual.
 [^5]: H. Sutter and J. Larus. see above
+[^6]: Joe Armstrong's: [Making reliable distributed systems in the presence of software errors](https://erlang.org/download/armstrong_thesis_2003.pdf)

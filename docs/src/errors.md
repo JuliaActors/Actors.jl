@@ -28,7 +28,56 @@ Connections between actors are always bidirectional and can be [`disconnect`](@r
 
 ![connection](assets/connect.svg)
 
-Assume in an actor system `A1`-`A3`-`A7`-`A9`-`A4` are connected, `A3` is a `:sticky` actor and `A9` fails. Before it terminates, it sends an `Exit` message to `A4` and `A7`. `A7` propagates it further to `A3`. `A9`, `A4` and `A7` die together. `A3` gives a warning about the failure and saves the link to the failed actor `A9`. `A3` does not propagate the `Exit` to `A1`. Both `A1` and `A3` stay connected and continue to operate. The other actors are separate and are not affected by the failure.
+Assume in an actor system `A1`-`A3`-`A7`-`A9`-`A4` are connected, `A3` is a `:sticky` actor and `A9` fails. Before it terminates, it sends an `Exit` message to `A4` and `A7`. `A7` propagates it further to `A3`. `A9`, `A4` and `A7` die together. `A3` gives a warning about the failure and saves the link to the failed actor `A9`. `A3` does not propagate the `Exit` to `A1`. Both `A1` and `A3` stay connected and continue to operate. The other actors are separate and are not affected by the failure. This is illustrated in the following script:
+
+```julia
+julia> using Actors, .Threads
+
+julia> import Actors: spawn
+
+julia> A = map((_)->spawn(threadid), 1:10); # create 10 actors
+
+julia> exec(A[3], connect, A[1]);           # connect A3 - A1
+
+julia> exec(A[3], connect, A[7]);           # connect A3 - A7
+
+julia> exec(A[9], connect, A[7]);           # connect A9 - A7
+
+julia> exec(A[9], connect, A[4]);           # connect A9 - A4
+
+julia> t = map(a->Actors.diag(a, :task), A) # create a task list
+10-element Vector{Task}:
+ Task (runnable) @0x000000016e949220
+ Task (runnable) @0x000000016e94a100
+ Task (runnable) @0x000000016e94a320
+ Task (runnable) @0x000000016e94a540
+ Task (runnable) @0x000000016e94a760
+ Task (runnable) @0x000000016e94a980
+ Task (runnable) @0x000000016e94aba0
+ Task (runnable) @0x000000016e94adc0
+ Task (runnable) @0x000000016e94b0f0
+ Task (runnable) @0x000000016e94b310
+
+julia> trapExit(A[3])                       # make A3 a sticky actor
+Actors.Update(:mode, :sticky)
+
+julia> send(A[9], :boom);                   # cause A9 to fail
+┌ Warning: 2021-02-13 12:08:11 x-d-kupih-pasob: Exit: connected Task (failed) @0x000000016e94b0f0, MethodError(Base.Threads.threadid, (:boom,), 0x0000000000007447)
+└ @ Actors ~/.julia/dev/Actors/src/logging.jl:31
+
+julia> t                                    # display the task list again
+10-element Vector{Task}:
+ Task (runnable) @0x000000016e949220
+ Task (runnable) @0x000000016e94a100
+ Task (runnable) @0x000000016e94a320
+ Task (done) @0x000000016e94a540
+ Task (runnable) @0x000000016e94a760
+ Task (runnable) @0x000000016e94a980
+ Task (done) @0x000000016e94aba0
+ Task (runnable) @0x000000016e94adc0
+ Task (failed) @0x000000016e94b0f0
+ Task (runnable) @0x000000016e94b310
+```
 
 ## Monitors
 
@@ -37,6 +86,34 @@ An actor can be told to [`monitor`](@ref) other actors or Julia tasks. Monitored
 ![monitor](assets/monitor.svg)
 
 `A3` is a monitor. It gets a `Down` signal from its monitored actors if they exit.
+
+```julia
+julia> A = map(_->spawn(threadid), 1:3);
+
+julia> exec(A[3], monitor, A[1]);
+
+julia> exec(A[3], monitor, A[2]);
+
+julia> t = map(a->Actors.diag(a, :task), A)
+3-element Vector{Task}:
+ Task (runnable) @0x000000010f8f5000
+ Task (runnable) @0x000000010fbb8120
+ Task (runnable) @0x000000010fbb8890
+
+julia> exit!(A[1]);
+┌ Warning: 2021-02-13 12:36:32 x-d-uvur-mofib: Down:  normal
+└ @ Actors ~/.julia/dev/Actors/src/logging.jl:31
+
+julia> send(A[2], :boom);
+┌ Warning: 2021-02-13 12:36:58 x-d-uvur-mofib: Down:  Task (failed) @0x000000010fbb8120, MethodError(Base.Threads.threadid, (:boom,), 0x000000000000744f)
+└ @ Actors ~/.julia/dev/Actors/src/logging.jl:31
+
+julia> t
+3-element Vector{Task}:
+ Task (done) @0x000000010f8f5000
+ Task (failed) @0x000000010fbb8120
+ Task (runnable) @0x000000010fbb8890
+```
 
 Monitors do not forward `Down` messages. They give warnings or execute specified actions for `Down` signals (even with reason `:normal`). Monitoring is not bidirectional. If a monitor fails, the monitored actor gets no notification. Monitoring can be stopped with [`demonitor`](@ref). An actor can have several monitors (if that makes sense).
 
@@ -47,6 +124,87 @@ A supervisor is an actor looking after child actors and restarting them as neces
 ![supervisor](assets/supervisor.svg)
 
 In the depicted case the supervisor `A10` has child actors `A1`-`A6`. What it does if one of them – say `A4` - exits, is determined by its supervision strategy and by the child's restart variable and exit reason.
+
+```julia
+julia> A10 = supervisor()  # start supervisor A10 with default strategy :one_for_one
+Link{Channel{Any}}(Channel{Any}(32), 1, :supervisor)
+
+julia> A = map(_->spawn(threadid), 1:6);    # spawn A1 - A6
+
+julia> t = map(a->Actors.diag(a, :task), A) # A1 - A6 are running
+6-element Vector{Task}:
+ Task (runnable) @0x000000016e948560
+ Task (runnable) @0x000000016e949660
+ Task (runnable) @0x000000016e949880
+ Task (runnable) @0x000000016e949bb0
+ Task (runnable) @0x000000016e949ee0
+ Task (runnable) @0x000000016e94a100
+
+julia> foreach(a->exec(a, supervise, A10, threadid), A)
+
+julia> send(A[4], :boom);                   # let A4 fail
+┌ Warning: 2021-02-13 12:55:27 x-d-kuhub-dabab: Exit: supervised Task (failed) @0x000000016e949bb0, MethodError(Base.Threads.threadid, (:boom,), 0x0000000000007458)
+└ @ Actors ~/.julia/dev/Actors/src/logging.jl:31
+
+┌ Warning: 2021-02-13 12:55:27 x-d-kuhub-dabab: supervisor: restarting
+└ @ Actors ~/.julia/dev/Actors/src/logging.jl:31
+
+julia> t = map(a->Actors.diag(a, :task), A) # A1-A6 have runnable tasks, but A4 has been restarted
+6-element Vector{Task}:
+ Task (runnable) @0x000000016e948560
+ Task (runnable) @0x000000016e949660
+ Task (runnable) @0x000000016e949880
+ Task (runnable) @0x000000010e3b8230
+ Task (runnable) @0x000000016e949ee0
+ Task (runnable) @0x000000016e94a100
+
+julia> set_strategy(A10, :one_for_all)      # change restart strategy
+(Actors.Strategy(:one_for_all),)
+
+julia> send(A[4], :boom);                   # let A4 fail again
+┌ Warning: 2021-02-13 12:57:16 x-d-kuhub-dabab: Exit: supervised Task (failed) @0x000000010e3b8230, MethodError(Base.Threads.threadid, (:boom,), 0x0000000000007459)
+└ @ Actors ~/.julia/dev/Actors/src/logging.jl:31
+┌ Warning: 2021-02-13 12:57:16 x-d-kuhub-dabab: supervisor: restarting all
+└ @ Actors ~/.julia/dev/Actors/src/logging.jl:31
+
+julia> t = map(a->Actors.diag(a, :task), A) # all actors have been restarted (got new tasks)
+6-element Vector{Task}:
+ Task (runnable) @0x000000010e3b8450
+ Task (runnable) @0x000000010e3b8670
+ Task (runnable) @0x000000010e3b8890
+ Task (runnable) @0x000000010e3b8ab0
+ Task (runnable) @0x000000010e3b8cd0
+ Task (runnable) @0x000000010e3b9000
+
+julia> set_strategy(A10, :rest_for_one)     # change strategy again
+(Actors.Strategy(:rest_for_one),)
+
+julia> send(A[4], :boom);                   # let A4 fail
+┌ Warning: 2021-02-13 12:58:33 x-d-kuhub-dabab: Exit: supervised Task (failed) @0x000000010e3b8ab0, MethodError(Base.Threads.threadid, (:boom,), 0x000000000000745a)
+└ @ Actors ~/.julia/dev/Actors/src/logging.jl:31
+┌ Warning: 2021-02-13 12:58:33 x-d-kuhub-dabab: supervisor: restarting rest
+└ @ Actors ~/.julia/dev/Actors/src/logging.jl:31
+
+julia> t = map(a->Actors.diag(a, :task), A) # A4 - A6 have been restarted
+6-element Vector{Task}:
+ Task (runnable) @0x000000010e3b8450
+ Task (runnable) @0x000000010e3b8670
+ Task (runnable) @0x000000010e3b8890
+ Task (runnable) @0x000000010e3b9220
+ Task (runnable) @0x000000010e3b9440
+ Task (runnable) @0x000000010e3b9770
+
+julia> failed = Actors.diag(A10, :err)      # the three failed tasks can be queried from the supervisor
+3-element Vector{Task}:
+ Task (failed) @0x000000016e949bb0
+ Task (failed) @0x000000010e3b8230
+ Task (failed) @0x000000010e3b8ab0
+
+julia> failed[1]                            # exceptions and stacktraces are available
+Task (failed) @0x000000016e949bb0
+MethodError: no method matching threadid(::Symbol)
+....
+```
 
 ### Supervision strategy
 

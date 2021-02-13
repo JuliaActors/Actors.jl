@@ -70,7 +70,7 @@ function onmessage(A::_ACT, msg::Exit)
     for c in A.conn
         if c.lk != msg.from
             c isa Monitor ?
-                trysend(c.lk, Down(self(), msg.reason)) :
+                trysend(c.lk, Down(self(), msg.reason, current_task())) :
                 send(c.lk, Exit(msg.reason, self(), msg.task, A))
         end
     end

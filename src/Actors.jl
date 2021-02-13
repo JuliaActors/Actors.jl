@@ -92,7 +92,7 @@ export
     connect, disconnect, monitor, demonitor, trapExit,
     # supervising
     supervisor, supervise, unsupervise, 
-    count_children, which_children,
+    set_strategy, count_children, which_children,
     delete_child, start_actor, start_task, terminate_child
     
 end

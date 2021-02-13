@@ -7,6 +7,9 @@
 struct Delete end 
 struct Terminate end
 struct Which end
+struct Strategy
+    strategy::Symbol
+end
 
 const strategies = (:one_for_one, :one_for_all, :rest_for_one)
 const restarts   = (:permanent, :temporary, :transient)
@@ -137,6 +140,7 @@ function (s::Supervisor)(::Terminate, lk::Link)
     end
 end
 (s::Supervisor)(::Which) = s.childs
+(s::Supervisor)(msg::Strategy) = s.strategy = msg.strategy
 
 #
 # API functions
@@ -337,4 +341,14 @@ function unsupervise(sv::Link)
         current_task()
     end
     send(sv, Delete(), me)
+end
+
+"""
+    set_strategy(sv::Link, strategy::Symbol)
+
+Tell a supervisor `sv` to change its restart `strategy`.
+"""
+function set_strategy(sv::Link, strategy::Symbol) 
+    @assert strategy in strategies "$strategy not known!"
+    send(sv, Strategy(strategy))
 end

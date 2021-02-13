@@ -139,10 +139,11 @@ checkTasks(cact, ptask, fill(!=,5))
 @test length(a1.bhv.childs) == 5
 @test length(a1.conn) == 5
 
-a1.bhv.strategy = :rest_for_one
+set_strategy(sv, :rest_for_one)
 ptask = map(a->convert(UInt, pointer_from_objref(diag(a,:task))), cact)
 send(cact[3], "boom")
 sleep(sleeptime)
+@test a1.bhv.strategy == :rest_for_one
 checkTasks(cact, ptask, (==,==,!=,!=,!=))
 
 # API

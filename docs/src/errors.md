@@ -80,6 +80,10 @@ Supervisors allow for more automation and control of error handling in an actor 
 
 With options we can limit how often a supervisor tries to restart children in a given timeframe. If it exceeds this limit, it terminates itself and all of its children with a warning.
 
+## Checkpointing
+
+yet to be implemented!
+
 ## The `_ROOT` Actor
 
 If `connect` or `monitor` are called from the REPL or a user script and not from an actor, the given link will be connected to or monitored by the `Actors._ROOT` actor.

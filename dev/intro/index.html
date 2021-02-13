@@ -5,16 +5,16 @@ julia&gt; import Actors: spawn, newLink</code></pre><p>You <code>spawn</code> an
 Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)</code></pre><p><code>spawn</code> returned an actor <em>link</em>. Now - as we will discover right away - our actor is <em>responsive</em> and waits for our <em>messages</em>.</p><h2 id="Actor-Links"><a class="docs-heading-anchor" href="#Actor-Links">Actor <code>Link</code>s</a><a id="Actor-Links-1"></a><a class="docs-heading-anchor-permalink" href="#Actor-Links" title="Permalink"></a></h2><p>A <a href="../api/#Actors.Link"><code>Link</code></a> is the actor&#39;s mail address and its only representation. Over the returned link it is possible to <em>send</em> messages to the actor or to use other messaging functions. <code>Actors</code>&#39; API functions like <code>info</code> use an actors link to communicate with it. If you <code>call</code> or <code>request</code> it, you <code>send</code> a <code>Call</code> message to the actor to execute its behavior and to respond with the result:</p><pre><code class="language-julia-repl">julia&gt; info(myactor)
 Actor    default
 Behavior threadid
-Pid      1, Thread 1
-Task     @0x00007ff9d4ae9fc0
-Ident    x-luzun-tifov-nuzab
+Pid      1, Thread 2
+Task     @0x00007fe0c3c8e230
+Ident    x-luzob-sazam-vamub
 
 julia&gt; call(myactor)
-1</code></pre><p>Now what happens if you <code>send</code> your actor a message which it cannot understand?</p><pre><code class="language-julia-repl">julia&gt; send(myactor, &quot;Boom&quot;)
+2</code></pre><p>Now what happens if you <code>send</code> your actor a message which it cannot understand?</p><pre><code class="language-julia-repl">julia&gt; send(myactor, &quot;Boom&quot;)
 (&quot;Boom&quot;,)
 
 julia&gt; info(myactor)
-Task (failed) @0x00007ff9d4ae9fc0
+Task (failed) @0x00007fe0c3c8e230
 MethodError: no method matching threadid(::String)
 Closest candidates are:
   threadid(!Matched::Task) at task.jl:187
@@ -76,4 +76,4 @@ julia&gt; call(myactor, 500)
 Actors.Exit{Symbol,Nothing,Nothing,Nothing}(:normal, nothing, nothing, nothing)
 
 julia&gt; send(myactor, 500)
-ERROR: InvalidStateException(&quot;Channel is closed.&quot;, :closed)</code></pre><p>Trying to <code>send</code> it something now throws an exception.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Actors Documentation</a><a class="docs-footer-nextpage" href="../basics/">Actor Model »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Saturday 13 February 2021 13:37">Saturday 13 February 2021</span>. Using Julia version 1.5.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+ERROR: InvalidStateException(&quot;Channel is closed.&quot;, :closed)</code></pre><p>Trying to <code>send</code> it something now throws an exception.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Actors Documentation</a><a class="docs-footer-nextpage" href="../basics/">Actor Model »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Saturday 13 February 2021 13:40">Saturday 13 February 2021</span>. Using Julia version 1.5.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

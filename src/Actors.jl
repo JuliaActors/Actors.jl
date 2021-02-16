@@ -46,10 +46,10 @@ pkg> add "https://github.com/JuliaActors/Actors.jl"
 module Actors
 
 "Gives the package version."
-const version = v"0.2.3"
+const version = v"0.2.4"
 
 using ActorInterfaces.Classic
-using Distributed, .Threads, Dates, Proquint
+using Distributed, .Threads, Serialization, Dates, Proquint
 import ActorInterfaces.Classic: onmessage
 
 include("types.jl")
@@ -60,6 +60,7 @@ include("connections.jl")
 include("logging.jl")
 include("errorkernel.jl")
 include("supervisor.jl")
+include("checkpoints.jl")
 include("protocol.jl")
 include("actor.jl")
 include("api.jl")
@@ -93,6 +94,9 @@ export
     # supervising
     supervisor, supervise, unsupervise, 
     set_strategy, count_children, which_children,
-    delete_child, start_actor, start_task, terminate_child
-    
+    delete_child, start_actor, start_task, terminate_child,
+    # checkpointing
+    checkpointing, checkpoint, restore, get_checkpoints,
+    save_checkpoints, load_checkpoints
+
 end

@@ -1,13 +1,14 @@
 name = "Actors"
 uuid = "18269d71-cc38-4e02-b8c8-1db30113a6dd"
 authors = ["Oliver Schulz", "Paul Bayer"]
-version = "0.2.3"
+version = "0.2.4"
 
 [deps]
 ActorInterfaces = "7e194583-e687-41a0-9133-1c22a29c80af"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 Proquint = "710532b4-0dcf-4e85-9a00-0fba2d710edd"
+Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 
 [compat]
 ActorInterfaces = "0.1"

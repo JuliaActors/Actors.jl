@@ -148,6 +148,19 @@ delete_child
 terminate_child
 ```
 
+### Checkpointing
+
+A checkpointing actor can take user-defined checkpoints from current computations and restore them on demand.
+
+```@docs
+checkpointing
+checkpoint
+restore
+get_checkpoints
+save_checkpoints
+load_checkpoints
+```
+
 ## Utilities
 
 ```@docs

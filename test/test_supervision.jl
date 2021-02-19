@@ -6,7 +6,7 @@
 using Actors, Test, .Threads
 import Actors: spawn, info, diag, newLink
 
-const sleeptime = 0.5
+const sleeptime = 0.6
 t1 = Ref{Task}()
 t2 = Ref{Task}()
 t3 = Ref{Task}()

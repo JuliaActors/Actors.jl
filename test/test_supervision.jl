@@ -111,7 +111,7 @@ sleep(sleeptime*2)
 rt = start_task(()->ttask(tvar, sleeptime, true), sv)  # with failure
 sleep(sleeptime)
 @test t1[].state == :runnable
-sleep(sleeptime*4) # 4 task errors
+sleep(sleeptime*5) # 4 task errors
 @test t1[].state == :done
 @test tvar[1] == 5
 

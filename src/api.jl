@@ -108,15 +108,15 @@ exit!(name::Symbol, reason=:normal) = exit!(whereis(name), reason)
 init!(lk::Link, f, args...; kwargs...)
 init!(name::Symbol, ....)
 ```
-Tell an actor `lk` to save the callable object `f` with 
-the given arguments as an [`init`](@ref _ACT) function 
-and to execute it.
+Tell an actor `lk` to save the callable object `f` with the given 
+arguments as an `init` object in its [`_ACT`](@ref) variable. 
+The `init` object will be called by a supervisor at actor restart.
 
-The `init` function will be called at actor restart.
-
-!!! note "This behavior is not yet implemented!"
-
-    It is needed for supervision.
+# Arguments
+- actor `lk::Link` or `name::Symbol` if registered, 
+- `f`: callable object,
+- `args...`: arguments to `f`,
+- `kwargs...`: keyword arguments to `f`.
 """
 init!(lk::Link, f, args...; kwargs...) =
     send(lk, Init(Bhv(f, args...; kwargs...)))
@@ -169,22 +169,18 @@ query(name::Symbol, args...; kwargs...) = query(whereis(name), args...; kwargs..
     
 """
 ```
-term!(lk::Link, func, args...; kwargs...)
+term!(lk::Link, f, args1...; kwargs...)
 term!(name::Symbol, ....)
 ```
 Tell an actor `lk` (or `name::Symbol` if registered) to 
-execute `func` with the given partial arguments and an
+execute `f` with the given partial arguments and an
 exit reason when it terminates. 
 
 The exit reason is added by the actor to `args1...` when it 
 exits.
-
-!!! note "This behavior is not yet implemented!"
-
-    It is needed for supervision.
 """
-term!(lk::Link, func, args...; kwargs...) = 
-    send(lk, Term(Bhv(func, args...; kwargs...)))
+term!(lk::Link, f, args...; kwargs...) = 
+    send(lk, Term(Bhv(f, args...; kwargs...)))
 term!(name::Symbol, args...; kwargs...) = term!(whereis(name), args...; kwargs...)
 
 """
@@ -192,10 +188,9 @@ term!(name::Symbol, args...; kwargs...) = term!(whereis(name), args...; kwargs..
 
 Change the mode of an actor.
 
-A `:sticky` actor does not exit if it receives an 
-[`Exit`](@ref) signal from a connected actor and does 
-not propagate it further. Instead it reports the failure 
-and saves a link to the failed actor. 
+A `:sticky` actor does not exit if it receives an [`Exit`](@ref) 
+signal from a connected actor and does not propagate it further. 
+Instead it reports the failure and saves a link to the failed actor. 
 
 See [`diag`](@ref) for getting links to failed actors 
 from a `:sticky` actor.

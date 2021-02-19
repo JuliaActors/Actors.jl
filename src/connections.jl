@@ -9,17 +9,20 @@ struct Super{L} <: Connection
 end
 
 """
+    Child{L,T}(lk::L, start, info::T)
+
 Connection to a supervised actor or task.
 
 # Fields
 - `lk::L`: Link or Task,
 - `start::Any`: callable object for restarting it,
-- `restart::Symbol`: `:permanent`, `:temporary` or `:transient`.
+- `info::T`: named tuple with information about restart
+    strategies, timeout, pollint ...
 """
-mutable struct Child{L} <: Connection
+struct Child{L,T} <: Connection
     lk::L
     start::Any
-    restart::Symbol
+    info::T
 end
 
 "Connection to a peer actor"
@@ -88,7 +91,6 @@ monitor(t::Task, onsignal...; timeout::Real=5.0, pollint::Real=0.1)
 Start monitoring the actor represented by `lk` or the
 task `t` and execute `onsignal...` if it sends [`Down`](@ref)
 or if it fails.
-
 # Parameters
 - `onsignal...`: action to take on `Down` signal: 
     - if empty, it gives a warning; 

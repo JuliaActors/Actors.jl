@@ -14,7 +14,7 @@ end
 const strategies = (:one_for_one, :one_for_all, :rest_for_one)
 const restarts   = (:permanent, :temporary, :transient)
 
-isnormal(reason) = reason in (:normal, :shutdown, :timed_out)
+isnormal(reason) = reason in (:normal, :shutdown, :done, :timed_out)
 
 """
 ```
@@ -43,17 +43,6 @@ mutable struct Supervisor
         new(strategy, max_restarts, max_seconds, Child[], Float64[])
 end
 
-function restart_child(c::Child)
-    if c.lk isa Link
-        lk = spawn(c.start)
-        c.lk.chn = lk.chn
-        send(lk, Connect(Super(self())))
-        update!(c.lk, c.lk, s=:self)
-    else
-        c.lk = Threads.@spawn c.start()
-    end
-end
-
 function shutdown_child(c::Child)
     if c.lk isa Link
         try
@@ -64,10 +53,30 @@ function shutdown_child(c::Child)
     end
 end
 
+function restart_child(c::Child, act)
+    if c.lk isa Link
+        lk = !isnothing(c.start) ? c.start(act.bhv) :
+            !isnothing(act.init) ? act.init() :
+                spawn(act.bhv)
+        c.lk.chn = lk.chn
+        c.lk.pid = lk.pid
+        send(lk, Connect(Super(self())))
+        update!(c.lk, c.lk, s=:self)
+    else
+        c.lk[] = Threads.@spawn c.start()
+        _supervisetask(c.lk, self(), timeout=c.info.timeout, pollint=c.info.pollint)
+    end
+end
+
+function shutdown_restart_child(c::Child)
+    act = isnothing(c.start) ? diag(c.lk, :act) : nothing
+    shutdown_child(c)
+    restart_child(c, act)
+end
+
 function must_restart(c::Child, reason)
-    return isnothing(c.start) ? false :
-        c.restart == :permanent ? true :
-        c.restart == :temporary ? false :
+    return c.info.restart == :permanent ? true :
+        c.info.restart == :temporary ? false :
         isnormal(reason) ? false : true
 end
 
@@ -78,22 +87,24 @@ function restart_limit!(s::Supervisor)
         s.rtime[end]-s.rtime[begin] ≤ s.max_seconds
 end
 
-function restart(s::Supervisor, c::Child)
+function restart(s::Supervisor, c::Child, msg::Exit)
     if s.strategy == :one_for_one
         warn("supervisor: restarting")
-        restart_child(c)
+        restart_child(c, msg.state)
     elseif s.strategy == :one_for_all
         warn("supervisor: restarting all")
         for child in s.childs
-            child.lk != c.lk && shutdown_child(child)
-            restart_child(child)
+            child.lk == c.lk ? 
+                restart_child(child, msg.state) :
+                shutdown_restart_child(child)
         end
     else
         warn("supervisor: restarting rest")
         ix = findfirst(x->x.lk==c.lk, s.childs)
         for child in s.childs[ix:end] 
-            child.lk != c.lk && shutdown_child(child)
-            restart_child(child)
+            child.lk == c.lk ? 
+                restart_child(child, msg.state) :
+                shutdown_restart_child(child)
         end
     end
 end
@@ -109,7 +120,7 @@ function (s::Supervisor)(msg::Exit)
             warn("supervisor: restart limit $(s.max_restarts) exceeded!")
             send(self(), Exit(:shutdown, fill(nothing, 3)...))
         else
-            restart(s, s.childs[ix])
+            restart(s, s.childs[ix], msg)
         end
     else
         act = task_local_storage("_ACT")
@@ -206,7 +217,7 @@ delete_child(sv::Link, child) = send(sv, Delete(), child)
 
 """
 ```
-start_actor(start, sv::Link, restart::Symbol; kwargs...)
+start_actor(start, sv::Link, restart::Symbol, cb=nothing; kwargs...)
 ```
 Tell a supervisor `sv` to start an actor, to add 
 it to its childs list and to return a link to it.
@@ -214,6 +225,10 @@ it to its childs list and to return a link to it.
 # Parameters
 - `start`: start behavior of the child, a callable object,
 - `sv::Link`: link to a started supervisor,
+- `cb=nothing`: callback (a callable object, gets the last
+    actor behavior as argument and must return a [`Link`](@ref));  
+    if `nothing`, the actor gets restarted with its [`init!`](@ref) 
+    callback or with its last behavior,
 - `restart::Symbol=:transient`: restart option, one of 
     `:permanent`, `:temporary`, `:transient`,
 - `kwargs...`: keyword arguments to [`spawn`](@ref).
@@ -222,50 +237,45 @@ it to its childs list and to return a link to it.
     See the manual chapter on error handling for
     explanations of restart options.
 """
-function start_actor(start, sv::Link, restart::Symbol=:transient; kwargs...)
+function start_actor(start, sv::Link, cb=nothing, restart::Symbol=:transient; kwargs...)
     @assert restart in restarts "Not a known restart strategy: $restart"
     lk = spawn(start; kwargs...)
-    send(sv, Child(lk, start, restart))
+    send(sv, Child(lk, cb, (; restart)))
     return lk
 end
 
-function _supervisetask(t::Task, sv::Link; timeout::Real=5.0, pollint::Real=0.1)
-    res = timedwait(()->t.state!=:runnable, timeout; pollint)
+function _supervisetask(r::Ref{Task}, sv::Link; timeout::Real=5.0, pollint::Real=0.1)
+    res = timedwait(()->r[].state!=:runnable, timeout; pollint)
     res == :ok ?
-        t.state == :done ?
-            send(sv, Exit(:done, t, t, nothing)) :
-            send(sv, Exit(t.exception, t, t, nothing)) :
-        send(sv, Exit(res, t, t, nothing))
+        r[].state == :done ?
+            send(sv, Exit(:done, r, r[], nothing)) :
+            send(sv, Exit(r[].exception, r, r[], nothing)) :
+        send(sv, Exit(res, r, r[], nothing))
 end
 
 """
 ```
-start_task(start, sv::Link, restart::Symbol=:transient; 
+start_task(start, sv::Link, cb=nothing; 
            timeout::Real=5.0, pollint::Real=0.1)
 ```
-Tell a supervisor `sv` to start a child task, to add 
-it to its childs list and to return it.
+Spawn a task, tell the supervisor `sv` to supervise it (with
+restart strategy `:transient`) and return a reference to it.
 
 # Parameters
 - `start`: must be callable with no arguments,
 - `sv::Link`: link to a started supervisor,
-- `restart::Symbol=:transient`: restart option, one of 
-    `:temporary`, `:transient`,
-- `timeout::Real=5.0`: how many seconds should a task 
+- `cb=nothing`: callback for restart (a callable object, must 
+    return a `Task`); if `cb=nothing`, the task gets restarted 
+    with its `start` function,
+- `timeout::Real=5.0`: how long [seconds] should the task 
     be supervised, 
-- `pollint::Real=0.1`: polling interval in seconds.
-
-!!! note
-    See the manual chapter on error handling for
-    explanations of restart options.
+- `pollint::Real=0.1`: polling interval [seconds].
 """
-function start_task(start, sv::Link, restart::Symbol=:transient; 
-                    timeout::Real=5.0, pollint::Real=0.1)
-    @assert restart in (:temporary, :transient) "Not a known restart strategy: $restart"
-    t = Threads.@spawn start()
-    !isinf(timeout) && @async _supervisetask(t, self(); timeout, pollint)
-    send(sv, Child(t, start, restart))
-    return t
+function start_task(start, sv::Link, cb=nothing; timeout::Real=5.0, pollint::Real=0.1)
+    r = Ref(Threads.@spawn start())
+    !isinf(timeout) && @async _supervisetask(r, sv; timeout, pollint)
+    send(sv, Child(r, isnothing(cb) ? start : cb, (; restart=:transient, timeout, pollint)))
+    return r
 end
 
 """
@@ -286,9 +296,9 @@ function which_children(sv::Link, info=false)
     function cinfo(c::Child)
         if c.lk isa Link
             i = Actors.info(c.lk)
-            (actor=i.mode, bhv=i.bhvf, pid=i.pid, thrd=i.thrd, task=i.task, id=i.tid, restart=c.restart)
+            (actor=i.mode, bhv=i.bhvf, pid=i.pid, thrd=i.thrd, task=i.task, id=i.tid, restart=c.info.restart)
         else
-            (task=c.lk, restart=c.restart)
+            (task=c.lk[], restart=c.info.restart)
         end
     end 
     childs = call(sv, Which())
@@ -297,15 +307,17 @@ end
 
 """
 ```
-supervise(sv::Link, start, restart::Symbol=:transient; 
-          timeout::Real=5.0, pollint::Real=0.1)
+supervise(sv::Link, cb=nothing, restart::Symbol=:transient)
 ```
-Tell a supervisor `sv` to add the calling actor or
-task to its childs list.
+Tell a supervisor `sv` to supervise the calling actor.
 
 # Parameters
-- `sv::Link`: link to a started supervisor,
-- `start`: start behavior of the child, a callable object,
+- `sv::Link`: link to a supervisor,
+- `cb=nothing`: callback (a callable object), takes the 
+    previous actor behavior as argument and must return 
+    a [`Link`](@ref) to a new actor; if `nothing`, the
+    actor gets restarted with its [`init!`](@ref) callback 
+    or its previous behavior. 
 - `restart::Symbol=:transient`: restart option, one of 
     `:permanent`, `:temporary`, `:transient`,
 
@@ -313,35 +325,18 @@ task to its childs list.
     See the manual chapter on error handling for
     explanations of restart options.
 """
-function supervise(sv::Link, start, restart::Symbol=:transient; timeout::Real=5.0, pollint::Real=0.1)
-    me = try
-        self()
-    catch
-        current_task()
-    end
-    if me isa Link
-        @assert restart in restarts "Not a known restart strategy: $restart"
-    else
-        @assert restart in (:temporary, :transient) "Not allowed for tasks: $restart"
-        !isinf(timeout) && @async _supervisetask(me, sv; timeout, pollint)
-    end
-    send(sv, Child(me, start, restart))
+function supervise(sv::Link, cb=nothing, restart::Symbol=:transient)
+    @assert restart in restarts "Not a known restart strategy: $restart"
+    send(sv, Child(self(), cb, (; restart)))
 end
 
 """
     unsupervise(sv::Link)
 
-Tell a supervisor `sv` to delete the calling actor or task
+Tell a supervisor `sv` to delete the calling actor 
 from the childs list. 
 """
-function unsupervise(sv::Link)
-    me = try
-        self()
-    catch
-        current_task()
-    end
-    send(sv, Delete(), me)
-end
+unsupervise(sv::Link) = send(sv, Delete(), self())
 
 """
     set_strategy(sv::Link, strategy::Symbol)

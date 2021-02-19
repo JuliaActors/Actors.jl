@@ -21,14 +21,14 @@ a1 = diag(sv, :act)
 @test isempty(which_children(sv))
 
 act2 = spawn(threadid, taskref=t2)
-exec(act2, supervise, sv, threadid)
+exec(act2, supervise, sv)
 a2 = diag(act2, :act)
 @test a2.conn[1] isa Actors.Super
 @test a2.conn[1].lk == sv
 @test a1.conn[1] isa Actors.Child
 @test a1.conn[1].lk == act2
-@test a1.conn[1].start == threadid
-@test a1.conn[1].restart == :transient
+@test isnothing(a1.conn[1].start)
+@test a1.conn[1].info.restart == :transient
 @test isempty(a1.bhv.rtime)
 @test length(which_children(sv)) == 1
 
@@ -76,7 +76,7 @@ a2 = diag(act2, :act)
 a1 = diag(sv, :act)
 @test t1[].state == :runnable
 @test a1.conn[1].lk == act2
-@test a1.conn[1].restart == :temporary
+@test a1.conn[1].info.restart == :temporary
 send(act2, "boom")
 sleep(sleeptime)
 @test isempty(a1.bhv.childs)
@@ -86,30 +86,29 @@ sleep(sleeptime)
 
 # test task supervision
 tvar = [0]
-function ttask(sv::Link, delay, fail=false)
-    supervise(sv, ()->ttask(sv, delay, fail))
+function ttask(tvar, delay, fail=false)
     sleep(delay)
     tvar[1] += 1
     fail && error("Task test error!")
-    unsupervise(sv)
 end
 
 println("supervisor restart!")
-t = Threads.@spawn ttask(sv, sleeptime*2)
+sv = supervisor(taskref=t1)
+rt = start_task(()->ttask(tvar, sleeptime*2), sv)
 a1 = diag(sv, :act)
 sleep(sleeptime)
 @test a1.conn[1] isa Actors.Child
-@test a1.conn[1].lk == t
-@test a1.bhv.childs[1].lk == t
+@test a1.conn[1].lk == rt
+@test a1.bhv.childs[1].lk == rt
 sleep(sleeptime*2)
 @test isempty(a1.conn)
 @test isempty(a1.bhv.childs)
-@test t.state == :done
+@test rt[].state == :done
 @test tvar[1] == 1
 @test t1[].state == :runnable
 
 # test task restart
-t = Threads.@spawn ttask(sv, sleeptime, true)  # with failure
+rt = start_task(()->ttask(tvar, sleeptime, true), sv)  # with failure
 sleep(sleeptime)
 @test t1[].state == :runnable
 sleep(sleeptime*4) # 4 task errors
@@ -127,7 +126,7 @@ end
 ctask = [Ref{Task}() for _ in 1:5]
 sv = supervisor(:one_for_all, taskref=t1)
 cact = [spawn(threadid, taskref=ctask[i]) for i in 1:5]
-foreach(act->exec(act, supervise, sv, threadid), cact)
+foreach(act->exec(act, supervise, sv), cact)
 sleep(sleeptime)
 a1 = diag(sv, :act)
 @test length(a1.bhv.childs) == 5
@@ -148,12 +147,12 @@ checkTasks(cact, ptask, (==,==,!=,!=,!=))
 
 # API
 ch = Channel(0)
-t = Threads.@spawn (supervise(sv, nothing, timeout=Inf); take!(ch))
+rt = start_task(()->take!(ch), sv, timeout=Inf)
 sleep(sleeptime)
 @test length(which_children(sv)) == 6
 @test length(which_children(sv, true)) == 6
 delete_child(sv, cact[5])
-delete_child(sv, t)
+delete_child(sv, rt)
 put!(ch, 0)
 sleep(sleeptime)
 @test length(which_children(sv)) == 4

@@ -49,13 +49,11 @@ end
 
 # Exec
 onmessage(A::_ACT, msg::Exec) = send(msg.from, Response(_current(msg.func)(), A.self))
-function onmessage(A::_ACT, msg::Init)
-    A.init = _current(msg.x)
-    A.sta  = A.init()
-end
 
-# Term
-onmessage(A::_ACT, msg::Term) = A.term = _current(msg.x)
+# Init
+onmessage(A::_ACT, msg::Init) = A.init = _current(msg.x)
+
+# Query
 function onmessage(A::_ACT, msg::Query)
     msg.x in (:mode,:bhv,:res,:sta,:usr) ?
         send(msg.from, Response(getfield(A, msg.x), A.self)) :
@@ -74,6 +72,9 @@ function onmessage(A::_ACT, msg::Update)
             pairs((; merge(A.bhv.kw, msg.x.kwargs)...))...)
     end
 end
+
+# Term
+onmessage(A::_ACT, msg::Term) = A.term = _current(msg.x)
 
 # dispatch on Request or user defined Msg
 onmessage(A::_ACT, msg::Msg) = A.res = A.bhv(msg)

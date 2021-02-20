@@ -82,7 +82,7 @@ sleep(0.1)
 @test query(:act1, :res) == 2
 init!(:act1, cos, 2pi)
 sleep(0.1)
-@test a1.sta == 1
+@test a1.init.f == cos
 term!(:act1, cos, 2pi)
 sleep(0.1)
 @test a1.term.f == cos

@@ -16,7 +16,14 @@ makedocs(
             "actors.md",
             "behaviors.md",
             "protocol.md",
-            "errors.md",
+            "Error Handling" => [ 
+                "errors.md",
+                "connections.md",
+                "monitors.md",
+                "supervisors.md",
+                "checkpoints.md",
+                "fault_tolerance.md"
+                ],
             "infrastructure.md",
             "glossary.md"
             ],

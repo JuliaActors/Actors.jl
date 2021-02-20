@@ -50,15 +50,15 @@ Diagnose an actor, get a state or stacktrace.
 # Arguments
 - `lk::Link`: actor link,
 - `check::Symbol`: requested information,
-	- `:state`: :ok if the actor is running, 
-	- `:task`: current actor task,
+	- `:state`: returns `:ok` if the actor is running, 
+	- `:task`: returns the current actor task,
 	- `:tid`: current actor task encoded as a proquint string,
 	- `:pid`: process identifier number,
 	- `:act`: actor `_ACT` variable,
-	- `:info`: actor `Info`,
+	- `:info`: actor [`Info`](@ref),
 	- `:err`: error log (only monitors or supervisors).
 
-!!! warn "This is for diagnosis only!"
+!!! warning "This is for diagnosis only!"
 
 	Modifying an actor's state can cause a race condition.
 """

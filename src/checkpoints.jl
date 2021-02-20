@@ -16,7 +16,7 @@ struct Reset
     key::String
 end
 struct Load
-    from::String
+    from::AbstractString
 end
 
 # Checkpointing actor
@@ -58,17 +58,17 @@ end
 
 # Checkpointing API
 """
-    checkpointing(filename::String, buffer::Int=10; kwargs...)
+    checkpointing(filename::AbstractString, buffer::Int=10; kwargs...)
 
 Start a checkpointing actor and return a [`Link`](@ref) to it.
 
 # Arguments
-- `filename::String`: filename where the actor should save its
+- `filename::AbstractString`: filename where the actor should save its
     checkpointing buffer,
 - `buffer::Int=10`: buffersize for number of checkpoints per key,
-- `kwargs...`: keyword arguments to [`spawn`](@ref) the actor.
+- `kwargs...`: keyword arguments to [`spawn`](@ref).
 """
-function checkpointing(filename::String, buffer::Int=10; kwargs...)
+function checkpointing(filename::AbstractString, buffer::Int=10; kwargs...)
     spawn(Checkpointing(Dict{String, Vector{T} where T}(), buffer, filename); kwargs...)
 end
 
@@ -105,4 +105,4 @@ get_checkpoints(cp::Link) = call(cp)
 save_checkpoints(cp::Link) = send(cp, Save())
 
 "Tell a checkpointing actor cp to load checkpointing data from a file"
-load_checkpoints(cp::Link, fromfile::String) = send(cp, Load(fromfile)) 
+load_checkpoints(cp::Link, fromfile::AbstractString) = send(cp, Load(fromfile)) 

@@ -88,7 +88,6 @@ exec(A, me, sin, 2pi)
 init!(A, cos, 2pi)
 sleep(sleeptime)
 @test act.init.f == cos
-@test act.sta == 1
 
 # test term!
 tvar = [:ndef]

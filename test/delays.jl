@@ -8,6 +8,15 @@ module Delays
 using Actors
 import Actors: newLink
 
+"""
+```
+@delayed expr
+@delayed expr timeout
+```
+Test an expression `expr` and return it after it becomes true.
+This has a default timeout of 1 second if unspecified and
+`timout` seconds if specified. It does polling every 0.1 second.
+"""
 macro delayed(expr, timeout)
     return quote
         timedwait($timeout) do 
@@ -20,7 +29,6 @@ macro delayed(expr, timeout)
         $(esc(expr))
     end 
 end
-
 macro delayed(expr)
     return :(@delayed $(esc(expr)) 1)
 end
@@ -39,6 +47,12 @@ function Base.copy(lk::Link)
     return lk1
 end
 
+"""
+    changed(var, timeout=1)
+
+Return a mutable variable `var` after it has been changed. Wait for
+the change at maximum `timeout` seconds. Poll every 0.1 seconds.
+"""
 function changed(var, timeout=1)
     oldvar = copy(var)
     timedwait(timeout) do 

@@ -3,10 +3,11 @@
 # MIT license, part of https://github.com/JuliaActors
 #
 
-using Actors, Test
+include("delays.jl")
+
+using Actors, Test, .Delays
 
 const fname = "test.x"
-const sleeptime = 0.5
 
 d = Dict(
     "test"  => [(1, 2, 3), (4, 5, 6)],
@@ -22,11 +23,9 @@ checkpoint(cp, "test1", "a","b","c")
 
 @test get_checkpoints(cp) == d
 save_checkpoints(cp)
-sleep(sleeptime)
-@test isfile(fname)
+@test @delayed isfile(fname)
 exit!(cp)
-sleep(sleeptime)
-@test info(cp) == :done
+@test @delayed info(cp) == :done
 cp = checkpointing(fname)
 load_checkpoints(cp, fname)
 @test get_checkpoints(cp) == d

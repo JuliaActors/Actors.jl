@@ -69,8 +69,8 @@ a1   = diag(act1, :act)
 a2   = diag(act2, :act)
 a3   = diag(act3, :act)
 @test @delayed a1.conn[1].lk == act2
-@test @delayed a2.conn[1].lk == act1
-@test @delayed a2.conn[2].lk == act3
+@test @delayed a2.conn[1].lk in (act1, act3)
+@test @delayed a2.conn[2].lk in (act1, act3)
 @test @delayed a3.conn[1].lk == act2
 become!(act1, disconnect)
 send(act1, act2)

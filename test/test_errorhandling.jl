@@ -26,7 +26,7 @@ a2   = diag(act2, :act)
 send(act1, act2)
 @test @delayed a1.conn[1] isa Actors.Peer
 @test a1.conn[1].lk == act2
-@test a2.conn[1] isa Actors.Peer
+@test @delayed a2.conn[1] isa Actors.Peer
 @test a2.conn[1].lk == act1
 @test t1[].state == :runnable
 @test t2[].state == :runnable
@@ -68,10 +68,10 @@ send(act3, act2)
 a1   = diag(act1, :act)
 a2   = diag(act2, :act)
 a3   = diag(act3, :act)
-@test a1.conn[1].lk == act2
-@test a2.conn[1].lk == act1
-@test a2.conn[2].lk == act3
-@test a3.conn[1].lk == act2
+@test @delayed a1.conn[1].lk == act2
+@test @delayed a2.conn[1].lk == act1
+@test @delayed a2.conn[2].lk == act3
+@test @delayed a3.conn[1].lk == act2
 become!(act1, disconnect)
 send(act1, act2)
 become!(act2, disconnect)

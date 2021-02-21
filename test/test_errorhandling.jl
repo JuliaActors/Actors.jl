@@ -77,8 +77,8 @@ send(act1, act2)
 become!(act2, disconnect)
 send(act2, act3)
 @test @delayed isempty(a1.conn)
-@test isempty(a2.conn)
-@test isempty(a3.conn)
+@test @delayed isempty(a2.conn)
+@test @delayed isempty(a3.conn)
 
 # connect and disconnect to _ROOT
 act1 = spawn(threadid, taskref=t1)

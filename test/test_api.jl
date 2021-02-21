@@ -3,10 +3,11 @@
 # MIT license, part of https://github.com/JuliaActors
 #
 
-using Actors, Test
+include("delays.jl")
+
+using Actors, Test, .Delays
 
 t = Ref{Task}()                # this is for debugging
-const sleeptime = 1
 
 arg = Args(1, 2, c=3, d=4)
 @test arg.args == (1, 2)
@@ -20,12 +21,11 @@ subx(x, y, sub; z=0) = x+y+z - sub
 
 me = Actors.newLink()
 A = Actors.spawn(Bhv(incx, a, y=b, z=c), taskref=t)
-sleep(sleeptime)
+sleep(0.5)
 @test t[].state == :runnable
 
 # test diag and actor startup, become! (implicitly)
 act = request(A, Actors.Diag, :act)
-sleep(sleeptime)
 @test act.sta == nothing
 @test act.bhv.f == incx
 @test act.bhv.a == (1,)
@@ -33,22 +33,18 @@ sleep(sleeptime)
 
 # test explicitly become!
 become!(A, subx, a, b, z=c)
-sleep(sleeptime)
-@test act.bhv.f == subx
+@test @delayed act.bhv.f == subx
 @test act.bhv.a == (1,1) 
 @test act.bhv.kw == pairs((z=1,))
 
 # test update!
 update!(A, (1, 2, 3))
-sleep(sleeptime)
-@test act.sta == (1,2,3)
+@test @delayed act.sta == (1,2,3)
 update!(A, Args(2,3, x=1, y=2), s=:arg)
-sleep(sleeptime)
-@test act.bhv.a == (2,3)
+@test @delayed act.bhv.a == (2,3)
 @test act.bhv.kw == pairs((x=1,y=2,z=1))
 update!(A, :dummy, s=:mode)
-sleep(sleeptime)
-@test act.mode == :dummy
+@test @delayed act.mode == :dummy
 @test A.mode == :dummy
 
 # test query
@@ -86,19 +82,16 @@ exec(A, me, sin, 2pi)
 
 # test init!
 init!(A, cos, 2pi)
-sleep(sleeptime)
-@test act.init.f == cos
+@test @delayed act.init.f == cos
 
 # test term!
 tvar = [:ndef]
 term(x) = tvar[1] = x
 term!(A, term)
-sleep(sleeptime)
-@test act.term.f == term
+@test @delayed act.term.f == term
 
 # test exit!
 exit!(A)
-sleep(sleeptime)
-@test t[].state == :done
+@test @delayed t[].state == :done
 @test A.chn.state == :closed
 @test tvar[1] == :normal

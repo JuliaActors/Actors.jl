@@ -4,7 +4,7 @@
 CurrentModule = Actors
 ```
 
-If you [`connect`](@ref) actors, they send each other [`Exit`](@ref) messages when they fail, [`stop`](@ref) or [`exit!`](@ref). An actor propagates an `Exit` message to all its connected actors and then terminates
+If you have actors depending on each other, you may want them to exit together if one of them terminates. Therefore you can [`connect`](@ref) them. An actor propagates an `Exit` message (caused by a failure [`stop`](@ref) or [`exit!`](@ref)) to its connected actors and then terminates
 
 - if the exit `reason` is other than `:normal`,
 - and if the actor is not `:sticky`.

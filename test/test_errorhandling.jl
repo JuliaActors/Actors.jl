@@ -42,8 +42,8 @@ send(act3, act2)
 sleep(0.5)
 send(act1, "boom")
 @test @delayed t1[].state == :failed
-@test t2[].state == :done
-@test t3[].state == :done
+@test @delayed t2[].state == :done
+@test @delayed t3[].state == :done
 
 act1 = spawn(connect, taskref=t1)
 act2 = spawn(connect, taskref=t2)

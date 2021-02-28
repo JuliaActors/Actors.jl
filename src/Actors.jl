@@ -97,6 +97,6 @@ export
     delete_child, start_actor, start_task, terminate_child,
     # checkpointing
     checkpointing, checkpoint, restore, get_checkpoints,
-    save_checkpoints, load_checkpoints
+    save_checkpoints, load_checkpoints, @chkey
 
 end

@@ -24,8 +24,8 @@ function info(lk::Link{RemoteChannel{Channel{Any}}})
 	return try
 		diag(lk, :info)
 	catch exc
-		exc.captured.ex isa InvalidStateException ?
-			:done :
+		!hasfield(typeof(exc), :captured) ? exc :
+		exc.captured.ex isa InvalidStateException ? :done :
 			exc.captured.ex.task
 	end
 end

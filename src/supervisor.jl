@@ -110,6 +110,15 @@ function restart(s::Supervisor, c::Child, msg::Exit)
 end
 
 # 
+# get a link to the RNFD actor, create it if it doesn't exist.
+#
+function rnfd(s::Supervisor)
+    i = findfirst(c->c.lk.mode == :rnfd, s.childs)
+    return !isnothing(i) ? s.childs[i].lk : rnfd_start(self())
+end
+rnfd_exists(s::Supervisor) = !isnothing(findfirst(c->c.lk.mode == :rnfd, s.childs))
+
+# 
 # Supervisor behavior methods
 #
 function (s::Supervisor)(msg::Exit)
@@ -134,7 +143,12 @@ function (s::Supervisor)(child::Child)
     isnothing(ix) && push!(s.childs, child)
     ix = findfirst(c->child.lk==c.lk, act.conn)
     isnothing(ix) && push!(act.conn, child)
-    child.lk isa Link && send(child.lk, Connect(Super(act.self)))
+    if child.lk isa Link 
+        send(child.lk, Connect(Super(act.self)))
+        if myid() != child.lk.pid 
+            Threads.@spawn remote_check(child.lk, self(), current_task())
+        end
+    end
 end
 function (s::Supervisor)(::Delete, lk)
     act = task_local_storage("_ACT")

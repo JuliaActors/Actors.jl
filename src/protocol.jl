@@ -28,7 +28,10 @@ onmessage(A::_ACT, msg::Cast) = A.res = A.bhv(msg.x...)
 function onmessage(A::_ACT, msg::Diag)
     x = first(msg.x)
     res = x == :act   ? A :
-          x == :task  ? current_task() :
+          x == :task  ? 
+            myid() == msg.from.pid ? 
+                current_task() :
+                repr(current_task()) :
           x == :tid   ? pqtid() :
           x == :pid   ? myid() :
           x == :err   ? errored() :

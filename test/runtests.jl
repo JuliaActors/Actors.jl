@@ -20,6 +20,7 @@ length(procs()) == 1 && addprocs(1)
 @safetestset "Communication"  begin include("test_com.jl") end
 @safetestset "Error handling" begin include("test_errorhandling.jl") end
 @safetestset "Supervision"    begin include("test_supervision.jl") end
+@testset "Remote Failures"    begin include("test_distr_errors.jl") end
 @safetestset "Checkpointing"  begin include("test_checkpointing.jl") end
 @safetestset "API"            begin include("test_api.jl") end
 @safetestset "Diagnosis"      begin include("test_diag.jl") end

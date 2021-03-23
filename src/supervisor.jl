@@ -10,6 +10,9 @@ struct Which end
 struct Strategy
     strategy::Symbol
 end
+struct NodeFailure{T} 
+    pids::T
+end
 
 const strategies = (:one_for_one, :one_for_all, :rest_for_one)
 const restarts   = (:permanent, :temporary, :transient)
@@ -18,29 +21,34 @@ isnormal(reason) = reason in (:normal, :shutdown, :done, :timed_out)
 
 """
 ```
-Supervisor
+Supervisor(; strategy=:one_for_one, max_restarts=3, max_seconds=5, kwargs...)
 ```
-Supervisor functor for actors, has data and behavior.
+Supervisor functor with data and behavior.
 
-# Data (acquaintances)
-- `strategy::Symbol`: supervision strategy, can be 
-    either `:one_for_one`, `:one_for_all` or `:rest_for_one`.
-- `max_restarts::Int`: maximum number of restarts 
-    allowed in a time frame, defaults to 3
-- `max_seconds::Float64`: time frame in which 
-    `max_restarts` applies, defaults to 5.
+# Fields (acquaintances)
+- `option::Dict{Symbol,Any}`: supervisor option
 - `childs::Array{Child,1}`: supervised childs,
 - `rtime::Array{Float64,1}`: last restart times.
-"""
-mutable struct Supervisor
-    strategy::Symbol
-    max_restarts::Int
-    max_seconds::Float64
-    childs::Array{Child,1}
-    rtime::Array{Float64,1}
 
-    Supervisor(strategy=:one_for_one, max_restarts=3, max_seconds=5) = 
-        new(strategy, max_restarts, max_seconds, Child[], Float64[])
+# Options
+- `strategy::Symbol`: supervision strategy, can be 
+    either `:one_for_one`, `:one_for_all` or `:rest_for_one`.
+- `max_restarts::Int`: maximum number of restarts allowed in a time frame,
+- `max_seconds::Float64`: time frame in which `max_restarts` applies, defaults to 5,
+- `kwargs...`: further option to extend supervisor behavior.
+"""
+struct Supervisor{O,C,T}
+    option::O
+    childs::C
+    rtime::T
+end
+function Supervisor(; strategy=:one_for_one, max_restarts=3, max_seconds=5, kwargs...)
+    s = Supervisor(Dict{Symbol,Any}(), Child[], Float64[])
+    s.option[:strategy]     = strategy
+    s.option[:max_restarts] = max_restarts
+    s.option[:max_seconds]  = max_seconds
+    merge!(s.option, kwargs)
+    return s
 end
 
 function shutdown_child(c::Child)
@@ -81,17 +89,17 @@ function must_restart(c::Child, reason)
 end
 
 function restart_limit!(s::Supervisor)
-    length(s.rtime) > s.max_restarts && popfirst!(s.rtime)
+    length(s.rtime) > s.option[:max_restarts] && popfirst!(s.rtime)
     push!(s.rtime, time_ns()/1e9)
-    return length(s.rtime) > s.max_restarts &&
-        s.rtime[end]-s.rtime[begin] ≤ s.max_seconds
+    return length(s.rtime) > s.option[:max_restarts] &&
+        s.rtime[end]-s.rtime[begin] ≤ s.option[:max_seconds]
 end
 
 function restart(s::Supervisor, c::Child, msg::Exit)
-    if s.strategy == :one_for_one
+    if s.option[:strategy] == :one_for_one
         warn("supervisor: restarting")
         restart_child(c, msg.state)
-    elseif s.strategy == :one_for_all
+    elseif s.option[:strategy] == :one_for_all
         warn("supervisor: restarting all")
         for child in s.childs
             child.lk == c.lk ? 
@@ -110,15 +118,6 @@ function restart(s::Supervisor, c::Child, msg::Exit)
 end
 
 # 
-# get a link to the RNFD actor, create it if it doesn't exist.
-#
-function rnfd(s::Supervisor)
-    i = findfirst(c->c.lk.mode == :rnfd, s.childs)
-    return !isnothing(i) ? s.childs[i].lk : rnfd_start(self())
-end
-rnfd_exists(s::Supervisor) = !isnothing(findfirst(c->c.lk.mode == :rnfd, s.childs))
-
-# 
 # Supervisor behavior methods
 #
 function (s::Supervisor)(msg::Exit)
@@ -126,7 +125,7 @@ function (s::Supervisor)(msg::Exit)
     isnothing(ix) && throw(AssertionError("child not found"))
     if must_restart(s.childs[ix], msg.reason)
         if restart_limit!(s)
-            warn("supervisor: restart limit $(s.max_restarts) exceeded!")
+            warn("supervisor: restart limit $(s.option[:max_restarts]) exceeded!")
             send(self(), Exit(:shutdown, fill(nothing, 3)...))
         else
             restart(s, s.childs[ix], msg)
@@ -137,6 +136,9 @@ function (s::Supervisor)(msg::Exit)
         filter!(c->c.lk!=msg.from, s.childs)
     end
 end
+function (s::Supervisor)(msg::NodeFailure)
+    
+end
 function (s::Supervisor)(child::Child)
     act = task_local_storage("_ACT")
     ix = findfirst(c->child.lk==c.lk, s.childs)
@@ -145,9 +147,7 @@ function (s::Supervisor)(child::Child)
     isnothing(ix) && push!(act.conn, child)
     if child.lk isa Link 
         send(child.lk, Connect(Super(act.self)))
-        if myid() != child.lk.pid 
-            Threads.@spawn remote_check(child.lk, self(), current_task())
-        end
+        myid() == child.lk.pid || rnfd_add(s, child.lk)
     end
 end
 function (s::Supervisor)(::Delete, lk)
@@ -165,7 +165,7 @@ function (s::Supervisor)(::Terminate, lk::Link)
     end
 end
 (s::Supervisor)(::Which) = s.childs
-(s::Supervisor)(msg::Strategy) = s.strategy = msg.strategy
+(s::Supervisor)(msg::Strategy) = s.option[:strategy] = msg.strategy
 
 #
 # API functions
@@ -197,7 +197,7 @@ return a link to it.
 """
 function supervisor(strategy=:one_for_one, max_restarts::Int=3, max_seconds::Real=5; name=nothing, kwargs...)
     @assert strategy in strategies "Unknown strategy $strategy"
-    lk = spawn(Supervisor(strategy, max_restarts, max_seconds); kwargs...)
+    lk = spawn(Supervisor(; strategy, max_restarts, max_seconds); kwargs...)
     !isnothing(name) && register(name, lk)
     send(lk, Update(:mode, :supervisor))
     return lk
@@ -249,7 +249,7 @@ it to its childs list and to return a link to it.
 
 !!! note
     See the manual chapter on error handling for
-    explanations of restart options.
+    explanations of restart option.
 """
 function start_actor(start, sv::Link, cb=nothing, restart::Symbol=:transient; kwargs...)
     @assert restart in restarts "Not a known restart strategy: $restart"
@@ -337,7 +337,7 @@ Tell a supervisor `sv` to supervise the calling actor.
 
 !!! note
     See the manual chapter on error handling for
-    explanations of restart options.
+    explanations of restart option.
 """
 function supervise(sv::Link, cb=nothing, restart::Symbol=:transient)
     @assert restart in restarts "Not a known restart strategy: $restart"

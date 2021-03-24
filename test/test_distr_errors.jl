@@ -38,13 +38,13 @@ rmprocs(prcs[1])
 @test ra.bhv.pids[1] == prcs[2]
 @test length(me.chn.data) == 1
 ex = take!(me.chn)
-@test ex.reason isa ProcessExitedException
-@test ex.reason.worker_id == prcs[1]
+@test ex[1] isa Actors.NodeFailure
+@test ex[1].pids[1] == prcs[1]
 
 rmprocs(prcs[2])
 @test @delayed !isempty(me.chn)
 @test @delayed isempty(ra.bhv.lks)
 @test @delayed isempty(ra.bhv.pids)
 ex = take!(me.chn)
-@test ex.reason isa ProcessExitedException
-@test ex.reason.worker_id == prcs[2]
+@test ex[1] isa Actors.NodeFailure
+@test ex[1].pids[1] == prcs[2]

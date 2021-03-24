@@ -4,14 +4,19 @@
 #
 
 # 
-# remote node failure detection
+# remote node failure detection (RNFD) actor
+# ----------------------------------------------
+# if an actor on a (relative) remote node is added to a
+# supervisor an actor is started scanning the remote link
+# in regular intervals. If a ProcessExitedException is
+# detected, it notifies the supervisor about it.
 # 
 const scan_interval = 1.0
 
 struct RNFD{L,S,T}
-    sv::L
-    lks::S
-    pids::T
+    sv::L      # supervisor link
+    lks::S     # links to remote actors
+    pids::T    # supervised pids
 end
 struct Add{L}
     lk::L
@@ -32,30 +37,26 @@ function (rfd::RNFD)(msg::Add)
 end
 function (rfd::RNFD)(msg::Remove)
     if msg.lk ∈ rdf.lks
-        filter!(!=(msg.lk), rfd.lks)
+        filter!(≠(msg.lk), rfd.lks)
         pids = (lk.pid for lk ∈ rdf.lks)
         filter!(p->p ∈ pids, rfd.pids)
     end
 end
 function (rfd::RNFD)(::Scan)
     isempty(rfd.lks) && return nothing
-    excs = Exception[]
+    excs = Int[]
     for lk in rfd.lks
-        ex = try
+        try
             isready(lk.chn)
         catch exc
-            filter!(!=(lk), rfd.lks)
-            exc isa ProcessExitedException ? exc : false
+            filter!(≠(lk), rfd.lks)
+            exc isa ProcessExitedException && push!(excs, exc.worker_id)
         end
-        ex isa Bool || push!(excs, ex)
     end
     if !isempty(excs)
-        for pex ∈ unique(x->x.worker_id, excs)
-            if pex.worker_id ∈ rfd.pids
-                send(rfd.sv, Exit(pex, self(), nothing, nothing))
-                filter!(!=(pex.worker_id), rfd.pids)
-            end
-        end
+        filter!(lk->lk.pid ∉ excs, rfd.lks)
+        filter!(p->p ∉ excs, rfd.pids)
+        send(rfd.sv, NodeFailure(unique(excs)))
     end
 end
 
@@ -79,4 +80,17 @@ function rnfd_start(sv::Link; interval=1, kwargs...)
     return lk
 end
 
+# 
+# get a link to the RNFD actor, create it if it doesn't exist.
+#
+function rnfd(s::Supervisor)
+    i = findfirst(c->c.lk.mode == :rnfd, s.childs)
+    return !isnothing(i) ? s.childs[i].lk : rnfd_start(self())
+end
+rnfd_exists(s::Supervisor) = !isnothing(findfirst(c->c.lk.mode == :rnfd, s.childs))
+#
+# add a remote child to an RNFD actor, 
+# create if first if it doesn't exist.
+#
+rnfd_add(s::Supervisor, child::Link) = send(rnfd(s), Add(child))
 

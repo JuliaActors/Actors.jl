@@ -18,7 +18,7 @@ a1 = diag(sv, :act)
 @test sv.mode == :supervisor
 @test a1.mode == :supervisor
 @test a1.bhv isa Actors.Supervisor
-@test a1.bhv.strategy == :one_for_one
+@test a1.bhv.option[:strategy] == :one_for_one
 @test isempty(which_children(sv))
 
 act2 = spawn(threadid, taskref=t2)
@@ -137,7 +137,7 @@ set_strategy(sv, :rest_for_one)
 ptask = map(a->convert(UInt, pointer_from_objref(diag(a,:task))), cact)
 send(cact[3], "boom")
 changed(cact[3])
-@test a1.bhv.strategy == :rest_for_one
+@test a1.bhv.option[:strategy] == :rest_for_one
 checkTasks(cact, ptask, (==,==,!=,!=,!=))
 
 # API

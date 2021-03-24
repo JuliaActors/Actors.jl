@@ -39,7 +39,7 @@ function (rfd::RNFD)(msg::Remove)
     if msg.lk ∈ rdf.lks
         filter!(≠(msg.lk), rfd.lks)
         pids = (lk.pid for lk ∈ rdf.lks)
-        filter!(∈(pids), rfd.pids)
+        filter!(p->p ∈ pids, rfd.pids)
     end
 end
 function (rfd::RNFD)(::Scan)
@@ -55,7 +55,7 @@ function (rfd::RNFD)(::Scan)
     end
     if !isempty(excs)
         filter!(lk->lk.pid ∉ excs, rfd.lks)
-        filter!(∉(excs), rfd.pids)
+        filter!(p->p ∉ excs, rfd.pids)
         send(rfd.sv, NodeFailure(unique(excs)))
     end
 end

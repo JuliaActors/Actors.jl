@@ -54,7 +54,14 @@ end
 onmessage(A::_ACT, msg::Exec) = send(msg.from, Response(_current(msg.func)(), A.self))
 
 # Init
-onmessage(A::_ACT, msg::Init) = A.init = _current(msg.x)
+function onmessage(A::_ACT, msg::Init) 
+    A.init = _current(msg.x)
+    if A.self.chn isa RemoteChannel
+        foreach(A.conn) do c
+            c isa Super && send(c.lk, ChildInit(A.self, A.init))
+        end
+    end
+end
 
 # Query
 function onmessage(A::_ACT, msg::Query)

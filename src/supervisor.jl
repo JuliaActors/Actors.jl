@@ -4,6 +4,10 @@
 #
 
 # messages to the supervisor
+struct ChildInit{L,I}
+    from::L
+    init::I
+end
 struct Delete end 
 struct Terminate end
 struct Which end
@@ -61,25 +65,24 @@ function shutdown_child(c::Child)
     end
 end
 
-function restart_child(c::Child, act)
-    if c.lk isa Link
-        lk = !isnothing(c.start) ? c.start(act.bhv) :
-            !isnothing(act.init) ? act.init() :
-                spawn(act.bhv)
-        c.lk.chn = lk.chn
-        c.lk.pid = lk.pid
-        send(lk, Connect(Super(self())))
-        update!(c.lk, c.lk, s=:self)
-    else
-        c.lk[] = Threads.@spawn c.start()
-        _supervisetask(c.lk, self(), timeout=c.info.timeout, pollint=c.info.pollint)
-    end
+function restart_child!(c::Child, act::_ACT)
+    lk = !isnothing(c.start) ? c.start(act.bhv) :
+        !isnothing(act.init) ? act.init() :
+            spawn(act.bhv)
+    c.lk.chn = lk.chn
+    c.lk.pid = lk.pid
+    send(lk, Connect(Super(self())))
+    update!(c.lk, c.lk, s=:self)
+end
+function restart_child!(c::Child, ::Nothing)
+    c.lk[] = Threads.@spawn c.start()
+    _supervisetask(c.lk, self(), timeout=c.info.timeout, pollint=c.info.pollint)
 end
 
-function shutdown_restart_child(c::Child)
+function shutdown_restart_child!(c::Child)
     act = isnothing(c.start) ? diag(c.lk, :act) : nothing
     shutdown_child(c)
-    restart_child(c, act)
+    restart_child!(c, act)
 end
 
 function must_restart(c::Child, reason)
@@ -95,24 +98,24 @@ function restart_limit!(s::Supervisor)
         s.rtime[end]-s.rtime[begin] ≤ s.option[:max_seconds]
 end
 
-function restart(s::Supervisor, c::Child, msg::Exit)
+function restart!(s::Supervisor, c::Child, msg::Exit)
     if s.option[:strategy] == :one_for_one
         warn("supervisor: restarting")
-        restart_child(c, msg.state)
+        restart_child!(c, msg.state)
     elseif s.option[:strategy] == :one_for_all
         warn("supervisor: restarting all")
         for child in s.childs
             child.lk == c.lk ? 
-                restart_child(child, msg.state) :
-                shutdown_restart_child(child)
+                restart_child!(child, msg.state) :
+                shutdown_restart_child!(child)
         end
     else
         warn("supervisor: restarting rest")
         ix = findfirst(x->x.lk==c.lk, s.childs)
         for child in s.childs[ix:end] 
             child.lk == c.lk ? 
-                restart_child(child, msg.state) :
-                shutdown_restart_child(child)
+                restart_child!(child, msg.state) :
+                shutdown_restart_child!(child)
         end
     end
 end
@@ -120,6 +123,11 @@ end
 # 
 # Supervisor behavior methods
 #
+function (s::Supervisor)(msg::ChildInit)
+    ix = findfirst(c->c.lk==msg.from, s.childs)
+    isnothing(ix) && throw(AssertionError("child not found"))
+    s.childs[ix].init = msg.init
+end
 function (s::Supervisor)(msg::Exit)
     ix = findfirst(c->c.lk==msg.from, s.childs)
     isnothing(ix) && throw(AssertionError("child not found"))
@@ -128,16 +136,13 @@ function (s::Supervisor)(msg::Exit)
             warn("supervisor: restart limit $(s.option[:max_restarts]) exceeded!")
             send(self(), Exit(:shutdown, fill(nothing, 3)...))
         else
-            restart(s, s.childs[ix], msg)
+            restart!(s, s.childs[ix], msg)
         end
     else
         act = task_local_storage("_ACT")
         filter!(c->c.lk!=msg.from, act.conn)
         filter!(c->c.lk!=msg.from, s.childs)
     end
-end
-function (s::Supervisor)(msg::NodeFailure)
-    
 end
 function (s::Supervisor)(child::Child)
     act = task_local_storage("_ACT")
@@ -254,7 +259,7 @@ it to its childs list and to return a link to it.
 function start_actor(start, sv::Link, cb=nothing, restart::Symbol=:transient; kwargs...)
     @assert restart in restarts "Not a known restart strategy: $restart"
     lk = spawn(start; kwargs...)
-    send(sv, Child(lk, cb, (; restart)))
+    send(sv, Child(lk, cb, lk.chn isa RemoteChannel ? start : nothing, (; restart)))
     return lk
 end
 
@@ -288,7 +293,7 @@ restart strategy `:transient`) and return a reference to it.
 function start_task(start, sv::Link, cb=nothing; timeout::Real=5.0, pollint::Real=0.1)
     r = Ref(Threads.@spawn start())
     !isinf(timeout) && @async _supervisetask(r, sv; timeout, pollint)
-    send(sv, Child(r, isnothing(cb) ? start : cb, (; restart=:transient, timeout, pollint)))
+    send(sv, Child(r, isnothing(cb) ? start : cb, start, (; restart=:transient, timeout, pollint)))
     return r
 end
 
@@ -341,7 +346,8 @@ Tell a supervisor `sv` to supervise the calling actor.
 """
 function supervise(sv::Link, cb=nothing, restart::Symbol=:transient)
     @assert restart in restarts "Not a known restart strategy: $restart"
-    send(sv, Child(self(), cb, (; restart)))
+    act = task_local_storage("_ACT")
+    send(sv, Child(self(), cb, isnothing(act.init) ? act.bhv : act.init, (; restart)))
 end
 
 """

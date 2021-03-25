@@ -16,12 +16,15 @@ Connection to a supervised actor or task.
 # Fields
 - `lk::L`: Link or Task,
 - `start::Any`: callable object for restarting it,
+- `init::Any`: callable object for initialization (this is used
+    for remote actors),
 - `info::T`: named tuple with information about restart
     strategies, timeout, pollint ...
 """
-struct Child{L,T} <: Connection
+mutable struct Child{L,T} <: Connection
     lk::L
     start::Any
+    init::Any
     info::T
 end
 

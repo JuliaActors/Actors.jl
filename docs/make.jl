@@ -21,6 +21,7 @@ makedocs(
                 "connections.md",
                 "monitors.md",
                 "supervisors.md",
+                "node_failures.md",
                 "checkpoints.md",
                 "fault_tolerance.md"
                 ],

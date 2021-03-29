@@ -66,9 +66,15 @@ function shutdown_child(c::Child)
 end
 
 function restart_child!(c::Child, act::_ACT)
-    lk = !isnothing(c.start) ? c.start(act.bhv) :
-        !isnothing(act.init) ? act.init() :
-            spawn(act.bhv)
+    if c.lk.chn isa RemoteChannel
+        lk = !isnothing(c.start) ? c.start(act.bhv, pid=c.lk.pid) :
+            !isnothing(act.init) ? spawn(act.init, pid=c.lk.pid) :
+                spawn(act.bhv, pid=c.lk.pid)
+    else
+        lk = !isnothing(c.start) ? c.start(act.bhv) :
+            !isnothing(act.init) ? spawn(act.init) :
+                spawn(act.bhv)
+    end
     c.lk.chn = lk.chn
     c.lk.pid = lk.pid
     send(lk, Connect(Super(self())))

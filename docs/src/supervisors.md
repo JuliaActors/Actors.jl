@@ -173,23 +173,31 @@ julia> call(myactor)                      # it has maintained its state
 65
 ```
 
+!!! note "Actor state recovery after node failures is different!"
+    In case of a [node failure](node_failures.md) an actor cannot send its state at failure time to the supervisor. In those cases you can use termination and restart callbacks and [checkpointing](checkpoints.md) for recovery.
+
 ## Termination and Restart Callbacks
 
-But there are cases where you want a different user-defined fallback strategy for actor restart, for example to
+There are cases where you want a different user-defined fallback strategy for actor restart, for example to
 
 - restart it with a different algorithm/behavior or data set or
 - do some cleanup before restarting it,
+- restart after a node failure,
 - save and restore a checkpoint.
 
 For that you can define callback functions invoked at actor termination, restart or initialization:
 
 | callback | short description |
 |:---------|:------------------|
-| [`term!`](@ref) | termination callback; if defined, it is called at actor exit with argument `reason` (exit reason), |
-| restart | `cb`, called by a supervisor at actor restart with argument `bhv` (last actor behavior); must return a [`Link`](@ref) to a spawned actor (or a `Task`); |
-| [`init!`](@ref) | initialization callback; if defined, it is called by a supervisor at actor restart if no restart callback is defined; must return a [`Link`](@ref) to a spawned actor. | 
+| [`term!`](@ref) | `term` callback; if defined, it is called at actor exit with argument `reason` (exit reason), |
+| `restart` | a given `cb` argument to [`supervise`](@ref), [`start_actor`](@ref) or [`start_task`](@ref) is executed by a supervisor to restart an actor/task; |
+| [`init!`](@ref) | if defined (and no `restart` callback is given), the supervisor restarts an actor with the given `init` behavior. |
 
-Those callbacks must follow some conventions.
+Those user defined callbacks must follow some conventions:
+
+1. A `restart` callback does some initialization and spawns an actor or a task and returns a [`Link`](@ref) or a `Task` which  again will be supervised.
+2. An `init` callback is a startup *behavior* of an actor. It does some initialization or recovery and then switches (with [`become`](@ref)) to the target behavior. A supervisor spawns a new supervised actor with the given `init` behavior and triggers it with `init()`.
+3. If an actor runs on a worker process (it has a `RemoteChannel`), a supervisor restarts it on the same worker (`pid`: process id). In this case the `restart` callback is called with (and must take) a `pid` keyword argument.
 
 ## Task Supervision 
 

@@ -94,7 +94,8 @@ a [`Link`](@ref) to it.
 - `f`: callable object (function, closure or functor)
     to execute when a message arrives,
 - `args...`: (partial) arguments to it,
-- `pid=myid()`: pid of worker process the actor should be started on,
+- `pid=nothing`: pid of worker process the actor should be started on,
+    if `nothing` the actor is started on `myid()`,
 - `thrd=false`: thread number the actor should be started on or `false`,
 - `sticky=false`: if `true` the actor is started on the current thread,
 - `taskref=nothing`: if a `Ref{Task}()` is given here, it gets the started `Task`,
@@ -104,11 +105,11 @@ a [`Link`](@ref) to it.
 **Note:** If you need keyword arguments `kwargs...` to 
 `f`, you can do `spawn(Bhv(f, args...; kwargs...))`.
 """
-function Classic.spawn( f, args...; pid=myid(), thrd=false, 
+function Classic.spawn( f, args...; pid=nothing, thrd=false, 
                         sticky=false, taskref=nothing, 
                         remote=false, mode=:default)
     isempty(args) || (f = Bhv(f, args...))
-    if pid == myid()
+    if isnothing(pid)
         lk = newLink(32)
         if thrd > 0 && thrd in 1:nthreads()
             @threads for i in 1:nthreads()
@@ -137,6 +138,7 @@ function Classic.spawn( f, args...; pid=myid(), thrd=false,
     become!(lk, f)
     return lk
 end
+const spawn_kws = (:pid, :thrd, :sticky, :taskref, :remote, :mode)
 
 """
     self()

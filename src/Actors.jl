@@ -51,6 +51,7 @@ const version = v"0.2.4"
 using ActorInterfaces.Classic
 using Distributed, .Threads, Serialization, Dates, Proquint
 import ActorInterfaces.Classic: onmessage
+import Base: structdiff
 
 include("types.jl")
 include("messages.jl")

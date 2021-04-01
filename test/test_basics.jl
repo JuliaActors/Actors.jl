@@ -26,7 +26,7 @@ sleep(0.1)
 @test request(act, 1) == 3
 @test a[] == 3
 become!(act, threadid)
-@test request(act) > 1
+@test request(act) in 1:nthreads()
 @test A.bhv == threadid
 become!(act, (lk, x, y) -> send(lk, x^y))
 send(act, me, 123, 456)

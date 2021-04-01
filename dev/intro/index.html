@@ -6,15 +6,15 @@ Link{Channel{Any}}(Channel{Any}(32), 1, :default)</code></pre><p><code>spawn</co
 Actor    default
 Behavior threadid
 Pid      1, Thread 1
-Task     @0x00007faea1aa5ba0
-Ident    x-luvov-pakop-jovob
+Task     @0x00007fb3876d6a10
+Ident    x-luvug-mitot-komib
 
 julia&gt; call(myactor)
 1</code></pre><p>Now what happens if you <code>send</code> your actor a message which it cannot understand?</p><pre><code class="language-julia-repl">julia&gt; send(myactor, &quot;Boom&quot;)
 (&quot;Boom&quot;,)
 
 julia&gt; info(myactor)
-Task (failed) @0x00007faea1aa5ba0
+Task (failed) @0x00007fb3876d6a10
 MethodError: no method matching threadid(::String)
 Closest candidates are:
   threadid() at threadingconstructs.jl:10
@@ -84,4 +84,4 @@ julia&gt; call(myactor, 500)
 Actors.Exit{Symbol, Nothing, Nothing, Nothing}(:normal, nothing, nothing, nothing)
 
 julia&gt; send(myactor, 500)
-ERROR: InvalidStateException(&quot;Channel is closed.&quot;, :closed)</code></pre><p>Trying to <code>send</code> it something now throws an exception.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Actors Documentation</a><a class="docs-footer-nextpage" href="../basics/">Actor Model »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Monday 29 March 2021 09:51">Monday 29 March 2021</span>. Using Julia version 1.6.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+ERROR: InvalidStateException(&quot;Channel is closed.&quot;, :closed)</code></pre><p>Trying to <code>send</code> it something now throws an exception.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Actors Documentation</a><a class="docs-footer-nextpage" href="../basics/">Actor Model »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Thursday 1 April 2021 17:23">Thursday 1 April 2021</span>. Using Julia version 1.6.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

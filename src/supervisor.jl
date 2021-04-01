@@ -20,6 +20,7 @@ end
 
 const strategies = (:one_for_one, :one_for_all, :rest_for_one)
 const restarts   = (:permanent, :temporary, :transient)
+const sv_options = (:strategy, :max_restarts, :max_seconds, :spares)
 
 isnormal(reason) = reason in (:normal, :shutdown, :done, :timed_out)
 
@@ -58,7 +59,7 @@ end
 function shutdown_child(c::Child)
     if c.lk isa Link
         try
-            send(c.lk, Connect(self(), remove=true))
+            send(c.lk, Connect(self(), true))
             exit!(c.lk, :shutdown)
         catch
         end
@@ -165,12 +166,12 @@ function (s::Supervisor)(::Delete, lk)
     act = task_local_storage("_ACT")
     filter!(c->c.lk!=lk, act.conn)
     filter!(c->c.lk!=lk, s.childs)
-    lk isa Link && trysend(lk, Connect(act.self, remove=true))
+    lk isa Link && trysend(lk, Connect(act.self, true))
 end
 function (s::Supervisor)(::Terminate, lk::Link)
     s(Delete(), lk)
     try
-        send(lk, Connect(self(), remove=true))
+        send(lk, Connect(self(), true))
         exit!(lk, :shutdown)
     catch
     end
@@ -188,19 +189,22 @@ supervisor( strategy=:one_for_one,
             max_seconds::Real=5; 
             name=nothing, kwargs...)
 ```
-Start a supervisor actor with an empty child list and
+Spawn a supervisor actor with an empty child list and
 return a link to it.
 
-# Parameters
+# Arguments
 - `strategy=:one_for_one`: supervision strategy, can be 
     either `:one_for_one`, `:one_for_all` or `:rest_for_one`,
 - `max_restarts::Int=3`: maximum number of restarts 
     allowed in a time frame,
 - `max_seconds::Real=5`: time frame in which 
     `max_restarts` applies,
+
+# Keyword arguments
 - `name=nothing`: name (Symbol) under which it should
     be registered,
-- `kwargs...`: keyword arguments to [`spawn`](@ref).
+- `kwargs...`: further keyword arguments to the 
+    [`Supervisor`](@ref) and to [`spawn`](@ref).
 
 !!! note
     See the manual chapter on error handling for
@@ -208,7 +212,8 @@ return a link to it.
 """
 function supervisor(strategy=:one_for_one, max_restarts::Int=3, max_seconds::Real=5; name=nothing, kwargs...)
     @assert strategy in strategies "Unknown strategy $strategy"
-    lk = spawn(Supervisor(; strategy, max_restarts, max_seconds); kwargs...)
+    sv_kw = merge((; strategy, max_restarts, max_seconds), structdiff(NamedTuple(kwargs), NamedTuple{spawn_kws}))
+    lk = spawn(Supervisor(; sv_kw...); structdiff(NamedTuple(kwargs), sv_kw)...)
     !isnothing(name) && register(name, lk)
     send(lk, Update(:mode, :supervisor))
     return lk
@@ -333,11 +338,14 @@ end
 """
 ```
 supervise(sv::Link, cb=nothing, restart::Symbol=:transient)
+supervise(sv::Link, ch::Link, cb=nothing, restart::Symbol=:transient)
 ```
-Tell a supervisor `sv` to supervise the calling actor.
+Tell a supervisor `sv` to supervise the calling actor or the 
+given child `ch`.
 
 # Parameters
 - `sv::Link`: link to a supervisor,
+- `ch::Link`: link to a child actor,
 - `cb=nothing`: callback (a callable object), takes the 
     previous actor behavior as argument and must return 
     a [`Link`](@ref) to a new actor; if `nothing`, the
@@ -354,6 +362,11 @@ function supervise(sv::Link, cb=nothing, restart::Symbol=:transient)
     @assert restart in restarts "Not a known restart strategy: $restart"
     act = task_local_storage("_ACT")
     send(sv, Child(self(), cb, isnothing(act.init) ? act.bhv : act.init, (; restart)))
+end
+function supervise(sv::Link, child::Link, cb=nothing, restart::Symbol=:transient)
+    @assert restart in restarts "Not a known restart strategy: $restart"
+    act = diag(child, :act)
+    send(sv, Child(child, cb, isnothing(act.init) ? act.bhv : act.init, (; restart)))
 end
 
 """

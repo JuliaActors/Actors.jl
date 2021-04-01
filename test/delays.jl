@@ -15,7 +15,7 @@ import Actors: newLink
 ```
 Test an expression `expr` and return it after it becomes true.
 This has a default timeout of 1 second if unspecified and
-`timout` seconds if specified. It does polling every 0.1 second.
+`timeout` seconds if specified. It does polling every 0.1 second.
 """
 macro delayed(expr, timeout)
     return quote

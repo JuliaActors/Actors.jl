@@ -63,9 +63,13 @@ end
 #
 # Supervisor behavior for NodeFailure
 #
-function remove_temporary!(s, childs)
+
+# 
+# remove temporary childs from both s and fchilds
+#
+function remove_temporary!(s, fchilds)
     act = task_local_storage("_ACT")
-    filter!(childs) do child
+    filter!(fchilds) do child
         if child.info.restart == :temporary
             warn("supervised temporary Task (failed) @unknown, $(ProcessExitedException(child.lk.pid))")
             filter!(c->c.lk!=child.lk, act.conn)
@@ -77,15 +81,18 @@ function remove_temporary!(s, childs)
     end
 end
 function restart_child!(c::Child, pid::Int)
-    warn("supervisor: restarting on pid $pid")
+    warn("supervisor: restarting child @unknown on pid $pid")
     if c.lk isa Link
-        lk = !isnothing(c.start) ? c.start() : c.init()
+        lk = !isnothing(c.start) ? c.start(pid) : spawn(c.init; pid)
+        c.lk.chn = lk.chn
+        c.lk.pid = lk.pid
     end
 end
 function restart!(s::Supervisor, cs::Vector{Child}, pids::Vector{Int})
     if s.option[:strategy] == :one_for_one
         for (i, c) in enumerate(cs)
             restart_child!(c, pids[i])
+            rnfd_add(s, c.lk)
         end
     elseif s.option[:strategy] == :one_for_all
         warn("supervisor: restarting all")
@@ -104,8 +111,14 @@ function restart!(s::Supervisor, cs::Vector{Child}, pids::Vector{Int})
         end
     end
 end
+#
+# return spare pids for failed childs cs and delete them from
+# the s.option[:spares] dict entry
+#
 function spare_pids!(s::Supervisor, cs)
-    spares = get(s.option, :spares) do 
+    spares = if haskey(s.option, :spares) && !isempty(s.option[:spares])
+        s.option[:spares]
+    else
         used = unique(map(c->c.lk.pid, s.childs))
         filter(p->p ∉ used, reverse(procs()))
     end
@@ -116,7 +129,7 @@ function spare_pids!(s::Supervisor, cs)
         p_new = spares[1:length(p_old)]
         rp = [p_old[i]=>p_new[i] for i ∈ 1:length(p_old)]
         replace!(pids, rp...)
-    elseif !empty(spares)
+    elseif !isempty(spares)
         pids = rand(spares, length(pids))
     else
         pids = rand(procs(), length(pids))
@@ -166,7 +179,7 @@ end
 rnfd_exists(s::Supervisor) = !isnothing(findfirst(c->c.lk.mode == :rnfd, s.childs))
 #
 # add a remote child to an RNFD actor, 
-# create if first if it doesn't exist.
+# create it first if it doesn't exist.
 #
 rnfd_add(s::Supervisor, child::Link) = send(rnfd(s), Add(child))
 

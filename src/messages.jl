@@ -51,8 +51,8 @@ A [`Msg`](@ref) to an actor to connect with `x`. If
 struct Connect{C} <: Msg
     x::C
     remove::Bool
-    Connect(x; remove=false) = new{typeof(x)}(x, remove)
 end
+Connect(x) = Connect{typeof(x)}(x, false)
 
 """
     Diag(x, from::Link)

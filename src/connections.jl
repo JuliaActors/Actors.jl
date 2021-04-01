@@ -159,11 +159,11 @@ function disconnect(lk::L) where L<:Link
     try
         act = task_local_storage("_ACT")
         filter!(c->c.lk!=lk, act.conn)
-        send(lk, Connect(act.self, remove=true))
+        send(lk, Connect(act.self, true))
     catch exc
         if exc isa KeyError
-            send(_ROOT, Connect(lk, remove=true))
-            send(lk, Connect(_ROOT, remove=true))
+            send(_ROOT, Connect(lk, true))
+            send(lk, Connect(_ROOT, true))
         else
             rethrow()
         end

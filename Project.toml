@@ -13,7 +13,7 @@ Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 [compat]
 ActorInterfaces = "0.1"
 Proquint = "0.1"
-julia = "1.5"
+julia = "1.6"
 
 [extras]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"

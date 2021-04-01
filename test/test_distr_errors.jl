@@ -44,6 +44,7 @@ supervise(sv, act3)
 sleep(1)
 @test isempty(sv.chn)
 rmprocs(prcs[1])
+sleep(1)
 @test @delayed act1.pid == prcs[3]
 @test @delayed act2.pid == prcs[3]
 @test @delayed sa.bhv.option[:spares] == prcs[4:5]
@@ -53,6 +54,7 @@ rmprocs(prcs[1])
 @test ra.bhv.pids == prcs[2:3]
 
 rmprocs(prcs[2])
+sleep(1)
 @test @delayed act3.pid == prcs[4]
 @test @delayed sa.bhv.option[:spares] == prcs[5:5]
 @test @delayed call(act3, 10) == 40
@@ -60,6 +62,7 @@ rmprocs(prcs[2])
 @test ra.bhv.pids == prcs[3:4]
 
 rmprocs(prcs[3])
+sleep(1)
 @test @delayed act1.pid == prcs[5]
 @test @delayed act2.pid == prcs[5]
 @test @delayed isempty(sa.bhv.option[:spares])
@@ -68,6 +71,7 @@ rmprocs(prcs[3])
 @test @delayed length(ra.bhv.lks) == 3
 
 rmprocs(prcs[5])
+sleep(1)
 @test @delayed act1.pid == prcs[6]
 @test @delayed act2.pid == prcs[6]
 @test @delayed call(act1, 10) == 20
@@ -75,5 +79,6 @@ rmprocs(prcs[5])
 @test @delayed length(ra.bhv.lks) == 3
 
 rmprocs(prcs[4])
+sleep(1)
 @test @delayed call(act3, 10) == 40
 @test @delayed length(ra.bhv.lks) == 3

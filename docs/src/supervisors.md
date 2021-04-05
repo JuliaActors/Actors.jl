@@ -24,7 +24,7 @@ julia> t = map(a->Actors.diag(a, :task), A) # A1 - A6 are running
 julia> foreach(a->exec(a, supervise, A10), A)
 ```
 
-We let `A1`-`A6` be [`supervise`](@ref)d by `A10` with default arguments. Thus they are restarted with their `threadid` behavior and they are assumed to be `:transient` (they get restarted if they terminate abnormally). 
+We let `A1`-`A6` be [`supervise`](@ref)d by `A10` with default arguments. Thus they are restarted with their `threadid` behavior and they are assumed to be `:transient` (they get restarted if they terminate abnormally).
 
 ## Restart Strategies
 
@@ -199,7 +199,13 @@ User defined callbacks must follow some conventions:
 2. An `init` callback is a startup *behavior* of an actor. It does some initialization or recovery and then switches (with [`become`](@ref)) to the target behavior. A supervisor spawns a new supervised actor with the given `init` behavior and triggers it with `init()`.
 3. A supervisor wants an actor running on a worker process (over a `RemoteChannel`) to restart on the same or on a spare `pid` (process id). In that case it calls the `restart` callback with a `pid` keyword argument (and the callback must take it).
 
-## Task Supervision 
+## Preserving actor links after restart
+
+After restarting an actor, a supervisor updates its link to point to the newly created actor. But existing copies of a link won't get updated and may then be out of sync.
+
+If remote actors on other workers communicate with an actor over `RemoteChannel`s, they have copies of its link on their workers. After actor restart those are out of sync, and a remote actor may try to communicate with an old failed actor. To avoid this situation, you should [`register`](@ref) those actors and use their registered name to supervise them and communicate with them. The supervisor then will update the registered link.
+
+## Task Supervision
 
 ## Supervisory trees
 

@@ -25,6 +25,7 @@ makedocs(
                 "checkpoints.md",
                 "fault_tolerance.md"
                 ],
+            "registry.md",
             "infrastructure.md",
             "glossary.md"
             ],

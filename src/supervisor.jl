@@ -272,16 +272,20 @@ it to its childs list and to return a link to it.
     callback or with its last behavior,
 - `restart::Symbol=:transient`: restart option, one of 
     `:permanent`, `:temporary`, `:transient`,
+- `name::Union{Symbol,Nothing}=nothing`, name (Symbol) under which
+    the actor should be registered,
 - `kwargs...`: keyword arguments to [`spawn`](@ref).
 
 !!! note
     See the manual chapter on error handling for
     explanations of restart option.
 """
-function start_actor(start, sv::Link, cb=nothing, restart::Symbol=:transient; kwargs...)
+function start_actor(start, sv::Link, cb=nothing, restart::Symbol=:transient; 
+    name::Union{Symbol,Nothing}=nothing, kwargs...)
     @assert restart in restarts "Not a known restart strategy: $restart"
     lk = spawn(start; kwargs...)
-    send(sv, Child(lk, cb, lk.chn isa RemoteChannel ? start : nothing, (; restart)))
+    isnothing(name) || register(name, lk)
+    send(sv, Child(lk, cb, lk.chn isa RemoteChannel ? start : nothing, name, (; restart)))
     return lk
 end
 
@@ -315,7 +319,7 @@ restart strategy `:transient`) and return a reference to it.
 function start_task(start, sv::Link, cb=nothing; timeout::Real=5.0, pollint::Real=0.1)
     r = Ref(Threads.@spawn start())
     !isinf(timeout) && @async _supervisetask(r, sv; timeout, pollint)
-    send(sv, Child(r, isnothing(cb) ? start : cb, start, (; restart=:transient, timeout, pollint)))
+    send(sv, Child(r, isnothing(cb) ? start : cb, start, nothing, (; restart=:transient, timeout, pollint)))
     return r
 end
 
@@ -328,16 +332,16 @@ childs and to terminate it with reason `:shutdown`.
 terminate_child(sv::Link, child::Link) = call(sv, Terminate(), child)
 
 """
-    which_children(sv::Link, info=false)
+    which_children(sv, info=false)
 
 Tell a supervisor `sv` to return its childs list. If `info=true` 
 it returns a list of named tuples with more child information.
 """
-function which_children(sv::Link, info=false)
+function which_children(sv, info=false)
     function cinfo(c::Child)
         if c.lk isa Link
             i = Actors.info(c.lk)
-            (actor=i.mode, bhv=i.bhvf, pid=i.pid, thrd=i.thrd, task=i.task, id=i.tid, restart=c.info.restart)
+            (actor=i.mode, bhv=i.bhvf, pid=i.pid, thrd=i.thrd, task=i.task, id=i.tid, name=i.name, restart=c.info.restart)
         else
             (task=c.lk[], restart=c.info.restart)
         end
@@ -348,15 +352,17 @@ end
 
 """
 ```
-supervise(sv::Link, cb=nothing, restart::Symbol=:transient)
-supervise(sv::Link, ch::Link, cb=nothing, restart::Symbol=:transient)
+supervise(sv; cb=nothing, restart::Symbol=:transient)
+supervise(sv, child; cb=nothing, restart::Symbol=:transient)
 ```
 Tell a supervisor `sv` to supervise the calling actor or the 
-given child `ch`.
+given child `child`.
 
-# Parameters
-- `sv::Link`: link to a supervisor,
-- `ch::Link`: link to a child actor,
+# Arguments
+- `sv`: link or registered name of a supervisor,
+- `child`: link or registered name of an actor to supervise.
+
+# Keyword Arguments
 - `cb=nothing`: callback (a callable object), takes the 
     previous actor behavior as argument and must return 
     a [`Link`](@ref) to a new actor; if `nothing`, the
@@ -369,16 +375,17 @@ given child `ch`.
     See the manual chapter on error handling for
     explanations of restart option.
 """
-function supervise(sv::Link, cb=nothing, restart::Symbol=:transient)
+function supervise(sv; cb=nothing, restart::Symbol=:transient)
     @assert restart in restarts "Not a known restart strategy: $restart"
     act = task_local_storage("_ACT")
-    send(sv, Child(self(), cb, isnothing(act.init) ? act.bhv : act.init, (; restart)))
+    send(sv, Child(self(), cb, isnothing(act.init) ? act.bhv : act.init, act.name, (; restart)))
 end
-function supervise(sv::Link, child::Link, cb=nothing, restart::Symbol=:transient)
+function supervise(sv, child; cb=nothing, restart::Symbol=:transient)
     @assert restart in restarts "Not a known restart strategy: $restart"
     act = diag(child, :act)
-    send(sv, Child(child, cb, isnothing(act.init) ? act.bhv : act.init, (; restart)))
+    send(sv, Child(child isa Symbol ? whereis(child) : child, cb, isnothing(act.init) ? act.bhv : act.init, act.name, (; restart)))
 end
+
 
 """
     unsupervise(sv::Link)

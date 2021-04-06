@@ -22,22 +22,60 @@ Generally a supervisor restarts a failed remote (`:transient` or `:permanent`) c
 
 ## Example
 
-We setup six actors `A1..A6` distributed over `pid`s 2..4 and put them under supervision of `A10` on `pid` 1 with two spare worker `pid`s 5,6. `A10` starts a `RFND` actor checking the supervised `RemoteChannel`s each second for node failures.
+We setup six actors `A1…A6` distributed over `pid`s 2…4 and put them under supervision of `A10` on `pid` 1 with two spare workers (`pid`s 5,6). `A10` starts a `RFND` actor checking the supervised `RemoteChannel`s each second for node failures.
 
 ```julia
+julia> using Actors, Distributed
+
+julia> addprocs(5);
+
+julia> @everywhere using Actors
+
+julia> sv = supervisor(name=:A10, spares=[5,6])
+Link{Channel{Any}}(Channel{Any}(32), 1, :supervisor)
+
+julia> for i in 1:6
+           register(Symbol("A$i"), Actors.spawn(+, i*10, pid=(2,2,3,3,4,4)[i]))
+           supervise(:A10, Symbol("A$i"))
+       end
+
+julia> info(:A3)
+Actor    default
+Behavior +
+Pid      3, Thread 1
+Task     @0x0000000171fa9cc0
+Ident    x-d-lalup-nugab
+Name     A3
 ```
 
-Our system now looks similar to the following:
+We [registered](registry.md) our remote actors under names `:A1…:A6`, which keeps them accessible to each other after restart. Our system now looks similar to the following:
 
 ![supervisor rfd 1](assets/supervisor_rfd1.svg)
 
-If the worker process with pid 3 fails, the supervisor restarts  actors A3 and A4 on the first spare worker process (`pid` 5). 
+If the worker process with `pid` 3 fails, the supervisor restarts  actors `A3` and `A4` on the first spare worker process (`pid` 5).
 
 ```julia
+julia> rmprocs(3);
+
+┌ Warning: 2021-04-06 17:26:55 A10 supervisor: Process 3 exited!
+└ @ Actors ~/.julia/dev/Actors/src/logging.jl:31
+┌ Warning: 2021-04-06 17:26:55 A10 supervisor: restarting child A3 on pid 5
+└ @ Actors ~/.julia/dev/Actors/src/logging.jl:31
+┌ Warning: 2021-04-06 17:26:55 A10 supervisor: restarting child A4 on pid 5
+└ @ Actors ~/.julia/dev/Actors/src/logging.jl:31
+julia> 
+
+julia> info(:A3)
+Actor    default
+Behavior +
+Pid      5, Thread 1
+Task     @0x000000011c576ed0
+Ident    x-d-dudil-kurib
+Name     A3
 ```
 
-(With supervision strategy `:one_for_all` or `:rest_for_one` the supervisor would have shutdown other child actors as well (`A1,A2,A5,A6` or `A5,A6` respectively) and restarted them on their same `pid`s.) The system after actor restart looks as follows:
+With other supervision strategies (`:one_for_all` or `:rest_for_one`) the supervisor would have shutdown other child actors as well (`A1,A2,A5,A6` or `A5,A6` respectively) and restarted them on their same `pid`s. The system after actor restart looks as follows:
 
 ![supervisor rfd 2](assets/supervisor_rfd2.svg)
 
-`pid` 3 is gone and the supervisor has one spare worker, `pid` 6 left.
+`pid` 3 is gone and the supervisor has one spare worker (`pid` 6) left.

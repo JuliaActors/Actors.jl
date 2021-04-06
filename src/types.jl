@@ -125,7 +125,9 @@ _ACT(mode=:default) = _ACT(mode, Bhv(+), fill(nothing, 7)..., Connection[])
 - `pid::Int`: process identifier,
 - `thrd::Int`: thread,
 - `task::Task`: actor task address,
-- `tid::String`: proquint identifier based on task address.
+- `tid::String`: proquint identifier based on task address,
+- `name::Union{Nothing,Symbol}`: name under which the actor is
+    registered, `nothing` if not registered.
 """
 struct Info
     mode::Symbol
@@ -134,6 +136,7 @@ struct Info
     thrd::Int
     task::UInt
     tid::String
+    name::Union{Nothing,Symbol}
 end
 
 # -----------------------------------------------

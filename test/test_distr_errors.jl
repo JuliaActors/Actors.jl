@@ -25,10 +25,14 @@ sa = Actors.diag(sv, :act)
 act1 = spawn(+, 10, pid=prcs[1])
 act2 = spawn(+, 20, pid=prcs[1])
 act3 = spawn(+, 30, pid=prcs[2])
+register(:act1, act1)
+register(:act2, act2)
+register(:act3, act3)
 
 # put them under supervision
 supervise(sv, act1)
 @test @delayed sa.bhv.childs[1].lk == act1
+@test sa.bhv.childs[1].name == :act1
 @test @delayed sa.bhv.childs[2].lk.mode == :rnfd
 rfd = sa.bhv.childs[2].lk
 ra = Actors.diag(rfd, :act)
@@ -49,7 +53,9 @@ sleep(1)
 @test @delayed act2.pid == prcs[3]
 @test @delayed sa.bhv.option[:spares] == prcs[4:5]
 @test @delayed call(act1, 10) == 20
+@test call(:act1, 10) == 20
 @test @delayed call(act2, 10) == 30
+@test call(:act2, 10) == 30
 @test @delayed length(ra.bhv.lks) == 3
 @test ra.bhv.pids == prcs[2:3]
 
@@ -58,6 +64,7 @@ sleep(1)
 @test @delayed act3.pid == prcs[4]
 @test @delayed sa.bhv.option[:spares] == prcs[5:5]
 @test @delayed call(act3, 10) == 40
+@test call(:act3, 10) == 40
 @test @delayed length(ra.bhv.lks) == 3
 @test ra.bhv.pids == prcs[3:4]
 
@@ -67,7 +74,9 @@ sleep(1)
 @test @delayed act2.pid == prcs[5]
 @test @delayed isempty(sa.bhv.option[:spares])
 @test @delayed call(act1, 10) == 20
+@test call(:act1, 10) == 20
 @test @delayed call(act2, 10) == 30
+@test call(:act2, 10) == 30
 @test @delayed length(ra.bhv.lks) == 3
 
 rmprocs(prcs[5])
@@ -75,10 +84,13 @@ sleep(1)
 @test @delayed act1.pid == prcs[6]
 @test @delayed act2.pid == prcs[6]
 @test @delayed call(act1, 10) == 20
+@test call(:act1, 10) == 20
 @test @delayed call(act2, 10) == 30
+@test call(:act2, 10) == 30
 @test @delayed length(ra.bhv.lks) == 3
 
 rmprocs(prcs[4])
 sleep(1)
 @test @delayed call(act3, 10) == 40
+@test call(:act3, 10) == 40
 @test @delayed length(ra.bhv.lks) == 3

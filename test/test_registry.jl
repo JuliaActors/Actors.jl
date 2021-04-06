@@ -15,6 +15,7 @@ length(procs()) == 1 && addprocs(1)
         ("local actor",  id, from) :
         ("remote actor", id, from)
 end
+call(Actors._REG, empty!)
 
 # 
 # test registry with one local actor

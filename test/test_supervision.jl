@@ -70,7 +70,7 @@ send(act2, "boom")
 # temporary actors
 sv = supervisor(taskref=t1)
 act2 = spawn(threadid, taskref=t2)
-exec(act2, supervise, sv, nothing, :temporary)
+supervise(sv, act2, restart=:temporary)
 a2 = diag(act2, :act)
 a1 = diag(sv, :act)
 @test t1[].state == :runnable
@@ -165,7 +165,7 @@ terminate_child(sv, act2)
 # supervisor shutdown
 sv = supervisor(taskref=t1)
 act2 = spawn(threadid, taskref=t2)
-exec(act2, supervise, sv, threadid)
+supervise(sv, act2)
 sleep(0.5)
 exit!(sv, :shutdown)
 @test @delayed t1[].state == :done

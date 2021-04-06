@@ -29,14 +29,18 @@ function info(lk::Link{RemoteChannel{Channel{Any}}})
 			exc.captured.ex.task
 	end
 end
+info(name::Symbol) = info(whereis(name))
 
-pretty(i::Info) = """
+function pretty(i::Info) 
+s = """
 Actor    $(i.mode)
 Behavior $(i.bhvf)
 Pid      $(i.pid), Thread $(i.thrd)
 Task     @0x$(string(i.task, base = 16, pad = Sys.WORD_SIZE>>2))
 Ident    $(i.tid)
 """
+return isnothing(i.name) ? s : s*"Name     $(i.name)"
+end
 
 Base.show(io::IO, i::Info) = print(io, pretty(i))
 

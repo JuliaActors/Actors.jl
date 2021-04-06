@@ -35,7 +35,7 @@ function onmessage(A::_ACT, msg::Diag)
           x == :tid   ? pqtid() :
           x == :pid   ? myid() :
           x == :err   ? errored() :
-          x == :info  ? Info(A.mode,bhvf(A),myid(),threadid(),tid(),pqtid()) :
+          x == :info  ? Info(A.mode,bhvf(A),myid(),threadid(),tid(),pqtid(),A.name) :
           x == :state ? :ok : :unknown_request
     send(msg.from, Response(res, A.self))
 end

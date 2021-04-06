@@ -71,7 +71,7 @@ function remove_temporary!(s, fchilds)
     act = task_local_storage("_ACT")
     filter!(fchilds) do child
         if child.info.restart == :temporary
-            warn("supervised temporary Task (failed) @unknown, $(ProcessExitedException(child.lk.pid))")
+            warn("supervised temporary actor failed $(isnothing(child.name) ? :noname : child.name), $(ProcessExitedException(child.lk.pid))")
             filter!(c->c.lk!=child.lk, act.conn)
             filter!(c->c.lk!=child.lk, s.childs)
             return false
@@ -81,11 +81,12 @@ function remove_temporary!(s, fchilds)
     end
 end
 function restart_child!(c::Child, pid::Int)
-    warn("supervisor: restarting child @unknown on pid $pid")
+    warn("supervisor: restarting child $(isnothing(c.name) ? :noname : c.name) on pid $pid")
     if c.lk isa Link
         lk = !isnothing(c.start) ? c.start(pid) : spawn(c.init; pid)
         c.lk.chn = lk.chn
         c.lk.pid = lk.pid
+        isnothing(c.name) || update!(lk, c.name, s=:name)
     end
 end
 function restart!(s::Supervisor, cs::Vector{Child}, pids::Vector{Int})

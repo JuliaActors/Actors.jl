@@ -18,6 +18,8 @@ Connection to a supervised actor or task.
 - `start::Any`: callable object for restarting it,
 - `init::Any`: callable object for initialization (this is used
     for remote actors),
+- `name::Union{Nothing,Symbol}`: registered actor name, `nothing` 
+    if not registered,
 - `info::T`: named tuple with information about restart
     strategies, timeout, pollint ...
 """
@@ -25,6 +27,7 @@ mutable struct Child{L,T} <: Connection
     lk::L
     start::Any
     init::Any
+    name::Union{Nothing,Symbol}
     info::T
 end
 

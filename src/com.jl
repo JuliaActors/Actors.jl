@@ -37,8 +37,9 @@ Send a message to an actor. `msg...` are communication
 parameters to the actor's behavior function.
 """
 Classic.send(lk::Link, msg::Msg) = _send!(lk.chn, msg)
+Classic.send(name::Symbol, msg::Msg) = _send!(whereis(name).chn, msg)
 Classic.send(lk::Link, msg...) = _send!(lk.chn, msg)
-Classic.send(name::Symbol, msg...) = _send!(whereis(name).chn, msg...)
+Classic.send(name::Symbol, msg...) = _send!(whereis(name).chn, msg)
 
 _match(msg, ::Nothing, ::Nothing) = true
 _match(msg::Msg, M::Type{<:Msg}, ::Nothing) = msg isa M

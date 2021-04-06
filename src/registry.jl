@@ -66,3 +66,4 @@ _reg(d::Dict{Symbol,Link}, ::typeof(whereis), name::Symbol) = get(d, name, missi
 _reg(d::Dict{Symbol,Link}, ::typeof(registered), id::Int) = 
     id == 1 ?   collect(pairs(d)) :
                 [Pair(i[1], _rlink(i[2])) for i in pairs(d)]
+_reg(d::Dict{Symbol,Link}, ::typeof(empty!)) = empty!(d)

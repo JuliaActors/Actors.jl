@@ -144,7 +144,6 @@ start_actor
 start_task
 count_children
 which_children
-delete_child
 terminate_child
 ```
 

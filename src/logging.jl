@@ -14,6 +14,14 @@ const _WARN = [true]
 
 tid(t::Task=current_task()) = convert(UInt, pointer_from_objref(t))
 pqtid(t::Task=current_task()) = uint2quint(tid(t), short=true)
+function id()
+    return try
+        act = task_local_storage("_ACT")
+        isnothing(act.name) ? pqtid() : String(act.name)
+    catch
+        pqtid()
+    end
+end
 
 function warn(msg::Down, info::String="")
     warn(msg.reason isa Exception ?
@@ -28,7 +36,7 @@ end
 function warn(s::String)
     if _WARN[1]
         enable_finalizers(false)
-        @warn "$(Dates.format(now(), date_format)) $(pqtid()): $s"
+        @warn "$(Dates.format(now(), date_format)) $(id()) $s"
         enable_finalizers(true)
     end
 end

@@ -71,7 +71,7 @@ function remove_temporary!(s, fchilds)
     act = task_local_storage("_ACT")
     filter!(fchilds) do child
         if child.info.restart == :temporary
-            warn("supervised temporary actor failed $(isnothing(child.name) ? :noname : child.name), $(ProcessExitedException(child.lk.pid))")
+            warn("temporary actor $(isnothing(child.name) ? :noname : child.name) failed, $(ProcessExitedException(child.lk.pid))")
             filter!(c->c.lk!=child.lk, act.conn)
             filter!(c->c.lk!=child.lk, s.childs)
             return false
@@ -160,8 +160,7 @@ Start a RNFD actor and return a link to it.
 - `interval=1`: interval in seconds for checking remote nodes.
 """
 function rnfd_start(sv::Link; interval=1, kwargs...)
-    lk = spawn(RNFD(sv, Link[], Int[]); kwargs...)
-    lk.mode = :rnfd
+    lk = spawn(RNFD(sv, Link[], Int[]); mode = :rnfd, kwargs...)
     exec(lk, supervise, sv)
     timer = Timer(interval; interval) do t
         send(lk, Scan())

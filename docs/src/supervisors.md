@@ -135,11 +135,10 @@ Supervisors allow some automation and control of error handling in an actor syst
 | API function | brief description |
 |:-------------|:------------------|
 | [`supervisor`](@ref) | start a supervisor actor, |
-| [`supervise`](@ref) | add the current actor to a supervisor's child list, |
-| [`unsupervise`](@ref) | delete the current actor from a supervisor's child list, |
+| [`supervise`](@ref) | add an actor to a supervisor's child list, |
+| [`unsupervise`](@ref) | delete an actor or task from a supervisor's child list, |
 | [`start_actor`](@ref) | tell a supervisor to start an actor as a child, |
 | [`start_task`](@ref) | tell a supervisor to start a task as a child, |
-| [`delete_child`](@ref) | tell a supervisor to remove an actor from its child list, |
 | [`terminate_child`](@ref) | tell a supervisor to terminate a child and to remove it from its child list, |
 | [`set_strategy`](@ref) | tell a supervisor to change its supervision strategy, |
 | [`count_children`](@ref) | tell a supervisor to return a children count, |
@@ -201,12 +200,12 @@ User defined callbacks must follow some conventions:
 
 ## Preserving actor links after restart
 
-After restarting an actor, a supervisor updates its link to point to the newly created actor. But existing copies of a link won't get updated and may then be out of sync.
+After restarting an actor, a supervisor updates its link to point to the newly created actor. But other copies of a link won't get updated and may then be out of sync.
 
-If remote actors on other workers communicate with an actor over `RemoteChannel`s, they have copies of its link on their workers. After actor restart those are out of sync, and a remote actor may try to communicate with an old failed actor. To avoid this situation, you should [`register`](@ref) those actors and use their registered name to supervise them and communicate with them. The supervisor then will update the registered link.
+If remote actors on other workers communicate with an actor over `RemoteChannel`s, they have copies of its link on their workers. After actor restart those are out of sync, and a remote actor may try to communicate with an old failed actor. To avoid this situation, you should [register](registry.md) those actors and use their registered names to supervise them and communicate with them. The supervisor then will update the registered link.
 
 ## Task Supervision
 
 ## Supervisory trees
 
-Often you may be interested in building a hierarchical structure containing all actors and tasks in your application. This is called a supervisory tree, and there is the [`Supervisors`](https://github.com/JuliaActors/Supervisors.jl) package facilitating to build that.
+For larger applications you may be interested in building a hierarchical structure containing all actors and tasks. This is called a supervisory tree, and there is the [`Supervisors`](https://github.com/JuliaActors/Supervisors.jl) package facilitating to build that.

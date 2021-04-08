@@ -145,8 +145,8 @@ ch = Channel(0)
 rt = start_task(()->take!(ch), sv, timeout=Inf)
 @test @delayed length(which_children(sv)) == 6
 @test length(which_children(sv, true)) == 6
-delete_child(sv, cact[5])
-delete_child(sv, rt)
+unsupervise(sv, cact[5])
+unsupervise(sv, rt)
 put!(ch, 0)
 @test @delayed length(which_children(sv)) == 4
 @test Actors.diag(cact[5], :task).state == :runnable

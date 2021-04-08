@@ -22,7 +22,7 @@ Generally a supervisor restarts a failed remote (`:transient` or `:permanent`) c
 
 ## Example
 
-We setup six actors `A1`…`A6` distributed over `pid`s 2…4 and put them under supervision of `A10` on `pid` 1 with two spare workers (`pid`s 5,6). `A10` starts a `RFND` actor checking the supervised `RemoteChannel`s each second for node failures.
+We setup six actors `A1`-`A6` distributed over `pid`s 2-4 and put them under supervision of `A10` on `pid` 1 with two spare workers (`pid`s 5, 6). `A10` starts a `RFND` actor to check the supervised `RemoteChannel`s each second for node failures.
 
 ```julia
 julia> using Actors, Distributed

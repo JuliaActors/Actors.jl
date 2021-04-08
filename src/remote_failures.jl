@@ -36,10 +36,10 @@ function (rfd::RNFD)(msg::Add)
     end
 end
 function (rfd::RNFD)(msg::Remove)
-    if msg.lk ∈ rdf.lks
+    if msg.lk ∈ rfd.lks
         filter!(≠(msg.lk), rfd.lks)
-        pids = (lk.pid for lk ∈ rdf.lks)
-        filter!(p->p ∈ pids, rfd.pids)
+        pids = (lk.pid for lk ∈ rfd.lks)
+        filter!(∈(pids), rfd.pids)
     end
 end
 function (rfd::RNFD)(::Scan)

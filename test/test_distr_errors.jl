@@ -31,14 +31,25 @@ register(:act3, act3)
 
 # put them under supervision
 supervise(sv, act1)
-@test @delayed sa.bhv.childs[1].lk == act1
+@test @delayed sa.bhv.childs[1].lk === act1
 @test sa.bhv.childs[1].name == :act1
 @test @delayed sa.bhv.childs[2].lk.mode == :rnfd
 rfd = sa.bhv.childs[2].lk
 ra = Actors.diag(rfd, :act)
 @test ra.bhv.sv == sv
-@test ra.bhv.lks[1] == act1
+@test ra.bhv.lks[1] === act1
 @test ra.bhv.pids == [prcs[1]]
+supervise(sv, act2)
+@test @delayed sa.bhv.childs[3].lk === act2
+@test length(sa.bhv.childs) == 3
+@test @delayed ra.bhv.lks[2] === act2
+@test length(ra.bhv.lks) == 2
+
+# intermezzo: test unsupervise and (rfd)(::Remove)
+unsupervise(sv, act2)
+@test @delayed length(sa.bhv.childs) == 2
+@test @delayed length(ra.bhv.lks) == 1
+
 supervise(sv, act2)
 supervise(sv, act3)
 @test @delayed length(sa.bhv.childs) == 4
@@ -94,3 +105,9 @@ sleep(1)
 @test @delayed call(act3, 10) == 40
 @test call(:act3, 10) == 40
 @test @delayed length(ra.bhv.lks) == 3
+
+# change act2 to :temporary
+sa.bhv.childs[3].info = (restart = :temporary,)
+rmprocs(prcs[6])
+sleep(1)
+@test @delayed length(sa.bhv.childs) == 3

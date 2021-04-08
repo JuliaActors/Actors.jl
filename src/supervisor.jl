@@ -169,7 +169,7 @@ function (s::Supervisor)(::Delete, lst)
     filter!(c->c.lk!=lk, s.childs)
     if lk isa Link 
         trysend(lk, Connect(act.self, true))
-        lk.pid ≠ myid() && rnfd(s)(Remove(lk))
+        lk.pid ≠ myid() &&  send(rnfd(s), Remove(lk))
     end
 end
 function (s::Supervisor)(::Terminate, ls)

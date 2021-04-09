@@ -1,8 +1,8 @@
 # Actors Documentation
 
-`Actors` implements the classical Actor model using Julia's concurrency primitives.
+`Actors` implements the Actor model of computation:
 
-> An actor is a computational entity that, in response to a message it receives, can concurrently:
+> An actor ... in response to a message it receives, can concurrently:
 >
 > - *send* a finite number of messages to other actors;
 > - *create* a finite number of new actors;
@@ -10,15 +10,13 @@
 
 Actors enhance Julia's capabilities for concurrent computing. They can be used together with other Julia functionality for multi-threading and distributed computing.
 
-Actors use Julia functions as behaviors and are
+`Actors` make(s) concurrency easy to understand and reason about and integrate(s) well with Julia's multi-threading and distributed computing. It provides a modern API [^2] for writing reactive [^3] applications, that are:
 
-- *responsive* – they react to users - and
-- *message-driven* - they rely on asynchronous message-passing [^2].
-
-`Actors` has a modern API [^3], can interface with other actor libraries and can be extended by them using actor protocols.
-
-`Actors` is in active development. If you want to contribute, please join [`JuliaActors`](https://github.com/JuliaActors).
+- *responsive*: react to inputs and events,
+- *resilient*: can cope with failures,
+- *elastic*: can distribute load over multiple threads and  workers,
+- *message-driven*: rely on asynchronous message-passing.
 
 [^1]: See the Wikipedia entry on the [Actor Model](https://en.wikipedia.org/wiki/Actor_model).
-[^2]: See [The Reactive Manifesto](https://www.reactivemanifesto.org). Its other two tenets *resilient* and *elastic* are prepared for and are likely to come soon.
-[^3]: The `Actors` API is inspired by Erlang/OTP, see [OTP Design Principles - User’s Guide](https://erlang.org/doc/design_principles/users_guide.html)
+[^2]: The `Actors` API is inspired by Erlang/OTP, see [OTP Design Principles - User’s Guide](https://erlang.org/doc/design_principles/users_guide.html)
+[^3]: See [The Reactive Manifesto](https://www.reactivemanifesto.org).

@@ -1,4 +1,4 @@
-# Overview
+# Error Handling Overview
 
 ```@meta
 CurrentModule = Actors
@@ -11,7 +11,7 @@ Failures in computations are due to hardware, software, and human cause failures
 - failures are in principle unavoidable and that
 - we must take care of all three sources of errors [^1].
 
-## Error-handling
+## Error Handling
 
 An actor system consists of computationally separate and concurrent entities. If one actor fails, the system does not crash immediately as do sequentially organized applications. Other actors can continue their tasks as long as they do not try to communicate with the failed one. The system now is in a problematic state, and we must somehow prevent further cascading failures.
 

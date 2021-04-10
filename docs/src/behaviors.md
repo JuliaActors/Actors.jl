@@ -4,20 +4,29 @@
 CurrentModule = Actors
 ```
 
-An actor embodies the essential elements of  computation: 1) processing, 2) storage and 3) communication.
+According to Carl Hewitt an actor embodies the essential elements of  computation: 1) processing, 2) storage and 3) communication. [^1]
+
+The actor behavior therefore can be described as ``f(a)[c]``,  representing 
+
+1. ``f``: a function, *processing*,
+2. ``a``: acquaintances, *storage*, data that it has,
+3. ``c``: *communication*, a message.
+
+It processes an incoming message ``c`` with its behavior function ``f`` based on its acquaintances ``a``.
+
 > When an Actor receives a message, it can concurrently:
 >
 > - send messages to ... addresses of Actors that it has;
 > - create new Actors;
-> - designate how to handle the next message it receives. [^1]
+> - designate how to handle the next message it receives. [^2]
 
-For that Gul Agha introduced the *behavior* as a ...
+For that Gul Agha described the *behavior* as a ...
 
-> ... function of the incoming communication. 
-> 
-> Two lists of identifiers are used in a behavior definition. Values for the first list of parameters must be specified when the actor is created. This list is called the *acquaintance list*. The second list of parameters, called the *communication list*, gets its bindings from an incoming communication. [^2]
+> ... function of the incoming communication.
+>
+> Two lists of identifiers are used in a behavior definition. Values for the first list of parameters must be specified when the actor is created. This list is called the *acquaintance list*. The second list of parameters, called the *communication list*, gets its bindings from an incoming communication. [^3]
 
-Thus a behavior maps the incoming communication to a three tuple of messages sent, new actors created and the replacement behavior:
+A behavior then maps the incoming communication to a three tuple of messages sent, new actors created and the replacement behavior:
 
 ```math
 \begin{array}{lrl}
@@ -30,18 +39,22 @@ f_i(a_i)[c_i] & \rightarrow &\{\{\mu_u,\mu_v, ...\},\;\{\alpha_x,\alpha_y,...\},
 \end{array}
 ```
 
-`Actors` represents a behavior as [partial application](https://en.wikipedia.org/wiki/Partial_application) of a function ``f`` to acquaintances ``a`` (variables, values or actors the actor knows of). If a communication ``c`` arrives, the behavior executes ``f(a,c)``:
+## Behavior Representation in Julia
+
+`Actors` represents actor behavior as [partial application](https://en.wikipedia.org/wiki/Partial_application) of a callable object ``f(a,c)`` to acquaintances ``a``, that is, as a closure ``f(a)``. If the actor receives a communication ``c``, it executes ``f(a)(c)``:
 
 ```@repl
 f(a, c) = a + c         # define a function
 partial(f, a...; kw...) = (c...) -> f(a..., c...; kw...)
-bhv = partial(f, 1)     # partially apply f to 1
+bhv = partial(f, 1)     # partially apply f to 1, return a closure
 bhv(2)                  # execute f(1,2)
 ```
 
-Actor behavior can be represented in a functional or in an object-oriented style. Both are interchangeable.
+Note that the [`...`-operator](https://docs.julialang.org/en/v1.6/manual/faq/#What-does-the-...-operator-do?) allows us to use multiple acquaintance and communication arguments (i.e. lists).
 
-## Functional Style
+Actor behavior can be further expressed in a more functional or in a more object-oriented style. Both are interchangeable and can be combined.
+
+### Functional Style
 
 The behavior is a function `f` together with acquaintance arguments `a...` and `kw...` (keyword arguments) to it. [`Bhv`](@ref) creates a partial application (a closure) `ϕ(a...; kw...)` which  can be executed with communication arguments `c...`:
 
@@ -52,7 +65,7 @@ bhv = Bhv(f, 1, 1, w=2, x=2);  # create a Bhv with f and acquaintances
 bhv(1, 1)                      # execute it with communication parameters
 ```
 
-## Object-oriented Style
+### Object-oriented Style
 
 Alternatively we put the acquaintance parameters in an object which we make executable (see: [function object](https://en.wikipedia.org/wiki/Function_object)) with communication parameters:
 
@@ -65,7 +78,7 @@ bhv = Acqu(1,1,2,2)            # create an instance
 bhv(1,1)                       # execute it with communication parameters
 ```
 
-## Freestyle
+### Freestyle
 
 With being callable the only hard requirement for a behavior, you can pass anything callable as behavior to an actor regardless whether it contains acquaintances or not:
 
@@ -84,7 +97,7 @@ You can give functors further acquaintance parameters (as for the players in the
 
 ## [Agha's Stack example](@id stack)
 
-Now more realistically for actor behavior we reproduce Agha's example 3.2.1 [^3]:
+Now more realistically for actor behavior we reproduce Agha's example 3.2.1 [^4]:
 
 ```julia
 using Actors
@@ -160,6 +173,7 @@ It is thread-safe to share actors between threads or other actors. Each call to 
 
 As those examples show, it is surprisingly easy to avoid race conditions by using actors.
 
-[^1]: Carl Hewitt. Actor Model of Computation: Scalable Robust Information Systems.- [arXiv:1008.1459](https://arxiv.org/abs/1008.1459).
-[^2]: Gul Agha 1986. *Actors. a model of concurrent computation in distributed systems*, MIT.- p. 30
-[^3]: ibid. p. 34
+[^1]: [Hewitt, Meijer and Szyperski: The Actor Model (everything you wanted to know, but were afraid to ask)](http://channel9.msdn.com/Shows/Going+Deep/Hewitt-Meijer-and-Szyperski-The-Actor-Model-everything-you-wanted-to-know-but-were-afraid-to-ask), Microsoft Channel 9. April 9, 2012.
+[^2]: Carl Hewitt. Actor Model of Computation: Scalable Robust Information Systems.- [arXiv:1008.1459](https://arxiv.org/abs/1008.1459).
+[^3]: Gul Agha 1986. *Actors. a model of concurrent computation in distributed systems*, MIT.- p. 30
+[^4]: ibid. p. 34

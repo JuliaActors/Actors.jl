@@ -4,9 +4,7 @@
 CurrentModule = Actors
 ```
 
-According to Carl Hewitt an actor embodies the essential elements of  computation: 1) processing, 2) storage and 3) communication. [^1]
-
-The actor behavior therefore can be described as ``f(a)[c]``,  representing 
+An actor embodies the essential elements of  computation: 1) processing, 2) storage and 3) communication.[^1] Its behavior therefore can be described as ``f(a)[c]``,  representing 
 
 1. ``f``: a function, *processing*,
 2. ``a``: acquaintances, *storage*, data that it has,
@@ -20,7 +18,7 @@ It processes an incoming message ``c`` with its behavior function ``f`` based on
 > - create new Actors;
 > - designate how to handle the next message it receives. [^2]
 
-For that Gul Agha described the *behavior* as a ...
+Gul Agha described the *behavior* as a ...
 
 > ... function of the incoming communication.
 >
@@ -41,7 +39,9 @@ f_i(a_i)[c_i] & \rightarrow &\{\{\mu_u,\mu_v, ...\},\;\{\alpha_x,\alpha_y,...\},
 
 ## Behavior Representation in Julia
 
-`Actors` represents actor behavior as [partial application](https://en.wikipedia.org/wiki/Partial_application) of a callable object ``f(a,c)`` to acquaintances ``a``, that is, as a closure ``f(a)``. If the actor receives a communication ``c``, it executes ``f(a)(c)``:
+`Actors` expresses actor behavior in a functional style. Actors are basically function servers.
+
+A behavior is a [partial application](https://en.wikipedia.org/wiki/Partial_application) of a callable object ``f(a...,c...)`` to acquaintances ``a...``, that is, a closure over ``f(a...)``. If the actor receives a communication ``c...``, the closure invokes ``f(a...,c...)``. The [`...`-operator](https://docs.julialang.org/en/v1.6/manual/faq/#What-does-the-...-operator-do?) allows us to use multiple acquaintance and communication arguments (i.e. lists).
 
 ```@repl
 f(a, c) = a + c         # define a function
@@ -50,59 +50,56 @@ bhv = partial(f, 1)     # partially apply f to 1, return a closure
 bhv(2)                  # execute f(1,2)
 ```
 
-Note that the [`...`-operator](https://docs.julialang.org/en/v1.6/manual/faq/#What-does-the-...-operator-do?) allows us to use multiple acquaintance and communication arguments (i.e. lists).
+Similar to the `partial` above, [`Bhv`](@ref) is a convenience function to create a partial application `ϕ(a...; kw...)` with optional keyword arguments, which can be executed with communication arguments `c...`:
 
-Actor behavior can be further expressed in a more functional or in a more object-oriented style. Both are interchangeable and can be combined.
-
-### Functional Style
-
-The behavior is a function `f` together with acquaintance arguments `a...` and `kw...` (keyword arguments) to it. [`Bhv`](@ref) creates a partial application (a closure) `ϕ(a...; kw...)` which  can be executed with communication arguments `c...`:
-
-```@repl
-using Actors
-f(s, t, u, v; w=1, x=1) = s + t + u + v + w + x   # a function
-bhv = Bhv(f, 1, 1, w=2, x=2);  # create a Bhv with f and acquaintances
-bhv(1, 1)                      # execute it with communication parameters
+```@repl bhv
+using Actors, .Threads
+import Actors: spawn, newLink
+f(s, t; w=1, x=1) = s + t + w + x   # a function
+bhv = Bhv(f, 2, w=2, x=2);          # create a behavior of f and acquaintances
+bhv(2)                              # execute it with a communication parameter
 ```
 
 ### Object-oriented Style
 
-Alternatively we put the acquaintance parameters in an object which we make executable (see: [function object](https://en.wikipedia.org/wiki/Function_object)) with communication parameters:
+Alternatively we define an object with acquaintance parameters and make it [callable (as a functor)](https://en.wikipedia.org/wiki/Function_object) with communication parameters:
 
-```@repl
-struct Acqu                    # define an object with acquaintances
-    s; t; w; x
+```@repl bhv
+struct A                            # define an object 
+    s; w; x                         # with acquaintances
 end
-(a::Acqu)(u, v) = a.s + a.t + u + v + a.w + a.x  # make it executable with communication parameters
-bhv = Acqu(1,1,2,2)            # create an instance
-bhv(1,1)                       # execute it with communication parameters
+(a::A)(t) = a.s + a.w + a.x + t     # make it a functor, executable with a communication parameter t
+bhv = A(2, 2, 2)                    # create an instance
+bhv(2)                              # execute it with a parameter
 ```
 
-### Freestyle
+## Actor Operation
 
-With being callable the only hard requirement for a behavior, you can pass anything callable as behavior to an actor regardless whether it contains acquaintances or not:
+When we create an actor with a behavior by using [`spawn`](@ref), it is ready to receive communication arguments and to process them:
 
-```@repl
-using Actors, .Threads
-import Actors: spawn, newLink
-myactor = spawn(threadid)                     # a parameterless function
-call(myactor)
+1. You can create an actor with anything callable as behavior regardless whether it contains acquaintances or not.
+2. Over its [`Link`](@ref) you can [`send`](@ref) it communication arguments and cause the actor to execute its behavior with them. [`call`](@ref), [`exec`](@ref) and similar [API](api.md) functions are just wrappers around `send` and [`receive`](@ref) using a [protocol](protocol.md) to communicate with an actor.
+3. If we send an actor wrong/unspecified communication arguments, it will fail with a `MethodError` when calling its behavior with those.
+4. With [`become!`](@ref) and [`become`](@ref) we can change an actor's behavior.
+
+```@repl bhv
+myactor = spawn(threadid)                     # create an actor with a parameterless behavior function
+call(myactor)                                 # call it without arguments
 become!(myactor, (lk, x, y) -> send(lk, x^y)) # an anonymous function with communication arguments
 me = newLink()
-send(myactor, me, 123, 456)
-receive(me)
+send(myactor, me, 123, 456)                   # send it arguments
+receive(me)                                   # receive the result
 ```
 
-You can give functors further acquaintance parameters (as for the players in the [table-tennis example](@ref table-tennis)). Of course you can give objects containing acquaintances as parameters to a function and create a partial application with `Bhv` on them and much more. Be my guest!
+In setting actor behavior you are free to mix the functional and object oriented approaches. For example you can give functors further acquaintance parameters (as for the players in the [table-tennis example](@ref table-tennis)). Of course you can give objects containing acquaintances as parameters to a function and create a partial application with `Bhv` on them and much more.
 
 ## [Agha's Stack example](@id stack)
 
-Now more realistically for actor behavior we reproduce Agha's example 3.2.1 [^4]:
+Now more realistically for actor behavior we reproduce Agha's example 3.2.1:
+
+> We implement a stack as a collection of actors with uniform behavior. ... [A] linked list consists of a collection of nodes each of which stores a value and knows the mail address of the "next" actor in the chain. ... Two kinds of operations may be requested of a *stack-node*: a *push* or a *pop*. In the first case, the new content to be pushed must be given, and in the second, the customer to which the value stored in the *stack-node* can be sent. [^4]:
 
 ```julia
-using Actors
-import Actors: spawn, newLink
-
 mutable struct StackNode{T,L}  # a stack node object
     content::T
     link::L
@@ -125,18 +122,20 @@ end
 (sn::StackNode)(msg::Push) = become(StackNode(msg.content, spawn(sn)))
 ```
 
-Here we use both the functional and the object oriented approach:
+Here we use both the functional and the object oriented style:
 
-- `forwarder` is a function which we put together with `sn.link` into a `Bhv`,
-- `StackNode` is an object, which gets two methods.
+- `forwarder` is a function (`send`) which we put together with `sn.link` into a behavior. After `become(forwarder, sn.link)` the actor will forward any received message to `sn.link`.
+- `StackNode` is a functor with two methods.
+
+> The top of the stack is the only receptionist in the stack system and was the only actor of the stack system created externally. It is created with a NIL content which is assumed to be the bottom of the stack marker. Notice that no mail address of a stack node ist ever communicated by any node to an external actor. Therefore no actor outside the configuration defined above can effect any of the actors inside the stack except by sending the receptionist a communication. When a *pop* operation is done, the actor on top of the stack simply becomes a *forwarder* to the next actor in the link. This means that all communications received by the top of the stack are now forwarded to the next element. [^4]
 
 Now we can operate the stack:
 
 ```julia
-julia> mystack = spawn(StackNode(nothing, newLink()))
+julia> mystack = spawn(StackNode(nothing, newLink())) # create the top of the stack
 Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
 
-julia> response = newLink()
+julia> response = newLink()                           # create a response link
 Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :local)
 
 julia> for i ∈ 1:5
@@ -176,4 +175,4 @@ As those examples show, it is surprisingly easy to avoid race conditions by usin
 [^1]: [Hewitt, Meijer and Szyperski: The Actor Model (everything you wanted to know, but were afraid to ask)](http://channel9.msdn.com/Shows/Going+Deep/Hewitt-Meijer-and-Szyperski-The-Actor-Model-everything-you-wanted-to-know-but-were-afraid-to-ask), Microsoft Channel 9. April 9, 2012.
 [^2]: Carl Hewitt. Actor Model of Computation: Scalable Robust Information Systems.- [arXiv:1008.1459](https://arxiv.org/abs/1008.1459).
 [^3]: Gul Agha 1986. *Actors. a model of concurrent computation in distributed systems*, MIT.- p. 30
-[^4]: ibid. p. 34
+[^4]: ibid. p. 34f

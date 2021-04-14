@@ -19,7 +19,7 @@ Welcome to the documentation of [`Actors`](https://github.com/JuliaActors/Actors
 
 ## Documentation, quick links
 
-- [Installation](@ref Actors),
+- [Installation](api.md),
 - Manual: [Getting started](intro.md), a quick introduction,
 - Manual: [Actor Model](basics.md) ..., further explanations,
 - Manual: [Error Handling](errors.md), fault-tolerance with `Actors`,

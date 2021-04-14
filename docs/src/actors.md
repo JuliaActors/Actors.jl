@@ -29,7 +29,7 @@ Actors support clear, correct concurrent programs and are an alternative to shar
 - use functions to localize variables and
 - make actors serve mutable variables without using locks.
 
-Below I will show how you can use actors in common multi-threading or distributed Julia code.
+You can use actors in common multi-threading or distributed Julia code.
 
 ## Multi-threading
 
@@ -41,15 +41,16 @@ An actor controlling the access to a variable or to another resource is lock-fre
 
 ## Distributed Computing
 
-Actors are location transparent. You can share their links across workers to access the same actor on different workers. If local links are sent to a remote actor, they are converted to remote links.
+Actors are location transparent. You can share their links across workers to access the same actor on different workers. If local links are sent to a remote actor, they are automatically converted to remote links.
 
 ## [A `Dict` Server](@id dict-server)
 
-This example shows how to implement a `Dict`-server actor that can be used in multi-threaded and distributed Julia code.
+This example implements a `Dict`-server actor that can be used in multi-threaded and distributed Julia code to avoid race conditions when tasks from multiple threads access a `Dict` concurrently:
 
-1. We implement `DictSrv` as a function object containing a link to an actor.
-2. `DictSrv` gets an indexing interface.
-3. The actor behavior `ds` takes a `Dict` variable as acquaintance and executes the communicated function `f` and `args...` on it. If called without arguments it returns a copy of its `Dict` variable.
+1. `DictSrv` simply is a functor containing a link to a server actor.
+2. `DictSrv` gets an indexing interface. It forwards the indexing functions `getindex` and `setindex!` to the server actor.
+3. The server actor's behavior `ds` takes a `Dict` variable as acquaintance and executes the communicated functions `f` with `args...` on it. If called without arguments it returns a copy of its `Dict` variable.
+4. `dictsrv` creates then a `DictSrv` functor, which spawns a server actor around a given `Dict`. 
 
 ```julia
 # examples/mydict.jl
@@ -61,8 +62,9 @@ import Actors: spawn
 struct DictSrv{L}
     lk::L
 end
-(ds::DictSrv)() = call(ds.lk)
 (ds::DictSrv)(f::Function, args...) = call(ds.lk, f, args...)
+(ds::DictSrv)() = call(ds.lk)
+
 # indexing interface
 Base.getindex(d::DictSrv, key) = call(d.lk, getindex, key)
 Base.setindex!(d::DictSrv, value, key) = call(d.lk, setindex!, value, key)
@@ -70,15 +72,16 @@ Base.setindex!(d::DictSrv, value, key) = call(d.lk, setindex!, value, key)
 # dict server behavior
 ds(d::Dict, f::Function, args...) = f(d, args...)
 ds(d::Dict) = copy(d)
-# start dict server
-dictsrv(d::Dict; remote=false) = DictSrv(spawn(ds, d, remote=remote))
 
-export DictSrv, dictsrv
+# start dict server
+dictsrv(d::Dict; remote=false) = DictSrv(spawn(ds, d; remote))
+
+export DictSrv, dictsrv 
 
 end
 ```
 
-A dict server is started with `dictsrv`. It does not share its `Dict` variable. Let's try it out:
+A `DictSrv` instance is created with `dictsrv`. It can be accessed like a `Dict`, but any access to its interface involves a communication. It shares its data by communicating. Let's try it out:
 
 ```julia
 julia> include("examples/mydict.jl")
@@ -86,11 +89,14 @@ Main.MyDict
 
 julia> using .MyDict, .Threads
 
+julia> nthreads()
+8
+
 julia> d = dictsrv(Dict{Int,Int}())
 DictSrv{Link{Channel{Any}}}(Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default))
 
 julia> @threads for i in 1:1000
-           d[i] = threadid()
+           d[i] = threadid()  # write concurrently to the Dict
        end
 
 julia> d()
@@ -111,7 +117,7 @@ julia> d[892]
 8
 ```
 
-All available threads did concurrently fill our served dictionary with their thread ids. Actor access to the dictionary happens almost completely behind the scenes.
+All available threads did concurrently fill our served dictionary with their thread ids. Actor access to the dictionary happens  behind the scenes.
 
 Now we try it out with distributed computing:
 
@@ -147,7 +153,9 @@ Dict{Int64,Int64} with 2 entries:
   17 => -8998327833489977098
 ```
 
-The remote `DictSrv` actor is available on all workers.
+The remote `DictSrv` actor is available on all workers. 
+
+This was just to show how `Actors` provides powerful abstractions to deal with concurrency.
 
 ## Fault Tolerance
 
@@ -187,7 +195,7 @@ Since actors are Julia tasks, they have a local dictionary in which you can stor
 
 [^1]: Carl Hewitt. Actor Model of Computation: Scalable Robust Information Systems.- [arXiv:1008.1459](https://arxiv.org/abs/1008.1459)
 [^2]: H. Sutter and J. Larus. Software and the concurrency revolution. ACM Queue, 3(7), 2005.
-[^3]: Effective Go: [Share by Communicating](https://golang.org/doc/effective_go.html#sharing)
+[^3]: "Do not communicate by sharing memory; instead, share memory by communicating." see Effective Go: [Share by Communicating](https://golang.org/doc/effective_go.html#sharing)
 [^4]: see [Data race freedom](https://docs.julialang.org/en/v1/manual/multi-threading/#Data-race-freedom) in the Julia manual.
 [^5]: H. Sutter and J. Larus. see above
 [^6]: see Joe Armstrong, 2003: [Making reliable distributed systems in the presence of software errors](https://erlang.org/download/armstrong_thesis_2003.pdf)

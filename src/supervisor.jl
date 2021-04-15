@@ -146,6 +146,7 @@ function (s::Supervisor)(msg::Exit)
             restart!(s, s.childs[ix], msg)
         end
     else
+        ## todo: warn about temporary actor failure!
         act = task_local_storage("_ACT")
         filter!(c->c.lk!=msg.from, act.conn)
         filter!(c->c.lk!=msg.from, s.childs)

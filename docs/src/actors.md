@@ -50,7 +50,7 @@ This example implements a `Dict`-server actor that can be used in multi-threaded
 1. `DictSrv` simply is a functor containing a link to a server actor.
 2. `DictSrv` gets an indexing interface. It forwards the indexing functions `getindex` and `setindex!` to the server actor.
 3. The server actor's behavior `ds` takes a `Dict` variable as acquaintance and executes the communicated functions `f` with `args...` on it. If called without arguments it returns a copy of its `Dict` variable.
-4. `dictsrv` creates then a `DictSrv` functor, which spawns a server actor around a given `Dict`. 
+4. `dictsrv` creates then a `DictSrv` functor, which spawns a server actor around a given `Dict`.
 
 ```julia
 # examples/mydict.jl
@@ -153,7 +153,7 @@ Dict{Int64,Int64} with 2 entries:
   17 => -8998327833489977098
 ```
 
-The remote `DictSrv` actor is available on all workers. 
+The remote `DictSrv` actor is available on all workers.
 
 This was just to show how `Actors` provides powerful abstractions to deal with concurrency.
 

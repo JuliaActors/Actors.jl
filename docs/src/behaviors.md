@@ -4,7 +4,7 @@
 CurrentModule = Actors
 ```
 
-An actor embodies the essential elements of  computation: 1) processing, 2) storage and 3) communication.[^1] Its behavior therefore can be described as ``f(a)[c]``,  representing 
+An actor embodies the essential elements of  computation: 1) processing, 2) storage and 3) communication.[^1] Its behavior therefore can be described as ``f(a)[c]``,  representing
 
 1. ``f``: a function, *processing*,
 2. ``a``: acquaintances, *storage*, data that it has,
@@ -39,9 +39,7 @@ f_i(a_i)[c_i] & \rightarrow &\{\{\mu_u,\mu_v, ...\},\;\{\alpha_x,\alpha_y,...\},
 
 ## Behavior Representation in Julia
 
-`Actors` expresses actor behavior in a functional style. Actors are basically function servers.
-
-A behavior is a [partial application](https://en.wikipedia.org/wiki/Partial_application) of a callable object ``f(a...,c...)`` to acquaintances ``a...``, that is, a closure over ``f(a...)``. If the actor receives a communication ``c...``, the closure invokes ``f(a...,c...)``. The [`...`-operator](https://docs.julialang.org/en/v1.6/manual/faq/#What-does-the-...-operator-do?) allows us to use multiple acquaintance and communication arguments (i.e. lists).
+`Actors` expresses actor behavior in a functional style. Actors are basically *function servers*. Their behavior is a [partial application](https://en.wikipedia.org/wiki/Partial_application) of a callable object ``f(a...,c...)`` to acquaintances ``a...``, that is, a closure over ``f(a...)``. If the actor receives a communication ``c...``, the closure invokes ``f(a...,c...)``. The [`...`-operator](https://docs.julialang.org/en/v1.6/manual/faq/#What-does-the-...-operator-do?) allows us to use multiple acquaintance and communication arguments (i.e. lists).
 
 ```@repl
 f(a, c) = a + c         # define a function
@@ -62,7 +60,7 @@ bhv(2)                              # execute it with a communication parameter
 
 ### Object-oriented Style
 
-Alternatively we define an object with acquaintance parameters and make it [callable (as a functor)](https://en.wikipedia.org/wiki/Function_object) with communication parameters:
+Alternatively we define an object with some data (acquaintances) and make it [callable (as a functor)](https://en.wikipedia.org/wiki/Function_object) with communication parameters:
 
 ```@repl bhv
 struct A                            # define an object 
@@ -78,17 +76,20 @@ bhv(2)                              # execute it with a parameter
 When we create an actor with a behavior by using [`spawn`](@ref), it is ready to receive communication arguments and to process them:
 
 1. You can create an actor with anything callable as behavior regardless whether it contains acquaintances or not.
-2. Over its [`Link`](@ref) you can [`send`](@ref) it communication arguments and cause the actor to execute its behavior with them. [`call`](@ref), [`exec`](@ref) and similar [API](api.md) functions are just wrappers around `send` and [`receive`](@ref) using a [protocol](protocol.md) to communicate with an actor.
-3. If we send an actor wrong/unspecified communication arguments, it will fail with a `MethodError` when calling its behavior with those.
+2. Over its [`Link`](@ref) you can [`send`](@ref) it communication arguments and cause the actor to execute its behavior with them. `Actors`' [API](api.md) functions like [`call`](@ref), [`exec`](@ref) are just wrappers around `send` and [`receive`](@ref) using a communication [protocol](protocol.md).
+3. If an actor receives wrong/unspecified communication arguments, it will fail with a `MethodError`.
 4. With [`become!`](@ref) and [`become`](@ref) we can change an actor's behavior.
 
 ```@repl bhv
-myactor = spawn(threadid)                     # create an actor with a parameterless behavior function
-call(myactor)                                 # call it without arguments
-become!(myactor, (lk, x, y) -> send(lk, x^y)) # an anonymous function with communication arguments
 me = newLink()
-send(myactor, me, 123, 456)                   # send it arguments
-receive(me)                                   # receive the result
+myactor = spawn(()->send(me, threadid()),thrd=2) # create an actor with a parameterless anonymous behavior function
+send(myactor)                                    # send it an empty tuple
+receive(me)                                      # receive the result
+become!(myactor, threadid)
+call(myactor)                                    # call it without arguments
+become!(myactor, (lk, x, y) -> send(lk, x^y))    # an anonymous function with communication arguments
+send(myactor, me, 123, 456)                      # send it arguments
+receive(me)                                      # receive the result
 ```
 
 In setting actor behavior you are free to mix the functional and object oriented approaches. For example you can give functors further acquaintance parameters (as for the players in the [table-tennis example](@ref table-tennis)). Of course you can give objects containing acquaintances as parameters to a function and create a partial application with `Bhv` on them and much more.
@@ -153,24 +154,27 @@ julia> for i ∈ 1:5
 1
 ```
 
-## Setting and Changing Behavior
+## Actors Don't Share State
 
-An actor's behavior is set with [`spawn`](@ref) and gets changed with [`become!`](@ref). Inside a behavior function an actor can change its own behavior with [`become`](@ref). In both cases a callable object together with acquaintance arguments can be specified as new behavior. This is effective when the next message gets processed.
+Actors must not share state in order to avoid race conditions. Acquaintance and communication parameters are actor state. `Actors` does not disallow for an actor to access and to modify mutable variables. It is therefore left to the programmer to exclude race conditions by not sharing them with other actors or tasks and accessing them concurrently. In most cases you can control which variables get passed to an actor and avoid to share them.
 
-## Don't Share Mutable Variables
+Note that when working with distributed actors, variables get copied automatically when sent over a `Link` (a `RemoteChannel`).
 
-As you have seen, you are very free in how you define behaviors, but you must be very careful in passing mutable variables as acquaintances to actors as they could be accessed by other actors on other threads concurrently causing race conditions. 
+### Instead Share Actors
 
-## Instead Share Actors
+But in many cases you want actors or tasks to concurrently use the same variables. You can then thread-safely model those as actors and share their links between actors or tasks alike. Each call to a shared link is a communication to an actor preventing concurrent access to the served variable:
 
-It is thread-safe to share actors between threads or other actors. Each call to the shared actor is a communication.
-
-- In the [table-tennis](@ref table-tennis) example we shared a print server actor between player actors working on different threads.
-- In the [Dict-server](@ref dict-server) example a dictionary gets served by an actor to parallel threads.
+- In the [table-tennis](@ref table-tennis) example player actors working on different threads share a print server actor controlling access to the `stdio` variable.
+- In the [Dict-server](@ref dict-server) example a `Dict` variable gets served by an actor to tasks on parallel threads or workers.
+- In the [Dining Philosophers](examples/dining_phil.md) problem the shared chopsticks are expressed as actors. This avoids races and starvation between the philosopher actors.
+- In the [Producer-Consumer](examples/prod_cons.md) problem producers and consumers share a buffer modeled as an actor.
 - You can wrap mutable variables into a [`:guard`](https://github.com/JuliaActors/Guards.jl) actor, which will manage access to them.
 - In more complicated cases of resource sharing you can use a [`:genserver`](https://github.com/JuliaActors/GenServers.jl) actor.
 
-As those examples show, it is surprisingly easy to avoid race conditions by using actors.
+To model concurrently shared objects or data as actors is a common and successful pattern in actor programming. It makes it easier to write clear, correct concurrent programs. Unlike common tasks, actors are particularly suitable for this modeling because
+
+1. they are persistent objects like the variables or objects they represent and
+2. they can express the behavior of those objects.
 
 [^1]: [Hewitt, Meijer and Szyperski: The Actor Model (everything you wanted to know, but were afraid to ask)](http://channel9.msdn.com/Shows/Going+Deep/Hewitt-Meijer-and-Szyperski-The-Actor-Model-everything-you-wanted-to-know-but-were-afraid-to-ask), Microsoft Channel 9. April 9, 2012.
 [^2]: Carl Hewitt. Actor Model of Computation: Scalable Robust Information Systems.- [arXiv:1008.1459](https://arxiv.org/abs/1008.1459).

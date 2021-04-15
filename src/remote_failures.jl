@@ -99,16 +99,22 @@ function restart!(s::Supervisor, cs::Vector{Child}, pids::Vector{Int})
         warn("supervisor: restarting all")
         for child in s.childs
             child ∈ cs ?
-                restart_child!(child, pids[findfirst(==(child),cs)]) :
-                shutdown_restart_child!(child)
+                begin 
+                    restart_child!(child, pids[findfirst(==(child),cs)]) 
+                    rnfd_add(s, child.lk)
+                end :
+                child.lk.mode ≠ :rnfd && shutdown_restart_child!(child)
         end
     else
         warn("supervisor: restarting rest")
         ix = findfirst(c->c ∈ cs, s.childs)
         for child in s.childs[ix:end]
             child ∈ cs ?
-            restart_child!(child, pids[findfirst(==(child),cs)]) :
-            shutdown_restart_child!(child)
+                begin
+                    restart_child!(child, pids[findfirst(==(child),cs)]) 
+                    rnfd_add(s, child.lk)
+                end :
+                child.lk.mode ≠ :rnfd && shutdown_restart_child!(child)
         end
     end
 end
@@ -144,7 +150,14 @@ function (s::Supervisor)(msg::NodeFailure)
     end
     failed_childs = filter(c->c.lk.pid ∈ msg.pids, s.childs)
     remove_temporary!(s, failed_childs)
-    isempty(failed_childs) || restart!(s, failed_childs, spare_pids!(s, failed_childs))
+    if !isempty(failed_childs)
+        if restart_limit!(s)
+            warn("supervisor: restart limit $(s.option[:max_restarts]) exceeded!")
+            send(self(), Exit(:shutdown, fill(nothing, 3)...))
+        else
+            restart!(s, failed_childs, spare_pids!(s, failed_childs))
+        end
+    end
 end
 
 #

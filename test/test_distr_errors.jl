@@ -8,7 +8,7 @@ include("delays.jl")
 using Actors, Distributed, Test, .Delays
 import Actors: spawn
 
-prcs = addprocs(6)
+prcs = addprocs(9)
 
 @everywhere using Actors
 
@@ -17,7 +17,7 @@ t1 = Ref{Task}()
 println("Testing supervision with remote failures:")
 
 # start a supervisor with spare nodes
-sv = supervisor(spares=prcs[3:5], taskref=t1)
+sv = supervisor(:one_for_one, 9, 30, spares=prcs[3:5], taskref=t1)
 sa = Actors.diag(sv, :act)
 @test sa.bhv.option[:spares] == prcs[3:5]
 
@@ -92,8 +92,8 @@ sleep(1)
 
 rmprocs(prcs[5])
 sleep(1)
-@test @delayed act1.pid == prcs[6]
-@test @delayed act2.pid == prcs[6]
+@test @delayed act1.pid == prcs[end]
+@test @delayed act2.pid == prcs[end]
 @test @delayed call(act1, 10) == 20
 @test call(:act1, 10) == 20
 @test @delayed call(act2, 10) == 30
@@ -108,6 +108,23 @@ sleep(1)
 
 # change act2 to :temporary
 sa.bhv.childs[3].info = (restart = :temporary,)
-rmprocs(prcs[6])
+rmprocs(prcs[end])
 sleep(1)
 @test @delayed length(sa.bhv.childs) == 3
+@test @delayed length(ra.bhv.lks) == 2
+
+# set strategy to :one_for_all
+set_strategy(sv, :one_for_all)
+@test @delayed sa.bhv.option[:strategy] == :one_for_all
+rmprocs(prcs[end-1])
+sleep(1)
+@test @delayed length(sa.bhv.childs) == 3
+@test @delayed length(ra.bhv.lks) == 2
+
+set_strategy(sv, :rest_for_one)
+@test @delayed sa.bhv.option[:strategy] == :rest_for_one
+rmprocs(prcs[end-2])
+sleep(1)
+@test @delayed length(sa.bhv.childs) == 3
+
+rmprocs(prcs[end-3])

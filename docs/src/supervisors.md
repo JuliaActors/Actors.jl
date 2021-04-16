@@ -202,7 +202,7 @@ User defined callbacks must follow some conventions:
 
 After restarting an actor, a supervisor updates its link to point to the newly created actor. But other copies of a link won't get updated and may then be out of sync.
 
-If remote actors on other workers communicate with an actor over `RemoteChannel`s, they have copies of its link on their workers. After actor restart those are out of sync, and a remote actor may try to communicate with an old failed actor. To avoid this situation, you should [register](registry.md) those actors and use their registered names to supervise them and communicate with them. The supervisor then will update the registered link.
+If remote actors on other workers communicate with an actor over `RemoteChannel`s, they have copies of its link on their workers. After actor restart those are out of sync, and a remote actor may try to communicate with an old failed actor. To avoid this situation, you should [register](howto/register.md) those actors and use their registered names to supervise them and communicate with them. The supervisor then will update the registered link.
 
 ## Task Supervision
 

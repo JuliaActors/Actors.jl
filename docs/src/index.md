@@ -1,8 +1,8 @@
-# Overview
+# Introduction
 
-Welcome to the documentation of [`Actors`](https://github.com/JuliaActors/Actors.jl), a Julia library for concurrent computing with actors.
+Welcome to the documentation of [`Actors`](https://github.com/JuliaActors/Actors.jl).
 
-`Actors` implements the Actor Model of computation:
+`Actors` is a [Julia](https://julialang.org) library for concurrent computing. It implements the [Actor Model](https://en.wikipedia.org/wiki/Actor_model):
 
 > An actor ... in response to a message it receives, can concurrently:
 >
@@ -10,21 +10,24 @@ Welcome to the documentation of [`Actors`](https://github.com/JuliaActors/Actors
 > - *create* a finite number of new actors;
 > - designate the *behavior* to be used for the next message it receives. [^1]
 
-`Actors` make(s) concurrency easy to understand and reason about and integrate(s) well with Julia's multi-threading and distributed computing. It provides a modern API [^2] for writing reactive [^3] applications, that are:
+Actors make concurrency easy to understand and reason about and integrate well with Julia's multi-threading and distributed computing. `Actors` provides a modern API [^2] for writing reactive [^3] applications, that are:
 
-- *responsive*: react to inputs and events,
-- *resilient*: can cope with failures,
-- *elastic*: can distribute load over multiple threads and  workers,
-- *message-driven*: rely on asynchronous message-passing.
+- *responsive* : react to inputs and events,
+- *resilient* : can cope with failures,
+- *elastic* : can distribute load over multiple threads and  workers,
+- *message-driven* : rely on asynchronous message-passing.
 
-## Documentation, quick links
+### Overview
 
-- [Installation](api.md),
-- Manual: [Getting started](intro.md), a quick introduction,
-- Manual: [Actor Model](basics.md) ..., further explanations,
-- Manual: [Error Handling](errors.md), fault-tolerance with `Actors`,
-- [API](api.md), documentation of module, types, functions,
-- [Examples](examples/dining_phil.md),
+This overview of `Actors`' documentation will help you know where to look for certain things:
+
+- [*Tutorials*](tutorial/install.md) take you through a series of steps to work with actors. Start here if you’re new to `Actors`.
+- [*How-to*](howto/spawn.md) guides are recipes. They guide you through the steps involved in addressing key problems and use-cases. They are more advanced than tutorials and assume some knowledge of how actors work.
+- [*On Actors*](basics.md) discusses key concepts and provides background information and explanation.
+- [*Reference*](api.md) contains technical reference for APIs, internals and some examples. It assumes that you have a basic understanding of key concepts.
+
+### Links
+
 - [Actors GitHub repository](https://github.com/JuliaActors/Actors.jl),
 - [JuliaActors](https://github.com/JuliaActors/)
 

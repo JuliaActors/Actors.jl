@@ -9,9 +9,24 @@ makedocs(
     sitename = "Actors.jl",
     authors  = "Paul Bayer",
     pages = [
-        "Actors Documentation" => "index.md",
-        "Manual" => [
-            "intro.md",
+        "Introduction" => "index.md",
+        "Tutorials" => [
+            "tutorial/install.md",
+            "tutorial/intro.md",
+            "tutorial/tabletennis.md",
+            "tutorial/stack.md",
+            "tutorial/dictsrv.md",
+        ],
+        "How to" => [
+            "`spawn` actors"              => "howto/spawn.md",
+            "communicate with actors"     => "howto/communicate.md",
+            "get information from actors" => "howto/information.md",
+            "`connect` actors"            => "howto/connect.md",
+            "`monitor` actors"            => "howto/monitor.md",
+            "`supervise` actors"          => "howto/supervise.md",
+            "`register` actors"           => "howto/register.md",
+        ],
+        "On Actors" => [
             "basics.md",
             "actors.md",
             "behaviors.md",
@@ -25,21 +40,22 @@ makedocs(
                 "checkpoints.md",
                 "fault_tolerance.md"
                 ],
-            "registry.md",
             "infrastructure.md",
-            "glossary.md"
             ],
-        "API" => "api.md",
-        "Examples" => [
-            "examples/dining_phil.md",
-            "examples/prod_cons.md",
-            "examples/examples.md"
+        "Reference" => [
+            "API" => "api.md",
+            "Examples" => [
+                "examples/dining_phil.md",
+                "examples/prod_cons.md",
+                "examples/examples.md"
+                ],
+            "Internals" => [
+                "diag.md",
+                "internals.md",
+                "messages.md",
+                "interface.md",
             ],
-        "Internals" => [
-            "diag.md",
-            "internals.md",
-            "messages.md",
-            "interface.md",
+            "glossary.md",
         ]
     ]
 )

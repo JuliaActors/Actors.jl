@@ -94,75 +94,15 @@ receive(me)                                      # receive the result
 
 In setting actor behavior you are free to mix the functional and object oriented approaches. For example you can give functors further acquaintance parameters (as for the players in the [table-tennis example](@ref table-tennis)). Of course you can give objects containing acquaintances as parameters to a function and create a partial application with `Bhv` on them and much more.
 
-## [Agha's Stack example](@id stack)
-
-Now more realistically for actor behavior we reproduce Agha's example 3.2.1:
-
-> We implement a stack as a collection of actors with uniform behavior. ... [A] linked list consists of a collection of nodes each of which stores a value and knows the mail address of the "next" actor in the chain. ... Two kinds of operations may be requested of a *stack-node*: a *push* or a *pop*. In the first case, the new content to be pushed must be given, and in the second, the customer to which the value stored in the *stack-node* can be sent. [^4]:
-
-```julia
-mutable struct StackNode{T,L}  # a stack node object
-    content::T
-    link::L
-end
-
-struct Pop{L}                  # a pop message
-    customer::L
-end
-
-struct Push{T}                 # a push message
-    content::T
-end
-
-# now three behavior methods
-forwarder = send
-function (sn::StackNode)(msg::Pop)
-    isnothing(sn.content) || become(forwarder, sn.link)
-    send(msg.customer, Response(sn.content))
-end
-(sn::StackNode)(msg::Push) = become(StackNode(msg.content, spawn(sn)))
-```
-
-Here we use both the functional and the object oriented style:
-
-- `forwarder` is a function (`send`) which we put together with `sn.link` into a behavior. After `become(forwarder, sn.link)` the actor will forward any received message to `sn.link`.
-- `StackNode` is a functor with two methods.
-
-> The top of the stack is the only receptionist in the stack system and was the only actor of the stack system created externally. It is created with a NIL content which is assumed to be the bottom of the stack marker. Notice that no mail address of a stack node ist ever communicated by any node to an external actor. Therefore no actor outside the configuration defined above can effect any of the actors inside the stack except by sending the receptionist a communication. When a *pop* operation is done, the actor on top of the stack simply becomes a *forwarder* to the next actor in the link. This means that all communications received by the top of the stack are now forwarded to the next element. [^4]
-
-Now we can operate the stack:
-
-```julia
-julia> mystack = spawn(StackNode(nothing, newLink())) # create the top of the stack
-Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :default)
-
-julia> response = newLink()                           # create a response link
-Link{Channel{Any}}(Channel{Any}(sz_max:32,sz_curr:0), 1, :local)
-
-julia> for i ∈ 1:5
-           send(mystack, Push(i))
-       end
-
-julia> for i ∈ 1:5
-           send(mystack, Pop(response))
-           println(receive(response).y)
-       end
-5
-4
-3
-2
-1
-```
-
 ## Actors Don't Share State
 
 Actors must not share state in order to avoid race conditions. Acquaintance and communication parameters are actor state. `Actors` does not disallow for an actor to access and to modify mutable variables. It is therefore left to the programmer to exclude race conditions by not sharing them with other actors or tasks and accessing them concurrently. In most cases you can control which variables get passed to an actor and avoid to share them.
 
 Note that when working with distributed actors, variables get copied automatically when sent over a `Link` (a `RemoteChannel`).
 
-### Instead Share Actors
+### Share Actors Instead Of Memory
 
-But in many cases you want actors or tasks to concurrently use the same variables. You can then thread-safely model those as actors and share their links between actors or tasks alike. Each call to a shared link is a communication to an actor preventing concurrent access to the served variable:
+But in many cases you want actors or tasks to concurrently use the same variables. You can then thread-safely model those as actors and share their links between actors and tasks alike. Each call to a link is a communication to an actor (instead of a concurrent access to a variable):
 
 - In the [table-tennis](@ref table-tennis) example player actors working on different threads share a print server actor controlling access to the `stdio` variable.
 - In the [Dict-server](@ref dict-server) example a `Dict` variable gets served by an actor to tasks on parallel threads or workers.
@@ -171,12 +111,11 @@ But in many cases you want actors or tasks to concurrently use the same variable
 - You can wrap mutable variables into a [`:guard`](https://github.com/JuliaActors/Guards.jl) actor, which will manage access to them.
 - In more complicated cases of resource sharing you can use a [`:genserver`](https://github.com/JuliaActors/GenServers.jl) actor.
 
-To model concurrently shared objects or data as actors is a common and successful pattern in actor programming. It makes it easier to write clear, correct concurrent programs. Unlike common tasks, actors are particularly suitable for this modeling because
+To model concurrently shared objects or data as actors is a common and successful pattern in actor programming. It makes it easier to write clear, correct concurrent programs. Unlike common tasks or also shared variables, actors are particularly suitable for this modeling because
 
 1. they are persistent objects like the variables or objects they represent and
-2. they can express the behavior of those objects.
+2. they can express a behavior of those objects.
 
 [^1]: [Hewitt, Meijer and Szyperski: The Actor Model (everything you wanted to know, but were afraid to ask)](http://channel9.msdn.com/Shows/Going+Deep/Hewitt-Meijer-and-Szyperski-The-Actor-Model-everything-you-wanted-to-know-but-were-afraid-to-ask), Microsoft Channel 9. April 9, 2012.
 [^2]: Carl Hewitt. Actor Model of Computation: Scalable Robust Information Systems.- [arXiv:1008.1459](https://arxiv.org/abs/1008.1459).
 [^3]: Gul Agha 1986. *Actors. a model of concurrent computation in distributed systems*, MIT.- p. 30
-[^4]: ibid. p. 34f

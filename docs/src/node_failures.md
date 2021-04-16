@@ -61,7 +61,7 @@ Ident    x-d-kofiz-jovub
 Name     A3
 ```
 
-We [registered](registry.md) our remote actors under names `:A1`…`:A6`, which keeps them accessible to each other after restart. Our system now looks similar to the following:
+We [registered](howto/register.md) our remote actors under names `:A1`…`:A6`, which keeps them accessible to each other after restart. Our system now looks similar to the following:
 
 ![supervisor rfd 1](assets/supervisor_rfd1.svg)
 

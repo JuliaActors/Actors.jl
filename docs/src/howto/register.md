@@ -1,4 +1,4 @@
-# Actor Registry
+# How to register an actor 
 
 ```@meta
 CurrentModule = Actors

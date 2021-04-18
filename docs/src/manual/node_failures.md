@@ -61,9 +61,9 @@ Ident    x-d-kofiz-jovub
 Name     A3
 ```
 
-We [registered](howto/register.md) our remote actors under names `:A1`…`:A6`, which keeps them accessible to each other after restart. Our system now looks similar to the following:
+We [registered](../howto/register.md) our remote actors under names `:A1`…`:A6`, which keeps them accessible to each other after restart. Our system now looks similar to the following:
 
-![supervisor rfd 1](assets/supervisor_rfd1.svg)
+![supervisor rfd 1](../assets/supervisor_rfd1.svg)
 
 If the worker process with `pid` 3 fails, the supervisor restarts  actors `A3` and `A4` on the first spare worker process (`pid` 5):
 
@@ -87,6 +87,6 @@ Name     A3
 
 With other supervision strategies (`:one_for_all` or `:rest_for_one`) the supervisor would have shutdown other child actors as well (`A1,A2,A5,A6` or `A5,A6` respectively) and restarted them on their same `pid`s. The system after actor restart looks as follows:
 
-![supervisor rfd 2](assets/supervisor_rfd2.svg)
+![supervisor rfd 2](../assets/supervisor_rfd2.svg)
 
 `pid` 3 is gone and the supervisor has one spare worker (`pid` 6) left.

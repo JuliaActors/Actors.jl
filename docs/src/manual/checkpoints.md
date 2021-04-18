@@ -24,7 +24,7 @@ All checkpointing actors have a `Dict` (in-memory) for checkpoints, which they c
 
 A hierarchy of checkpointing actors may look like the following:
 
-![checkpointing](assets/checkpointing.svg)
+![checkpointing](../assets/checkpointing.svg)
 
 `C1` .. `C3` take level 1 checkpoints from connected worker actors `A1` .. `A17`. `C4` is at level 2 and updates regularly its dictionary from checkpoints of actors `A1` .. `A10`. `C5` updates regularly from `C3` and `C4`. Depending on the failure and the supervisory strategy the system can recover from checkpoints on various levels. Maybe `C5` saves its checkpoints to disk. Thus the whole system could be restarted from that.
 

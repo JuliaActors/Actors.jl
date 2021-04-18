@@ -6,7 +6,7 @@ CurrentModule = Actors
 
 An actor can be told to [`monitor`](@ref) other actors or Julia tasks. Monitored actors or tasks send a [`Down`](@ref) message with an exit reason to their monitor(s) before they terminate. A monitor then gives a warning or executes a specified action dispatched on the received reason.
 
-![monitor](assets/monitor.svg)
+![monitor](../assets/monitor.svg)
 
 `A3` is a monitor. It gets a `Down` signal from its monitored actors if they exit.
 

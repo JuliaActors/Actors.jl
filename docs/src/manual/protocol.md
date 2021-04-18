@@ -4,7 +4,7 @@
 CurrentModule = Actors
 ```
 
-`Actors` has predefined [message types](messages.md) with respective [`onmessage`](@ref) methods. This gives your actors predefined behaviors going beyond the classical [behavior](behaviors.md). API functions provide an interface to that messaging protocol and facilitate actor control and message exchange.
+`Actors` has predefined [message types](../reference/messages.md) with respective [`onmessage`](@ref) methods. This gives your actors predefined behaviors going beyond the classical [behavior](behaviors.md). API functions provide an interface to that messaging protocol and facilitate actor control and message exchange.
 
 ## Messaging Patterns
 

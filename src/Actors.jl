@@ -26,8 +26,7 @@ It provides:
     - supervisors: [`supervisor`](@ref), [`supervise`](@ref), 
         [`unsupervise`](@ref), [`start_actor`](@ref), 
         [`start_task`](@ref), [`count_children`](@ref), 
-        [`which_children`](@ref), [`delete_child`](@ref), 
-        [`terminate_child`](@ref), 
+        [`which_children`](@ref), [`terminate_child`](@ref), 
 - an actor registry: [`register`](@ref), [`unregister`](@ref), 
     [`whereis`](@ref), [`registered`](@ref)
 

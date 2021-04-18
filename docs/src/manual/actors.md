@@ -65,7 +65,7 @@ In order to avoid race conditions actors have to be strongly isolated from each 
 
 An actor stores the behavior function and arguments to it, results of computations and more. Thus it has state and this influences how it behaves.
 
-But it does **not share** its state variables with its environment (only for diagnostic purposes). The [API](api.md) functions above are a safe way to access actor state via messaging.
+But it does **not share** its state variables with its environment (only for diagnostic purposes). The [user API functions](../api/user_api.md) functions are a safe way to access actor state via messaging.
 
 Mutable variables in Julia can be sent over local channels without being copied. Accessing those variables from multiple threads can cause race conditions. The programmer has to be careful to avoid those situations either by
 

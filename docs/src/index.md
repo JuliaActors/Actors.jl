@@ -2,7 +2,7 @@
 
 Welcome to the documentation of [`Actors`](https://github.com/JuliaActors/Actors.jl).
 
-`Actors` is a [Julia](https://julialang.org) library for concurrent computing. It implements the [Actor Model](https://en.wikipedia.org/wiki/Actor_model):
+`Actors` is a [Julia](https://julialang.org) library for concurrent computing based on the [Actor Model](https://en.wikipedia.org/wiki/Actor_model):
 
 > An actor ... in response to a message it receives, can concurrently:
 >
@@ -10,7 +10,7 @@ Welcome to the documentation of [`Actors`](https://github.com/JuliaActors/Actors
 > - *create* a finite number of new actors;
 > - designate the *behavior* to be used for the next message it receives. [^1]
 
-Actors make concurrency easy to understand and reason about and integrate well with Julia's multi-threading and distributed computing. `Actors` provides a modern API [^2] for writing reactive [^3] applications, that are:
+Actors make concurrency easy to understand and reason about and integrate well with Julia's multi-threaded and distributed computing. `Actors` provides a modern API [^2] for writing reactive [^3] applications, that are:
 
 - *responsive* : react to inputs and events,
 - *resilient* : can cope with failures,
@@ -21,10 +21,10 @@ Actors make concurrency easy to understand and reason about and integrate well w
 
 This overview of `Actors`' documentation will help you know where to look for certain things:
 
-- [*Tutorials*](tutorial/install.md) take you through a series of steps to work with actors. Start here if you’re new to `Actors`.
+- [*Tutorials*](tutorial/install.md) will help you to learn how to work with actors. Start here if you’re new to `Actors`.
 - [*How-to*](howto/spawn.md) guides are recipes. They guide you through the steps involved in addressing key problems and use-cases. They are more advanced than tutorials and assume some knowledge of how actors work.
-- [*On Actors*](basics.md) discusses key concepts and provides background information and explanation.
-- [*Reference*](api.md) contains technical reference for APIs, internals and some examples. It assumes that you have a basic understanding of key concepts.
+- [*On Actors*](manual/basics.md) discusses key concepts and provides background information and explanation.
+- [*Reference*](api/api.md) contains technical reference for APIs, internals and some examples. It assumes that you have a basic understanding of key concepts.
 
 ### Links
 

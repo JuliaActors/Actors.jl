@@ -1,4 +1,4 @@
-# Install `Actors`
+# Install and Use `Actors`
 
 `Actors` requires at least Julia 1.6.
 
@@ -14,3 +14,9 @@ The development version is installed with:
 pkg> add "https://github.com/JuliaActors/Actors.jl"
 ```
 
+You can then use it for your work:
+
+```@repl
+using Actors
+Actors.version
+```

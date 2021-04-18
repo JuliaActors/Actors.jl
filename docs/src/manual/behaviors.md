@@ -4,7 +4,7 @@
 CurrentModule = Actors
 ```
 
-An actor embodies the essential elements of  computation: 1) processing, 2) storage and 3) communication.[^1] Its behavior therefore can be described as ``f(a)[c]``,  representing
+An actor embodies the three essential elements of computation: 1) processing, 2) storage and 3) communication[^1]. Its behavior therefore can be described as ``f(a)[c]``,  representing
 
 1. ``f``: a function, *processing*,
 2. ``a``: acquaintances, *storage*, data that it has,
@@ -60,7 +60,7 @@ bhv(2)                              # execute it with a communication parameter
 
 ### Object-oriented Style
 
-Alternatively we define an object with some data (acquaintances) and make it [callable (as a functor)](https://en.wikipedia.org/wiki/Function_object) with communication parameters:
+Alternatively we define an object with some data (acquaintances) and make it [callable](https://en.wikipedia.org/wiki/Function_object) with communication parameters:
 
 ```@repl bhv
 struct A                            # define an object 
@@ -76,7 +76,7 @@ bhv(2)                              # execute it with a parameter
 When we create an actor with a behavior by using [`spawn`](@ref), it is ready to receive communication arguments and to process them:
 
 1. You can create an actor with anything callable as behavior regardless whether it contains acquaintances or not.
-2. Over its [`Link`](@ref) you can [`send`](@ref) it communication arguments and cause the actor to execute its behavior with them. `Actors`' [API](api.md) functions like [`call`](@ref), [`exec`](@ref) are just wrappers around `send` and [`receive`](@ref) using a communication [protocol](protocol.md).
+2. Over its [`Link`](@ref) you can [`send`](@ref) it communication arguments and cause the actor to execute its behavior with them. `Actors`' [API](../api/user_api.md) functions like [`call`](@ref), [`exec`](@ref) are just wrappers around `send` and [`receive`](@ref) using a communication [protocol](protocol.md).
 3. If an actor receives wrong/unspecified communication arguments, it will fail with a `MethodError`.
 4. With [`become!`](@ref) and [`become`](@ref) we can change an actor's behavior.
 
@@ -102,12 +102,14 @@ Note that when working with distributed actors, variables get copied automatical
 
 ### Share Actors Instead Of Memory
 
-But in many cases you want actors or tasks to concurrently use the same variables. You can then thread-safely model those as actors and share their links between actors and tasks alike. Each call to a link is a communication to an actor (instead of a concurrent access to a variable):
+But in many cases you want actors or tasks to concurrently use the same variables. You can then thread-safely model those as actors and share their links between actors and tasks alike. Each call to a link is a communication to an actor (instead of a concurrent access to a variable). See [How to (not) share variables](../howto/share.md) for a receipt.
+
+In the Actors documentation there are many examples on how actors represent variables and get shared between actors and tasks:
 
 - In the [table-tennis](@ref table-tennis) example player actors working on different threads share a print server actor controlling access to the `stdio` variable.
 - In the [Dict-server](@ref dict-server) example a `Dict` variable gets served by an actor to tasks on parallel threads or workers.
-- In the [Dining Philosophers](examples/dining_phil.md) problem the shared chopsticks are expressed as actors. This avoids races and starvation between the philosopher actors.
-- In the [Producer-Consumer](examples/prod_cons.md) problem producers and consumers share a buffer modeled as an actor.
+- In the [Dining Philosophers](../examples/dining_phil.md) problem the shared chopsticks are expressed as actors. This avoids races and starvation between the philosopher actors.
+- In the [Producer-Consumer](../examples/prod_cons.md) problem producers and consumers share a buffer modeled as an actor.
 - You can wrap mutable variables into a [`:guard`](https://github.com/JuliaActors/Guards.jl) actor, which will manage access to them.
 - In more complicated cases of resource sharing you can use a [`:genserver`](https://github.com/JuliaActors/GenServers.jl) actor.
 

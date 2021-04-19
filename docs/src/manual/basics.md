@@ -33,7 +33,7 @@ Modern actor implementations extend those by
 
 ## Actor Primitives
 
-The actor machinery is based on only a few basic primitives defined in [`ActorInterfaces.Classic`](https://github.com/JuliaActors/ActorInterfaces.jl):
+The actor machinery is based on only a few basic [primitives](../api/primitives.md) defined in [`ActorInterfaces.Classic`](https://github.com/JuliaActors/ActorInterfaces.jl):
 
 | Primitive             | Brief description            |
 |:----------------------|:-----------------------------|
@@ -42,9 +42,8 @@ The actor machinery is based on only a few basic primitives defined in [`ActorIn
 | `spawn(bhv)` | create an actor from a behavior and return an address, |
 | `send(addr, msg)` | send a message to an actor, |
 | `become(bhv)` | an actor designates a new behavior, |
-| `onmessage(bhv, msg)` | is executed by the actor when a message arrives. |
 
-A user can write actor programs using only those basic primitives. Those programs should run with minor modifications on other libraries supporting the same basic interface.
+A user can write actor programs using only those. His programs should run with minor modifications on other actor libraries supporting the same basic interface.
 
 !!! note "The interface needs yet work!"
 

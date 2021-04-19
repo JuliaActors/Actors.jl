@@ -16,6 +16,7 @@ makedocs(
             "tutorial/tabletennis.md",
             "tutorial/stack.md",
             "tutorial/dictsrv.md",
+            "tutorial/supervise.md",
         ],
         "How to" => [
             "`spawn` actors"              => "howto/spawn.md",

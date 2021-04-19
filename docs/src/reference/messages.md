@@ -4,9 +4,15 @@
 CurrentModule = Actors
 ```
 
-Actors can be called, updated, queried … To do it they follow a `onmessage` protocol on the following internal messages.
+Actors can be called, updated, queried … This is implemented with Julia's multiple dispatch. An actors dispatches the `onmessage` methods on the incoming messages:
+
+```@docs
+onmessage
+```
 
 ## Internal Messages
+
+The actor's `onmessage` methods are dispatched by and do different things with the following internal messages:
 
 ```@docs
 Become

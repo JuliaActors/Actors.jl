@@ -201,7 +201,7 @@ return a link to it.
 # Arguments
 The following arguments are mandatory and go into a supervisor's 
 options:
-- `strategy=:one_for_one`: supervision strategy, can be 
+- `strategy=:one_for_one`: [supervision strategy](@ref strategies), can be 
     either `:one_for_one`, `:one_for_all` or `:rest_for_one`,
 - `max_restarts::Int=3`: maximum number of restarts 
     allowed in a time frame,
@@ -222,10 +222,6 @@ options:
 - `spares=[5,6,7]`: spare `pid`s, where you can give spare pids 
     (e.g. `[5,6,7]`) to a supervisor used for actor restarts after 
     node failures.
-
-!!! note
-    See the manual chapter on Supervisors for
-    explanations of `strategy`.
 """
 function supervisor(strategy=:one_for_one, max_restarts::Int=3, max_seconds::Real=5; name=nothing, kwargs...)
     @assert strategy in strategies "Unknown strategy $strategy"
@@ -269,15 +265,11 @@ it to its childs list and to return a link to it.
     actor behavior as argument and must return a [`Link`](@ref));  
     if `nothing`, the actor gets restarted with its [`init!`](@ref) 
     callback or with its last behavior,
-- `restart::Symbol=:transient`: restart option, one of 
+- `restart::Symbol=:transient`: [restart option](@ref restart), one of 
     `:permanent`, `:temporary`, `:transient`,
 - `name::Union{Symbol,Nothing}=nothing`, name (Symbol) under which
     the actor should be registered,
 - `kwargs...`: keyword arguments to [`spawn`](@ref).
-
-!!! note
-    See the manual chapter on supervisors for explanations of 
-    child restart options.
 """
 function start_actor(start, sv::Link, cb=nothing, restart::Symbol=:transient; 
     name::Union{Symbol,Nothing}=nothing, kwargs...)
@@ -373,12 +365,8 @@ Tell a supervisor `sv` to supervise the given `child` actor.
     a [`Link`](@ref) to a new actor; if `nothing`, the
     actor gets restarted with its [`init!`](@ref) callback 
     or its previous behavior. 
-- `restart::Symbol=:transient`: restart option, one of 
+- `restart::Symbol=:transient`: [restart option](@ref restart), one of 
     `:permanent`, `:temporary`, `:transient`,
-
-!!! note
-    See the manual chapter on supervisors for
-    explanations of child restart options.
 """
 function supervise(sv, child=self(); cb=nothing, restart::Symbol=:transient)
     @assert restart in restarts "Not a known restart strategy: $restart"

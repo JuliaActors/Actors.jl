@@ -8,7 +8,7 @@ Supervisors allow some automation and control of error handling in an actor syst
 
 ## [Supervision Strategies](@id strategies)
 
-What a [`supervisor`](@ref) does if one of its children terminates, is determined by its supervision `strategy` keyword:
+What a [`supervisor`](@ref) does if one of its children terminates, is determined by its supervision `strategy` argument:
 
 | strategy | brief description |
 |:---------|:------------------|

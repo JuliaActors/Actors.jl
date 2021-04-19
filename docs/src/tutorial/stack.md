@@ -17,22 +17,23 @@ end
 struct Push{T}                 # a push message
     content::T
 end
+```
 
-# now three behavior methods
-forwarder = send
+> The top of the stack is the only receptionist in the stack system and was the only actor of the stack system created externally. It is created with a NIL content which is assumed to be the bottom of the stack marker. Notice that no mail address of a stack node ist ever communicated by any node to an external actor. Therefore no actor outside the configuration defined above can effect any of the actors inside the stack except by sending the receptionist a communication. When a *pop* operation is done, the actor on top of the stack simply becomes a *forwarder* to the next actor in the link. This means that all communications received by the top of the stack are now forwarded to the next element. [^1]
+
+To implement the stack we use both the functional and the object oriented style for [actor behaviors](../manual/behaviors.md):
+
+- `forwarder` is just an alias for `send` which we put together with `sn.link` into a behavior. After `become(forwarder, sn.link)` the actor will forward any received message to `sn.link`.
+- `StackNode` is a function object with two methods for `Pop` and `Push` messages.
+
+```julia
+const forwarder = send
 function (sn::StackNode)(msg::Pop)
     isnothing(sn.content) || become(forwarder, sn.link)
     send(msg.customer, Response(sn.content))
 end
 (sn::StackNode)(msg::Push) = become(StackNode(msg.content, spawn(sn)))
 ```
-
-Here we use both the functional and the object oriented style:
-
-- `forwarder` is a function (`send`) which we put together with `sn.link` into a behavior. After `become(forwarder, sn.link)` the actor will forward any received message to `sn.link`.
-- `StackNode` is a functor with two methods.
-
-> The top of the stack is the only receptionist in the stack system and was the only actor of the stack system created externally. It is created with a NIL content which is assumed to be the bottom of the stack marker. Notice that no mail address of a stack node ist ever communicated by any node to an external actor. Therefore no actor outside the configuration defined above can effect any of the actors inside the stack except by sending the receptionist a communication. When a *pop* operation is done, the actor on top of the stack simply becomes a *forwarder* to the next actor in the link. This means that all communications received by the top of the stack are now forwarded to the next element. [^1]
 
 Now we can operate the stack:
 

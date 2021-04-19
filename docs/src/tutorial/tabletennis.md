@@ -1,12 +1,12 @@
 # [Simulate a Game](@id table-tennis)
 
-Now a small toy example for concurrency with actors using only some classic actor primitives:
+Now we implement a small toy example for concurrency with three actors using only some classic actor primitives:
 
 | Primitive             | Brief description            |
 |:----------------------|:-----------------------------|
-| `spawn(bhv)` | create an actor from a behavior and return a link, |
-| `self()` | get the address of the current actor, |
-| `send(addr, msg)` | send a message to an actor, |
+| [`spawn`](@ref) | create an actor from a behavior and return a link, |
+| [`self`](@ref) | get the link of the current actor, |
+| [`send`](@ref) | send a message to an actor. |
 
 We simulate table-tennis where a player has a name and a capability. If he gets a ball with a difficulty exceeding his capability, he looses it. Players log to a print server actor.
 
@@ -15,20 +15,24 @@ using Actors, Printf, Random
 import Actors: spawn
 
 struct Player{S,T}
-    name::S
-    capa::T
+    name::S  # player's name 
+    capa::T  # capabiity
 end
 
 struct Ball{T,S,L}
-    diff::T
-    name::S
-    from::L
+    diff::T  # difficulty
+    name::S  # the server's name
+    from::L  # the server's link
 end
 
 struct Serve{L}
-    to::L
+    to::L    # the opponent's link
 end
+```
 
+We implement `Player` as a function object which gets the `prn` print server link as additional acquaintance and knows two message types: `Ball` and `Serve`.
+
+```julia
 function (p::Player)(prn, b::Ball)
     if p.capa ≥ b.diff
         send(b.from, Ball(rand(), p.name, self()))
@@ -45,7 +49,7 @@ end
 
 In order to get reproducible results we initialize our random generator on each thread and assign threads to  players.
 
-The print server `prn` gets an anonymous function as behavior. The two players `ping` and `pong` get the print server's link as acquaintance. We start the game by sending `ping` the `:serve` command and the address of `pong`:
+The print server `prn` gets an anonymous function as behavior. The two players `ping` and `pong` get the print server's link as acquaintance and - for illustration - are started on different threads. We start the game by sending `ping` a `Serve` message with the address of `pong`.
 
 ```julia
 @threads for i in 1:nthreads()

@@ -4,7 +4,7 @@
 CurrentModule = Actors
 ```
 
-You need to know only a few quite self-explanatory functions to get started with concurrent actor programming: 
+You need to know only a few quite self-explanatory functions to get started with concurrent actor programming:
 
 | API function | Brief description |
 |:-------------|:------------------|

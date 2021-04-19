@@ -1,4 +1,4 @@
-# [Implement a Game](@id table-tennis)
+# [Simulate a Game](@id table-tennis)
 
 Now a small toy example for concurrency with actors using only some classic actor primitives:
 

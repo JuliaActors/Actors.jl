@@ -1,7 +1,8 @@
+# Getting Started with Actors
+
 ```@meta
 CurrentModule = Actors
 ```
-# Getting Started with Actors
 
 You need to know only a few quite self-explanatory functions to get started with concurrent actor programming: 
 
@@ -16,7 +17,7 @@ You need to know only a few quite self-explanatory functions to get started with
 
 When we introduce those functions, please follow along in your Julia REPL and don't hesitate to try things out.
 
-## Creation: `spawn`
+## Create an actor
 
 The basic mechanism to *create* a new actor is the `spawn` function. You have to import it explicitly:
 
@@ -51,7 +52,7 @@ info(myactor)
 
 We caused our actor to fail. Ouch!
 
-## More On Actor Behavior
+## Actor behavior
 
 Now let's write our own behavior function! We want our actor to execute a given function `f` on parameters `args...` and to `send` the result back to a given address `addr`:
 
@@ -79,7 +80,7 @@ receive(me)
 
 Now we did *asynchronous communication* with our actor. After sending it something, we could have done other work and then received the result later.
 
-## Change Behavior: `become` and `become!`
+## Change behavior
 
 If we want our actor to do only multiplication, we can change its behavior with `become!` to `calc` with new acquaintances:
 
@@ -96,7 +97,7 @@ receive(me)
 
 An actor can change also its own behavior with `become` inside its behavior function. Instead `become!` is a call from the outside of an actor. A behavior change is effective for the next message an actor receives.
 
-## A Communication Failure
+## A communication failure
 
 What happens if a communication fails? Let's try that out: We cause our actor to fail, so it will not `send` back anything. Then we try to `receive` an answer:
 
@@ -107,7 +108,7 @@ receive(me)
 
 After some seconds we got a `Timeout()`.
 
-## Actor Protocol: `request`
+## The actor protocol
 
 We don't give up with it and start it again, but now we want it to be an adding machine with an offset of 1000:
 
@@ -115,29 +116,19 @@ We don't give up with it and start it again, but now we want it to be an adding 
 myactor = spawn(+, 1000)
 ```
 
-Our actor now has no acquaintance of `me`, neither has its behavior any `send` instruction. If we send it something, it will only add that to 1000 but not respond anything.
+Our actor now has no acquaintance of `me`, neither has its behavior any `send` instruction. If we send it something, it will only add that to 1000 but not respond anything. The *message protocol* allows us to communicate with actors even if their behaviors don't send anything. Actors understand messaging patterns.
 
-Here the *actor protocol* comes to our rescue. It allows us to communicate with actors even if their behaviors don't send anything. Actors understand messaging patterns.  For example if we send an actor a [`Call`](@ref), it knows that it must send a [`Response`](@ref) with the result. Let's try that out:
-
-```@repl intro
-send(myactor, Actors.Call((1,2,3), me))
-receive(me)
-ans.y
-```
-
-The actor added (1,2,3) to 1000 and sent the result back to the provided link. Then we received it asynchronously.
-
-The `request` function is a wrapper for *synchronous bidirectional communication*. It will create a link internally and `send` it with the communication parameters as a `Call` (or another given message type) to the actor. That one sends a `Response` back to the received link, and `request` then delivers the response:
+The [`request`](@ref) function is a wrapper for *synchronous communication*. It will create a link internally and `send` it with the communication parameters as a [`Call`](@ref) (or another given message type) to the actor. That sends a [`Response`](@ref) back to the received link, and `request` then delivers the response:
 
 ```@repl intro
 request(myactor, 1,2,3)
 ```
 
-This is called *synchronous communication* since `request` **blocks** until it `receive`s the result (or a `Timeout()`).
+This is *synchronous communication* since `request` **blocks** until it `receive`s the result (or a `Timeout()`).
 
 ## `call`, `cast` and `query`
 
-There are more such actor protocols and API functions.
+Then there are more [user API](../api/user_api.md) functions.
 
 We can do asynchronous communication with our actor if we use [`call`](@ref) with the `me` link. This sends the given link to the actor and it responds to it. Then we can `receive` the result asynchronously:
 

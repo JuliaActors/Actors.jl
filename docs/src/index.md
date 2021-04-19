@@ -1,8 +1,6 @@
-# Introduction
+# Welcome to Actors
 
-Welcome to the documentation of [`Actors`](https://github.com/JuliaActors/Actors.jl).
-
-`Actors` is a [Julia](https://julialang.org) library for concurrent computing based on the [Actor Model](https://en.wikipedia.org/wiki/Actor_model):
+[`Actors`](https://github.com/JuliaActors/Actors.jl) is a [Julia](https://julialang.org) library for concurrent computing based on the [Actor Model](https://en.wikipedia.org/wiki/Actor_model):
 
 > An actor ... in response to a message it receives, can concurrently:
 >
@@ -19,20 +17,19 @@ Actors make concurrency easy to understand and reason about and integrate well w
 
 ### Overview
 
-This overview of `Actors`' documentation will help you know where to look for certain things:
+This overview of `Actors`' documentation [^4] will help you know where to look for certain things:
 
 - [*Tutorials*](tutorial/install.md) will help you to learn how to work with actors. Start here if you’re new to `Actors`.
 - [*How-to*](howto/spawn.md) guides are recipes. They guide you through the steps involved in addressing key problems and use-cases. They are more advanced than tutorials and assume some knowledge of how actors work.
 - [*On Actors*](manual/basics.md) discusses key concepts and provides background information and explanation.
-- [*Reference*](api/api.md) contains technical reference for APIs, internals and some examples. It assumes that you have a basic understanding of key concepts.
+- [*Reference*](api/api.md) contains technical reference for APIs, some examples and internals. It assumes that you have a basic understanding of key concepts.
 
 ### Links
 
 - [Actors GitHub repository](https://github.com/JuliaActors/Actors.jl),
 - [JuliaActors](https://github.com/JuliaActors/)
 
-------
-
-[^1]: See the Wikipedia entry on the [Actor Model](https://en.wikipedia.org/wiki/Actor_model).
+[^1]: See the Wikipedia entry on the [Actor Model](https://en.wikipedia.org/wiki/Actor_model)
 [^2]: The `Actors` API is inspired by Erlang/OTP, see [OTP Design Principles - User’s Guide](https://erlang.org/doc/design_principles/users_guide.html)
-[^3]: See [The Reactive Manifesto](https://www.reactivemanifesto.org).
+[^3]: See [The Reactive Manifesto](https://www.reactivemanifesto.org)
+[^4]: The organization of the docs follows the [Diátaxis Framework](https://diataxis.fr)

@@ -4,11 +4,11 @@
 CurrentModule = Actors
 ```
 
-`Actors` has predefined [message types](../reference/messages.md) with respective [`onmessage`](@ref) methods. This gives your actors predefined behaviors going beyond the classical [behavior](behaviors.md). API functions provide an interface to that messaging protocol and facilitate actor control and message exchange.
+`Actors` has predefined [message types](../reference/messages.md) with respective [`onmessage`](@ref) methods. This gives your actors predefined behaviors going beyond the classical [behavior](behaviors.md).
 
 ## Messaging Patterns
 
-The actor protocol can be described as a series of messaging patterns. For every predefined message the actor executes a predefined behavior. Here is an overview:
+The actor protocol can be described as a series of messaging patterns. For every predefined message an actor executes a predefined `onmessage` method. Here is an overview:
 
 | Message pattern | brief description |
 |:----------------|:------------------|
@@ -23,47 +23,11 @@ The actor protocol can be described as a series of messaging patterns. For every
 | [`Request`](@ref) | This triggers the actor's default response to execute its behavior. |
 | [`Term`](@ref) | Tell an actor to execute a given behavior upon termination. |
 
-`Actors` API functions are wrappers to those message patterns. As you have seen there are unidirectional messages (without response) for actor control and bidirectional messages.
+There are messages for bidirectional and unidirectional communication (the latter for actor control without response).
 
-## Actor Control
+## User API Functions
 
-Actors can be controlled with the following functions:
-
-| API function | brief description |
-|:-------------|:------------------|
-| [`become!`](@ref) | cause an actor to switch its behavior |
-| [`cast`](@ref) | cause an actor to execute its behavior function |
-| [`exit!`](@ref) | cause an actor to terminate |
-| [`init!`](@ref) | tell an actor to execute a function at startup |
-| [`term!`](@ref) | tell an actor to execute a function when it terminates |
-| [`update!`](@ref) | update an actor's internal state |
-
-Actors can also operate on themselves, or rather they send themselves messages:
-
-| API function | brief description |
-|:-------------|:------------------|
-| [`become`](@ref) | an actor switches its own behavior |
-| [`self`](@ref) | an actor gets a link to itself |
-| [`stop`](@ref) | an actor stops |
-
-## Bidirectional Messages
-
-To receive a reply from an actor there are two possibilities:
-
-| API function | brief description |
-|:-------------|:------------------|
-| [`receive`](@ref) | after a [`send`](@ref) receive the [`Response`](@ref) asynchronously |
-| [`request`](@ref) | `send` (implicitly) a message to an actor, **block** and `receive` the result synchronously |
-
-The following functions do that for specific duties:
-
-| API function | brief description |
-|:-------------|:------------------|
-| [`call`](@ref) | tell an actor to execute its behavior function and to send the result |
-| [`exec`](@ref) | tell an actor to execute a function and to send the result |
-| [`query`](@ref) | tell an actor's to send one of its internal state variables |
-
-Those functions support both asynchronous and synchronous communication.
+`Actors`' [user API](../api/user_api.md) functions provide an interface to those message patterns. 
 
 ## Enhancing the Protocol
 

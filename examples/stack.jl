@@ -27,7 +27,7 @@ forwarder = send
 
 function (sn::StackNode)(msg::Pop)
     isnothing(sn.content) || become(forwarder, sn.link)
-    send(msg.customer, Response(sn.content))
+    send(msg.customer, sn.content)
 end
 (sn::StackNode)(msg::Push) = become(StackNode(msg.content, spawn(sn)))
 
@@ -40,5 +40,5 @@ end
 
 for i ∈ 1:5
     send(mystack, Pop(response))
-    println(receive(response).y)
+    println(receive(response))
 end

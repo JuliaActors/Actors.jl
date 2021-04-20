@@ -4,7 +4,7 @@
 CurrentModule = Actors
 ```
 
-`Actors` are represented only by their [`Link`](@ref)s. There are two API functions: [`info`](@ref) and [`diag`](@ref) (not exported) to get more information about them.
+`Actors` are represented only by their [`Link`](@ref)s. There are two API functions: [`info`](@ref) and [`diag`](@ref) (the latter is not exported) to get more information about them.
 
 ## Actor Identification
 

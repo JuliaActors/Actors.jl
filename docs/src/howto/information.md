@@ -59,7 +59,7 @@ Ident    x-d-ukih-hamub
 Name     myname
 ```
 
-## about the actor's task
+## about an actor's task
 
 There are two ways to get the `Task` variable from an actor:
 
@@ -78,7 +78,7 @@ Note: if an actor is on a worker process (`pid` > 1), you cannot get access to i
 
 ## about a failed actor
 
-If an actor fails, info will return the failed `Task`, which shows a clickable stack-trace in the REPL:
+If an actor fails, `info` will return the failed `Task`, which shows a clickable stack-trace in the REPL:
 
 ```julia
 julia> send(myactor, :boom)
@@ -109,6 +109,20 @@ Stacktrace:
 ....
 ```
 
+If a monitored or supervised actor has failed, you can get the failed task by using [`Actors.diag`](@ref) with the `:err` argument from the monitor or supervisor.
+
 ## about actor state
 
 For diagnostic purposes it is possible to get access to an actor's state by using [`Actors.diag`](@ref). See also [Diagnostics](../reference/diag.md).
+
+## about an actor system
+
+You can get further informations about registered or supervised actors:
+
+| function | brief description |
+|:---------|:------------------|
+| [`whereis`](@ref) | Find out whether an actor name is registered, |
+| [`registered`](@ref) | Return all registered actors in the system, |
+| [`count_children`](@ref) | tell a supervisor to return a children count, |
+| [`which_children`](@ref) | tell a supervisor to return a list of its children. |
+

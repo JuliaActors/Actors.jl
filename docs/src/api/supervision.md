@@ -12,9 +12,9 @@ What a [`supervisor`](@ref) does if one of its children terminates, is determine
 
 | strategy | brief description |
 |:---------|:------------------|
-| `:one_for_one` | only the terminated actor is restarted (`A4`), |
-| `:one_for_all` | all other child actors are terminated, then all child actors are restarted (`A1`-`A6`), |
-| `:rest_for_one` | the children started after the terminated one are terminated, then all terminated ones are restarted (`A4`-`A6`). |
+| `:one_for_one` | only the terminated actor is restarted (default strategy), |
+| `:one_for_all` | all other child actors are shutdown, then all child actors are restarted, |
+| `:rest_for_one` | actors registered to the supervisor after the terminated one are shutdown, then the terminated one and the rest are restarted. |
 
 ## [Child Restart Options](@id restart)
 
@@ -35,12 +35,12 @@ Supervisors have the following API:
 | [`supervisor`](@ref) | start a supervisor actor, |
 | [`supervise`](@ref) | add an actor to a supervisor's child list, |
 | [`unsupervise`](@ref) | delete an actor or task from a supervisor's child list, |
-| [`start_actor`](@ref) | tell a supervisor to start an actor as a child, |
-| [`start_task`](@ref) | tell a supervisor to start a task as a child, |
-| [`terminate_child`](@ref) | tell a supervisor to terminate a child and to remove it from its child list, |
-| [`set_strategy`](@ref) | tell a supervisor to change its supervision strategy, |
-| [`count_children`](@ref) | tell a supervisor to return a children count, |
-| [`which_children`](@ref) | tell a supervisor to return a list of its children. |
+| [`start_actor`](@ref) | start an actor as a child, |
+| [`start_task`](@ref) | start a task as a child, |
+| [`terminate_child`](@ref) | terminate a child and to remove it from its child list, |
+| [`set_strategy`](@ref) | change the supervision strategy, |
+| [`count_children`](@ref) | return a children count, |
+| [`which_children`](@ref) | return a list of all children. |
 
 ## Functions
 

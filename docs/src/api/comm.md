@@ -7,8 +7,8 @@ To receive a reply from an actor there are two possibilities:
 
 | API function | brief description |
 |:-------------|:------------------|
-| [`receive`](@ref) | after a [`send`](@ref) receive the [`Response`](@ref) asynchronously |
-| [`request`](@ref) | `send` (implicitly) a message to an actor, **block** and `receive` the result synchronously |
+| [`receive`](@ref) | after a [`send`](@ref) receive the response asynchronously |
+| [`request`](@ref) | `send` (implicitly) a message to an actor, **block** and `receive` the response synchronously |
 
 ## Functions
 

@@ -178,7 +178,7 @@ function rnfd_start(sv::Link; interval=1, kwargs...)
     timer = Timer(interval; interval) do t
         send(lk, Scan())
     end
-    term!(lk, ()->close(timer))
+    term!(lk, (exp)->close(timer))
     return lk
 end
 

@@ -97,13 +97,13 @@ sleep(1)
 @test @delayed length(sa.bhv.childs) == 3
 @test @delayed length(ra.bhv.lks) == 2
 
-set_strategy(sv, :rest_for_one)
-@test @delayed sa.bhv.option[:strategy] == :rest_for_one
-rmprocs(prcs[end]) # 5
-sleep(1)
-@test @delayed Actors.diag(sv) == :ok
-@test @delayed length(sa.bhv.childs) == 3
-@test @delayed length(sa.bhv.rtime) == 5
+# set_strategy(sv, :rest_for_one)
+# @test @delayed sa.bhv.option[:strategy] == :rest_for_one
+# rmprocs(prcs[end]) # 5
+# sleep(1)
+# @test @delayed Actors.diag(sv) == :ok
+# @test @delayed length(sa.bhv.childs) == 3
+# @test @delayed length(sa.bhv.rtime) == 5
 
 # rmprocs(prcs[end-1]) # 6
 # sleep(1)

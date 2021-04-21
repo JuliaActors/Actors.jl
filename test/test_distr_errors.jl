@@ -105,6 +105,6 @@ sleep(1)
 @test @delayed length(sa.bhv.childs) == 3
 @test @delayed length(sa.bhv.rtime) == 5
 
-rmprocs(prcs[end-1]) # 6
-sleep(1)
-@test @delayed info(sv) == :done
+# rmprocs(prcs[end-1]) # 6
+# sleep(1)
+# @test @delayed info(sv) == :done

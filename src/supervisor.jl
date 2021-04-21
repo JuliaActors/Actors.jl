@@ -78,7 +78,7 @@ function restart_child!(c::Child, act::_ACT)
     end
     c.lk.chn = lk.chn
     c.lk.pid = lk.pid
-    send(lk, Connect(Super(self())))
+    trysend(lk, Connect(Super(self())))
     update!(c.lk, c.lk, s=:self)
 end
 function restart_child!(c::Child, ::Nothing)

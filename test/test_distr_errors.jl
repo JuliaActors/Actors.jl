@@ -60,6 +60,7 @@ sleep(1)
 @test isempty(sv.chn)
 rmprocs(prcs[1]) # 1
 sleep(1)
+@test @delayed Actors.diag(sv) == :ok
 @test @delayed act1.pid == prcs[3]
 @test @delayed act2.pid == prcs[3]
 @test @delayed sa.bhv.option[:spares] == prcs[4:4]
@@ -72,6 +73,7 @@ sleep(1)
 
 rmprocs(prcs[2]) # 2, no spares left
 sleep(1)
+@test @delayed Actors.diag(sv) == :ok
 @test @delayed act3.pid == prcs[4]
 @test @delayed isempty(sa.bhv.option[:spares])
 @test @delayed call(act3, 10) == 40
@@ -83,6 +85,7 @@ sleep(1)
 sa.bhv.childs[3].info = (restart = :temporary,)
 rmprocs(prcs[3]) # 3 
 sleep(1)
+@test @delayed Actors.diag(sv) == :ok
 @test @delayed act1.pid == prcs[6]
 @test @delayed info(act2) == ProcessExitedException(prcs[3])
 @test @delayed length(sa.bhv.childs) == 3

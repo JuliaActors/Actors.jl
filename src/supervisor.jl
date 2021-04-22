@@ -78,8 +78,8 @@ function restart_child!(c::Child, act::_ACT)
     end
     c.lk.chn = lk.chn
     c.lk.pid = lk.pid
-    trysend(lk, Connect(Super(self())))
-    update!(c.lk, c.lk, s=:self)
+    send(lk, Connect(Super(self())))
+    update!(lk, c.lk, s=:self)
 end
 function restart_child!(c::Child, ::Nothing)
     c.lk[] = Threads.@spawn c.start()

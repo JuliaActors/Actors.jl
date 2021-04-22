@@ -40,7 +40,7 @@ Call an actor to execute its behavior and to send a
 **Note:** If `from` is omitted, `call` blocks and returns the result
 """
 call(lk::Link, from::Link, args...) = send(lk, Call(args, from))
-call(lk::Link, args...; timeout::Real=5.0) = request(lk, Call, args...; timeout=timeout)
+call(lk::Link, args...; timeout::Real=5.0) = request(lk, Call, args...; timeout)
 call(name::Symbol, args...; kwargs...) = call(whereis(name), args...; kwargs...)
 
 """
@@ -87,7 +87,7 @@ end
 function exec(lk::Link, f, args...; timeout::Real=5.0, kwargs...)
     isempty(args) && isempty(kwargs) ?
         request(lk, Exec, f; timeout=timeout) :
-        request(lk, Exec, Bhv(f, args...; kwargs...); timeout=timeout)
+        request(lk, Exec, Bhv(f, args...; kwargs...); timeout)
 end
 exec(name::Symbol, args...; kwargs...) = exec(whereis(name), args...; kwargs...)
 
@@ -164,7 +164,7 @@ Bhv(f, (1,), Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}
 ```
 """
 query(lk::Link, from::Link, s::Symbol=:sta) = send(lk, Query(s, from))
-query(lk::Link, s::Symbol=:sta; timeout::Real=5.0) = request(lk, Query, s, timeout=timeout)
+query(lk::Link, s::Symbol=:sta; timeout::Real=5.0) = request(lk, Query, s; timeout)
 query(name::Symbol, args...; kwargs...) = query(whereis(name), args...; kwargs...)
     
 """

@@ -61,10 +61,11 @@ Diagnose an actor, get a state or stacktrace.
 	- `:act`: actor `_ACT` variable,
 	- `:info`: actor [`Info`](@ref),
 	- `:err`: error log (only monitors or supervisors).
+- `timeout::Real=5.0`: timeout in seconds.
 
 !!! warning "This is for diagnosis only!"
 
 	Modifying an actor's state can cause a race condition.
 """
-diag(lk::Link, check::Symbol=:state) = request(lk, Diag, check)
-diag(name::Symbol, args...) = diag(whereis(name), args...)
+diag(lk::Link, check::Symbol=:state; timeout::Real=5.0) = request(lk, Diag, check; timeout)
+diag(name::Symbol, args...; kwargs...) = diag(whereis(name), args...; kwargs)

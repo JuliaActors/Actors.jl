@@ -42,7 +42,7 @@ Actors receive messages implicitly.
 
 ## `receive`
 
-Receiving a message is a blocking operation. Since here actors are implemented as Julia `Task`s, either they are busy in processing a message or waiting for the next message to arrive. We can use [`receive`](@ref) explicitly in order to communicate with actors. To do it, we 
+Receiving a message is a blocking operation. Since actors are implemented as Julia `Task`s, either they are busy in processing a message or waiting for the next message to arrive. We can use [`receive`](@ref) explicitly to get messages from actors. To do it, we 
 
 1. use [`newLink`](@ref) to create a Link,
 2. communicate it to an actor and
@@ -75,13 +75,23 @@ julia> receive(me)
 Actors.Timeout()
 ```
 
-So far we used `send` and `receive` explicitly to communicate with actors.
+If we want to do *synchronous communication* we combine a `send` and `receive` to an actor into one code block:
 
-## use the messaging protocol
+```julia
+julia> begin
+           send(myactor, +, 4, 5, 6)
+           receive(me)
+       end
+15
+```
 
-The [messaging protocol](../manual/protocol.md) is another way to communicate with an actor. It can be used to cause an actor to do also other things e.g. giving information, executing arbitrary functions or updating parameters. You normally won't use it explicitly since we have the user API for that. But here we demonstrate briefly how to do it.
+This will block until the actor responds or until the communication times out.
 
-We cause our actor to assume a `+`-behavior. It will add what we send to it, but it will not send it back. Now if we send it a [`Call`](@ref) with the same information, it will send a [`Response`](@ref) with the result to the given link:
+## with the messaging protocol
+
+The [messaging protocol](../manual/protocol.md) is another way to communicate with an actor. It can be used to cause an actor to do also other things e.g. giving information, executing arbitrary functions or updating parameters. Here we demonstrate it briefly with a [`Call`](@ref) - [`Response`](@ref) pattern:
+
+We cause our actor to assume a `+`-behavior. That behavior doesn't send a result back back. But if we send that actor a `Call` message with some arguments in a `Tuple`, it will send the result as a `Response` back to the given link:
 
 ```julia
 julia> become!(myactor, +);
@@ -96,7 +106,7 @@ julia> ans.y
 6
 ```
 
-A user or programmer can enhance the messaging protocol (see below).
+A user or programmer can enhance the messaging protocol (see below). You normally won't use it explicitly since we have the user API for that.
 
 ## use the user API functions
 
@@ -119,7 +129,7 @@ julia> receive(me).y
 6
 ```
 
-If you don't give it a link, it will use a `request` and work synchronously:
+Without a link as second parameter, it will use a `request` and work synchronously:
 
 ```julia
 julia> call(myactor, 1, 2, 3)

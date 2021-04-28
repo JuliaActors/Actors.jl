@@ -65,7 +65,8 @@ changed(act2)
 @test t1[].state == :runnable
 # fourth failure
 send(act2, "boom")
-@test @delayed t1[].state == :done
+sleep(2)
+@test @delayed t1[].state == :done 2
 
 # temporary actors
 sv = supervisor(taskref=t1)

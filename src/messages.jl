@@ -48,11 +48,11 @@ Cast() = Cast(())
 A [`Msg`](@ref) to an actor to connect with `x`. If 
 `remove=true`, an existing connection gets removed.
 """
-struct Connect{C} <: Msg
-    x::C
+struct Connect <: Msg
+    x
     remove::Bool
 end
-Connect(x) = Connect{typeof(x)}(x, false)
+Connect(x) = Connect(x, false)
 
 """
     Diag(x, from::Link)
@@ -71,8 +71,8 @@ end
 A [`Msg`](@ref) to a monitor actor indicating that an error
 has occurred or a [`Exit`](@ref) has been received.
 """
-struct Down{L,T,U} <: Msg
-    from::L
+struct Down{T,U} <: Msg
+    from::Union{Link,Task}
     reason::T
     task::U
 end
@@ -98,9 +98,9 @@ if an error has occurred and then are propagated further.
 They are not propagated by `:sticky` actors, see 
 [`trapExit`](@ref).
 """
-struct Exit{T,L,U,V} <: Msg
+struct Exit{T,U,V} <: Msg
     reason::T
-    from::L
+    from
     task::U
     state::V
 end

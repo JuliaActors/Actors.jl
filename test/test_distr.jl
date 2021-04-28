@@ -26,5 +26,5 @@ if length(workers()) > 0
     @test info(mut).pid == 2
     send(mut, :boom)
     sleep(0.5)
-    @test info(mut).exception isa MethodError
+    @test info(mut).exception.ex isa MethodError
 end

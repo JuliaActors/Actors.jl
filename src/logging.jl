@@ -23,20 +23,27 @@ function id()
     end
 end
 
-function warn(msg::Down, info::String="")
-    warn(msg.reason isa Exception ?
+function log_warn(msg::Down, info::String="")
+    log_warn(msg.reason isa Exception ?
             "Down: $info $(msg.task), $(msg.task.exception)" :
             "Down: $info $(msg.reason)")
 end
-function warn(msg::Exit, info::String="")
-    warn(msg.reason isa Exception && !isnothing(msg.task.exception) ?
+function log_warn(msg::Exit, info::String="")
+    log_warn(msg.reason isa Exception && !isnothing(msg.task.exception) ?
             "Exit: $info $(msg.task), $(msg.task.exception)" :
             "Exit: $info $(msg.reason)")
 end
-function warn(s::String)
+function log_warn(s::String)
     if _WARN[1]
         enable_finalizers(false)
         @warn "$(Dates.format(now(), date_format)) $(id()) $s"
         enable_finalizers(true)
     end
+end
+
+function log_error(s::String, ex::Exception, bt=nothing)
+    enable_finalizers(false)
+    exc = isnothing(bt) ? ex : (ex,bt)
+    @error "$(Dates.format(now(), date_format)) $(id()) $s" exception=exc
+    enable_finalizers(true)
 end

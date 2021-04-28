@@ -56,13 +56,13 @@ function onmessage(A::_ACT, msg::Down)
         if c.lk == msg.from && c isa Monitored 
             !isnothing(c.action) ?
                 c.action(msg.reason) :
-                warn(msg, "monitored")
+                log_warn(msg, "monitored")
             ix = i
         end
     end
     ix != 0 ?
         deleteat!(A.conn, ix) :
-        warn(msg)
+        log_warn(msg)
 end
 
 # Exit
@@ -80,7 +80,7 @@ onmessage(A::_ACT, ::Val{:sticky}, msg::Exit) = onmessage(A, Val(:system), msg)
 function onmessage(A::_ACT, ::Val{:system}, msg::Exit)
     if msg.reason != :normal
         saveerror(msg.task)
-        warn(msg, "connected")
+        log_warn(msg, "connected")
     end
     ix = findfirst(c->c.lk==msg.from, A.conn)
     isnothing(ix) ? # Exit not from a connection
@@ -91,10 +91,10 @@ function onmessage(A::_ACT, ::Val{:supervisor}, msg::Exit)
     !isnormal(msg.reason) && saveerror(msg.task)
     ix = findfirst(c->c.lk==msg.from, A.conn)
     if !isnothing(ix) && A.conn[ix] isa Child
-        warn(msg, "supervised")
+        log_warn(msg, "supervised")
         A.bhv(msg)
     elseif !isnothing(ix) && A.conn[ix] isa Peer
-        msg.reason != :normal && warn(msg, "connected")
+        msg.reason != :normal && log_warn(msg, "connected")
     else
         if msg.reason ∉ (:done, :timed_out)
             for c in A.conn
@@ -104,7 +104,7 @@ function onmessage(A::_ACT, ::Val{:supervisor}, msg::Exit)
                         send(c.lk, Exit(msg.reason, self(), msg.task, A))
                 end
             end
-            warn(msg, "supervisor")
+            log_warn(msg, "supervisor")
             _terminate!(A, msg.reason)            
             A.mode = Symbol(string(A.mode)*"∇")
         end

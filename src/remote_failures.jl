@@ -71,7 +71,7 @@ function remove_temporary!(s, fchilds)
     act = task_local_storage("_ACT")
     filter!(fchilds) do child
         if child.info.restart == :temporary
-            warn("temporary actor $(isnothing(child.name) ? :noname : child.name) failed, $(ProcessExitedException(child.lk.pid))")
+            log_warn("temporary actor $(isnothing(child.name) ? :noname : child.name) failed, $(ProcessExitedException(child.lk.pid))")
             filter!(c->c.lk!=child.lk, act.conn)
             filter!(c->c.lk!=child.lk, s.childs)
             return false
@@ -81,7 +81,7 @@ function remove_temporary!(s, fchilds)
     end
 end
 function restart_child!(c::Child, pid::Int)
-    warn("supervisor: restarting child $(isnothing(c.name) ? :noname : c.name) on pid $pid")
+    log_warn("supervisor: restarting child $(isnothing(c.name) ? :noname : c.name) on pid $pid")
     if c.lk isa Link
         lk = !isnothing(c.start) ? c.start(pid) : spawn(c.init; pid)
         c.lk.chn = lk.chn
@@ -96,7 +96,7 @@ function restart!(s::Supervisor, cs::Vector{Child}, pids::Vector{Int})
             rnfd_add(s, c.lk)
         end
     elseif s.option[:strategy] == :one_for_all
-        warn("supervisor: restarting all")
+        log_warn("supervisor: restarting all")
         for child in s.childs
             child ∈ cs ?
                 begin 
@@ -106,7 +106,7 @@ function restart!(s::Supervisor, cs::Vector{Child}, pids::Vector{Int})
                 child.lk.mode ≠ :rnfd && shutdown_restart_child!(child)
         end
     else
-        warn("supervisor: restarting rest")
+        log_warn("supervisor: restarting rest")
         ix = findfirst(c->c ∈ cs, s.childs)
         for child in s.childs[ix:end]
             child ∈ cs ?
@@ -146,13 +146,13 @@ function spare_pids!(s::Supervisor, cs)
 end
 function (s::Supervisor)(msg::NodeFailure)
     foreach(msg.pids) do pid
-        warn("supervisor: Process $pid exited!")
+        log_warn("supervisor: Process $pid exited!")
     end
     failed_childs = filter(c->c.lk.pid ∈ msg.pids, s.childs)
     remove_temporary!(s, failed_childs)
     if !isempty(failed_childs)
         if restart_limit!(s)
-            warn("supervisor: restart limit $(s.option[:max_restarts]) exceeded!")
+            log_warn("supervisor: restart limit $(s.option[:max_restarts]) exceeded!")
             send(self(), Exit(:shutdown, fill(nothing, 3)...))
         else
             restart!(s, failed_childs, spare_pids!(s, failed_childs))

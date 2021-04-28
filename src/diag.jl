@@ -68,4 +68,4 @@ Diagnose an actor, get a state or stacktrace.
 	Modifying an actor's state can cause a race condition.
 """
 diag(lk::Link, check::Symbol=:state; timeout::Real=5.0) = request(lk, Diag, check; timeout)
-diag(name::Symbol, args...; kwargs...) = diag(whereis(name), args...; kwargs)
+diag(name::Symbol, args...; kwargs...) = diag(whereis(name), args...; kwargs...)

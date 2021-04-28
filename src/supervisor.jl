@@ -61,7 +61,8 @@ function shutdown_child(c::Child)
         try
             send(c.lk, Connect(self(), true))
             exit!(c.lk, :shutdown)
-        catch
+        catch exc
+            log_error("shutdown_child", exc)
         end
     end
 end
@@ -107,17 +108,17 @@ end
 
 function restart!(s::Supervisor, c::Child, msg::Exit)
     if s.option[:strategy] == :one_for_one
-        warn("supervisor: restarting")
+        log_warn("supervisor: restarting")
         restart_child!(c, msg.state)
     elseif s.option[:strategy] == :one_for_all
-        warn("supervisor: restarting all")
+        log_warn("supervisor: restarting all")
         for child in s.childs
             child.lk == c.lk ? 
                 restart_child!(child, msg.state) :
                 shutdown_restart_child!(child)
         end
     else
-        warn("supervisor: restarting rest")
+        log_warn("supervisor: restarting rest")
         ix = findfirst(x->x.lk==c.lk, s.childs)
         for child in s.childs[ix:end] 
             child.lk == c.lk ? 
@@ -140,7 +141,7 @@ function (s::Supervisor)(msg::Exit)
     isnothing(ix) && throw(AssertionError("child not found"))
     if must_restart(s.childs[ix], msg.reason)
         if restart_limit!(s)
-            warn("supervisor: restart limit $(s.option[:max_restarts]) exceeded!")
+            log_warn("supervisor: restart limit $(s.option[:max_restarts]) exceeded!")
             send(self(), Exit(:shutdown, fill(nothing, 3)...))
         else
             restart!(s, s.childs[ix], msg)

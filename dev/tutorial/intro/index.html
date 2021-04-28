@@ -6,19 +6,19 @@ Link{Channel{Any}}(Channel{Any}(32), 1, :default)</code></pre><p>That returned a
 Actor    default
 Behavior threadid
 Pid      1, Thread 1
-Task     @0x00007f33e65f2770
-Ident    x-lusug-viniz-fitub
+Task     @0x00007fd0a2a6ca90
+Ident    x-luzib-papok-sopib
 
 julia&gt; call(myactor)         # call its behavior function
 1</code></pre><p>Now what happens if you <code>send</code> your actor a message which it cannot understand?</p><pre><code class="language-julia-repl">julia&gt; send(myactor, :boom)  # cause the actor to fail
 (:boom,)
 
 julia&gt; info(myactor)
-Task (failed) @0x00007f33e65f2770
+Task (failed) @0x00007fd0a2a6ca90
 MethodError: no method matching threadid(::Symbol)
 Closest candidates are:
   threadid() at threadingconstructs.jl:10
-  threadid(!Matched::Task) at task.jl:237
+  threadid(!Matched::Task) at task.jl:242
 Stacktrace:
  [1] #invokelatest#2
    @ ./essentials.jl:708 [inlined]
@@ -72,7 +72,7 @@ Actors.Update(:arg, Args{Tuple{Int64}, Base.Iterators.Pairs{Union{}, Union{}, Tu
 
 julia&gt; call(myactor, 500)
 1000</code></pre><p>But we could have achieved the same with <code>become!(myactor, +, 500)</code>.</p><p>Finally we <a href="../../api/user_api/#Actors.exit!"><code>exit!</code></a> our actor since we are finished with this introduction:</p><pre><code class="language-julia-repl">julia&gt; exit!(myactor)
-Actors.Exit{Symbol, Nothing, Nothing, Nothing}(:normal, nothing, nothing, nothing)
+Actors.Exit{Symbol, Nothing, Nothing}(:normal, nothing, nothing, nothing)
 
 julia&gt; send(myactor, 500)
 ERROR: InvalidStateException(&quot;Channel is closed.&quot;, :closed)</code></pre><p>Trying to <code>send</code> it something now throws an exception.</p><h2 id="Actor-Systems"><a class="docs-heading-anchor" href="#Actor-Systems">Actor Systems</a><a id="Actor-Systems-1"></a><a class="docs-heading-anchor-permalink" href="#Actor-Systems" title="Permalink"></a></h2><p>For this introduction we have worked with one actor. But there is no point in doing that. Actors come in systems. They can assume different and arbitrary behaviors, create other actors and then compose into systems by communicating via messages. Thus they can represent arbitrary concurrent systems.</p><p>Let&#39;s build a minimal actor system. It consists of two actors, a <code>greeter</code> actor for composing a greeting and a <code>sayhello</code> actor for communication:</p><pre><code class="language-julia-repl">julia&gt; greet(greeting, msg) = greeting*&quot;, &quot;*msg*&quot;!&quot; # a greetings server behavior
@@ -91,4 +91,4 @@ julia&gt; request(sayhello, &quot;World&quot;)                   # request the c
 &quot;Hello, World!&quot;
 
 julia&gt; request(sayhello, &quot;Kermit&quot;)
-&quot;Hello, Kermit!&quot;</code></pre><p>We could have done that without actors. But, come on, add a third one, saying hello asynchronously. Then you need a forth one to channel the access of the <code>hello</code> actors to the console …</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../install/">« Install and Use <code>Actors</code></a><a class="docs-footer-nextpage" href="../tabletennis/">Simulate a Game »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Thursday 22 April 2021 06:22">Thursday 22 April 2021</span>. Using Julia version 1.6.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+&quot;Hello, Kermit!&quot;</code></pre><p>We could have done that without actors. But, come on, add a third one, saying hello asynchronously. Then you need a forth one to channel the access of the <code>hello</code> actors to the console …</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../install/">« Install and Use <code>Actors</code></a><a class="docs-footer-nextpage" href="../tabletennis/">Simulate a Game »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Wednesday 28 April 2021 14:28">Wednesday 28 April 2021</span>. Using Julia version 1.6.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

@@ -72,7 +72,7 @@ A [`Msg`](@ref) to a monitor actor indicating that an error
 has occurred or a [`Exit`](@ref) has been received.
 """
 struct Down{T,U} <: Msg
-    from::Link
+    from::Union{Link,Task}
     reason::T
     task::U
 end
@@ -100,7 +100,7 @@ They are not propagated by `:sticky` actors, see
 """
 struct Exit{T,U,V} <: Msg
     reason::T
-    from::Union{Nothing,Link}
+    from
     task::U
     state::V
 end

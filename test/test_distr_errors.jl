@@ -84,7 +84,7 @@ println("2: supervisor ", Actors.diag(sv, timeout=10))
 # change act2 to :temporary
 sa.bhv.childs[3].info = (restart = :temporary,)
 rmprocs(prcs[3]) # 3 
-sleep(2)
+sleep(4)
 println("3: supervisor ", Actors.diag(sv, timeout=10))
 @test @delayed act1.pid == prcs[6]
 @test @delayed info(act2) == ProcessExitedException(prcs[3])
@@ -95,7 +95,7 @@ println("3: supervisor ", Actors.diag(sv, timeout=10))
 set_strategy(sv, :one_for_all)
 @test @delayed sa.bhv.option[:strategy] == :one_for_all
 rmprocs(prcs[4]) # 4
-sleep(2)
+sleep(4)
 println("4: supervisor ", Actors.diag(sv, timeout=10))
 @test @delayed length(sa.bhv.childs) == 3
 @test @delayed length(ra.bhv.lks) == 2
@@ -103,11 +103,11 @@ println("4: supervisor ", Actors.diag(sv, timeout=10))
 set_strategy(sv, :rest_for_one)
 @test @delayed sa.bhv.option[:strategy] == :rest_for_one
 rmprocs(prcs[end]) # 5
-sleep(2)
+sleep(4)
 println("5: supervisor ", Actors.diag(sv, timeout=10))
 @test @delayed length(sa.bhv.childs) == 3
 @test @delayed length(sa.bhv.rtime) == 5
 
 rmprocs(prcs[end-1]) # 6
-sleep(2)
+sleep(4)
 @test @delayed info(sv) == :done

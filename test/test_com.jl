@@ -113,3 +113,13 @@ res = request(A, Request(1, lk2), full=true, timeout=1)
 @test request(A, Request(3, lk2), timeout=1) == (3,4,5)
 @test request(A, Request(4, lk2), timeout=1) == [6,7,8]
 @test request(A, Request(99, lk2), timeout=1) == "test"
+
+# test send_after
+counter = Ref(0)
+tick(c, t, n) = n > 0 && (c[]+=1; send_after(self(), t, c, t, n-1))
+ticker = Actors.spawn(tick)
+send_after(ticker, 0.1, counter, 0.1, 5)
+sleep(0.6)
+@test counter[] == 5
+@test Actors.diag(ticker) == :ok
+exit!(ticker)

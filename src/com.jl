@@ -31,15 +31,32 @@ function _send!(rch::RemoteChannel, msg)
 end
 
 """
-    send(lk::Link, msg...)
-
-Send a message to an actor. `msg...` are communication
-parameters to the actor's behavior function.
+```
+send(lk::Link, msg...)
+send(name::Symbol, msg...)
+```
+Send a message to an actor `lk` (or registered `name`). 
+`msg...` are communication parameters to the actor's behavior 
+function.
 """
 Classic.send(lk::Link, msg::Msg) = _send!(lk.chn, msg)
 Classic.send(name::Symbol, msg::Msg) = _send!(whereis(name).chn, msg)
 Classic.send(lk::Link, msg...) = _send!(lk.chn, msg)
 Classic.send(name::Symbol, msg...) = _send!(whereis(name).chn, msg)
+
+"""
+```
+send_after(lk::Link, time::Real, msg...)
+```
+[`Send`](@ref send) a message `msg...` to an actor `lk` (or 
+registered `name`) after a `time` period in seconds.
+"""
+function send_after(lk::Link, time::Real, msg...)
+    time > 0 ? 
+        Timer((timer)->send(lk, msg...), time) :
+        send(lk, msg...)
+end
+send_after(name::Symbol, time::Real, msg...) = send_after(whereis(name), time, msg...)
 
 _match(msg, ::Nothing, ::Nothing) = true
 _match(msg::Msg, M::Type{<:Msg}, ::Nothing) = msg isa M

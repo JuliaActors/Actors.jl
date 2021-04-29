@@ -45,7 +45,7 @@ pkg> add "https://github.com/JuliaActors/Actors.jl"
 module Actors
 
 "Gives the package version."
-const version = v"0.2.4"
+const version = v"0.2.5"
 
 using ActorInterfaces.Classic
 using Distributed, .Threads, Serialization, Dates, Proquint
@@ -83,7 +83,7 @@ export
     # - onmessage
     # -------------------------------
     # API primitives
-    receive, request,
+    receive, request, send_after,
     # API
     Args, become, self, stop,
     become!, call, cast, exec, exit!, info, init!, 

@@ -120,7 +120,7 @@ function Classic.spawn( f, args...; pid=nothing, thrd=false,
                 end
             end
         else
-            t = Task(()->_act(lk.chn))
+            t = Task(() -> _act(lk.chn))
             isnothing(taskref) || (taskref[] = t)
             pid == 1 && (t.sticky = sticky)
             bind(lk.chn, t)
@@ -129,7 +129,7 @@ function Classic.spawn( f, args...; pid=nothing, thrd=false,
         lk.mode = mode
         remote && (lk = _rlink(lk))
     else
-        lk = Link(RemoteChannel(()->Channel(_act, 32), pid),
+        lk = Link(RemoteChannel(() -> Channel(_act, 32), pid),
                   pid, mode)
         f = _rlink(f)
     end
@@ -181,4 +181,4 @@ end
 
 Cause your actor to stop with a `reason`.
 """
-stop(reason=:normal) = send!(self(), Exit(reason, fill(nothing, 3)...))
+stop(reason=:normal) = send(self(), Exit(reason, fill(nothing, 3)...))

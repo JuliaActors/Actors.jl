@@ -101,9 +101,9 @@ end
 
 function restart_limit!(s::Supervisor)
     length(s.rtime) > s.option[:max_restarts] && popfirst!(s.rtime)
-    push!(s.rtime, time_ns()/1e9)
+    push!(s.rtime, time_ns() / 1e9)
     return length(s.rtime) > s.option[:max_restarts] &&
-        s.rtime[end]-s.rtime[begin] ≤ s.option[:max_seconds]
+        s.rtime[end] - s.rtime[begin] ≤ s.option[:max_seconds]
 end
 
 function restart!(s::Supervisor, c::Child, msg::Exit)
@@ -119,7 +119,7 @@ function restart!(s::Supervisor, c::Child, msg::Exit)
         end
     else
         log_warn("supervisor: restarting rest")
-        ix = findfirst(x->x.lk==c.lk, s.childs)
+        ix = findfirst(x -> x.lk == c.lk, s.childs)
         for child in s.childs[ix:end] 
             child.lk == c.lk ? 
                 restart_child!(child, msg.state) :
@@ -132,12 +132,12 @@ end
 # Supervisor behavior methods
 #
 function (s::Supervisor)(msg::ChildInit)
-    ix = findfirst(c->c.lk==msg.from, s.childs)
+    ix = findfirst(c -> c.lk == msg.from, s.childs)
     isnothing(ix) && throw(AssertionError("child not found"))
     s.childs[ix].init = msg.init
 end
 function (s::Supervisor)(msg::Exit)
-    ix = findfirst(c->c.lk==msg.from, s.childs)
+    ix = findfirst(c -> c.lk == msg.from, s.childs)
     isnothing(ix) && throw(AssertionError("child not found"))
     if must_restart(s.childs[ix], msg.reason)
         if restart_limit!(s)
@@ -149,15 +149,15 @@ function (s::Supervisor)(msg::Exit)
     else
         ## todo: warn about temporary actor failure!
         act = task_local_storage("_ACT")
-        filter!(c->c.lk!=msg.from, act.conn)
-        filter!(c->c.lk!=msg.from, s.childs)
+        filter!(c -> c.lk != msg.from, act.conn)
+        filter!(c -> c.lk != msg.from, s.childs)
     end
 end
 function (s::Supervisor)(child::Child)
     act = task_local_storage("_ACT")
-    ix = findfirst(c->child.lk==c.lk, s.childs)
+    ix = findfirst(c -> child.lk == c.lk, s.childs)
     isnothing(ix) && push!(s.childs, child)
-    ix = findfirst(c->child.lk==c.lk, act.conn)
+    ix = findfirst(c -> child.lk == c.lk, act.conn)
     isnothing(ix) && push!(act.conn, child)
     if child.lk isa Link 
         send(child.lk, Connect(Super(act.self)))
@@ -167,8 +167,8 @@ end
 function (s::Supervisor)(::Delete, lst)
     lk = lst isa Symbol ? whereis(lst) : lst
     act = task_local_storage("_ACT")
-    filter!(c->c.lk!=lk, act.conn)
-    filter!(c->c.lk!=lk, s.childs)
+    filter!(c -> c.lk != lk, act.conn)
+    filter!(c -> c.lk != lk, s.childs)
     if lk isa Link 
         trysend(lk, Connect(act.self, true))
         lk.pid ≠ myid() &&  send(rnfd(s), Remove(lk))
@@ -243,7 +243,7 @@ function count_children(sv)
     childs = call(sv, Which())
     d = Dict(:all => length(childs))
     ms = [c.lk.mode for c in childs if c.lk isa Link]
-    tasks = length(childs)- length(ms)
+    tasks = length(childs) - length(ms)
     for m in Set(ms)
         d[m] = length(filter(==(m), ms))
     end
@@ -282,7 +282,7 @@ function start_actor(start, sv::Link, cb=nothing, restart::Symbol=:transient;
 end
 
 function _supervisetask(r::Ref{Task}, sv; timeout::Real=5.0, pollint::Real=0.1)
-    res = timedwait(()->r[].state!=:runnable, timeout; pollint)
+    res = timedwait(() -> r[].state != :runnable, timeout; pollint)
     res == :ok ?
         r[].state == :done ?
             send(sv, Exit(:done, r, r[], nothing)) :
@@ -341,9 +341,9 @@ function which_children(sv, info=false)
     function cinfo(c::Child)
         if c.lk isa Link
             i = Actors.info(c.lk)
-            (actor=i.mode, bhv=i.bhvf, pid=i.pid, thrd=i.thrd, task=i.task, id=i.tid, name=i.name, restart=c.info.restart)
+            (actor = i.mode, bhv = i.bhvf, pid = i.pid, thrd = i.thrd, task = i.task, id = i.tid, name = i.name, restart = c.info.restart)
         else
-            (task=c.lk[], restart=c.info.restart)
+            (task = c.lk[], restart = c.info.restart)
         end
     end 
     childs = call(sv, Which())

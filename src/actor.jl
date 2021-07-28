@@ -181,4 +181,4 @@ end
 
 Cause your actor to stop with a `reason`.
 """
-stop(reason=:normal) = send!(self(), Exit(reason, fill(nothing, 3...)))
+stop(reason=:normal) = send!(self(), Exit(reason, fill(nothing, 3)...))

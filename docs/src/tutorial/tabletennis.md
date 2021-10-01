@@ -11,7 +11,7 @@ Now we implement a small toy example for concurrency with three actors using onl
 We simulate table-tennis where a player has a name and a capability. If he gets a ball with a difficulty exceeding his capability, he looses it. Players log to a print server actor.
 
 ```julia
-using Actors, Printf, Random
+using Actors, Printf, Random, .Threads
 import Actors: spawn
 
 struct Player{S,T}
@@ -60,7 +60,7 @@ prn = spawn(s->print(@sprintf("%s\n", s)))
 ping = spawn(Player("Ping", 0.8), prn, thrd=3)
 pong = spawn(Player("Pong", 0.75), prn, thrd=4)
 
-send(ping, Serve(pong))
+send(ping, Serve(pong));
 ```
 
 To execute the program we include the file:

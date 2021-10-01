@@ -42,4 +42,4 @@ prn = spawn(s->print(@sprintf("%s\n", s))) # a print server
 ping = spawn(Player("Ping", 0.8), prn, thrd=3)
 pong = spawn(Player("Pong", 0.75), prn, thrd=4)
 
-send(ping, Serve(pong))
+send(ping, Serve(pong));
